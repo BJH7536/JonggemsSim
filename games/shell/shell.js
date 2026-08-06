@@ -51,7 +51,15 @@
         shows: d.shows || 0,
         fresh: d.fresh || {},       // gameId -> 0..4 (감쇠 단계)
         best: d.best || {},         // gameId -> 최고 시청자
+        log: d.log || [],           // 최근 방송 기록 [{g, v, r}] 최신순 4개
       };
+    },
+    updateTopbar: function () {
+      $('tbSubs').textContent = this.ch.subs.toLocaleString();
+      $('tbShows').textContent = this.ch.shows;
+      var live = this.phase === 'live';
+      $('tbLive').textContent = live ? '● LIVE' : 'OFFLINE';
+      $('tbLive').className = live ? 'on' : 'off';
     },
     saveChannel: function () {
       try { localStorage.setItem(STORE_KEY, JSON.stringify(this.ch)); } catch (e) {}
@@ -65,8 +73,43 @@
       Chat.init($('chatFeed'));
       this.loadChannel();
       this.bindInput();
+      // 스트리머 캠 얼굴 프리로드 — 없으면 첫 리액션 순간에 깜빡인다
+      var self = this;
+      this._camFaces = {};
+      ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question'].forEach(function (m) {
+        var img = new Image();
+        img.src = 'games/shell/faces/adventurer_' + m + '.png';
+        self._camFaces[m] = img;
+      });
+      this._camMood = 'silence'; this._camAt = 0;
+      this._graph = []; this._graphT = 0; this._upT = 0;
+      if (window.JongLLM) JongLLM.init($('chatBadge'));
       this.showHub();
       requestAnimationFrame(this.loop.bind(this));
+    },
+
+    // ---------- 스트리머 캠 (연출 전용 — C3: 게임 수치와 무관) ----------
+    // 게임이 emit하는 이벤트 이름을 표정으로 번역한다. 새 게임이 기존 이름을 재사용하면
+    // 캠은 공짜로 따라온다 — 목록에 없는 이벤트는 무표정 유지 (contract 4.2 참고).
+    CAM_MOOD: {
+      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall'],
+      panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death'],
+      aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
+            'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done'],
+      confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam'],
+      thinking: ['nag', 'stuck', 'idle'],
+      question: ['milestone'],
+    },
+    camReact: function (ev) {
+      for (var mood in this.CAM_MOOD) {
+        if (this.CAM_MOOD[mood].indexOf(ev) >= 0) {
+          if (mood === 'thinking' && this._camMood !== 'silence') return; // 잡담은 큰 표정을 덮지 않는다
+          this._camMood = mood; this._camAt = this.now;
+          var f = this._camFaces[mood];
+          if (f && f.complete && f.naturalWidth) $('camImg').src = f.src;
+          return;
+        }
+      }
     },
 
     bindInput: function () {
@@ -114,31 +157,60 @@
       Chat.reset();
       Chat.sys('— 방송 대기 중 —');
 
+      $('camBox').classList.add('hidden');
+      $('tallyUp').textContent = '';
+      this.updateTopbar();
+
       var self = this;
       var cards = this.games.map(function (g) {
         var step = self.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
         var best = self.ch.best[g.id] || 0;
         return '<button class="gcard" data-game="' + g.id + '">' +
+          '<div class="gthumbWrap"><canvas class="gthumb" data-thumb="' + g.id + '" width="228" height="104"></canvas>' +
+            '<span class="golive">● 방송 시작</span></div>' +
           '<div class="gt">' + g.title + '</div>' +
           '<div class="gd">' + g.tagline + '</div>' +
-          '<div class="gf' + (fm < 1 ? ' warn' : '') + '">신선도 <b>' + pct + '%</b>' +
-            (fm < 1 ? ' — 물렸다. 다른 게임을 방송하면 회복' : '') + '</div>' +
+          '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
           '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
-          (best ? '<div class="gf">최고 <b>' + best.toLocaleString() + '</b>명</div>' : '') +
+          '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
+            (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
           '</button>';
       }).join('');
 
+      var recent = this.ch.log.length
+        ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
+            return '<div class="rrow"><span>' + r.g + '</span><span><b>' + r.v.toLocaleString() + '</b>명' +
+              (r.r ? '<span class="rec">★ 신기록</span>' : '') + '</span></div>';
+          }).join('') + '</div>'
+        : '';
+
       $('overlay').classList.remove('hidden');
-      $('overlay').innerHTML = '<div class="panel">' +
-        '<h2>오늘 뭐 방송하지?</h2>' +
-        '<p>당신은 종합게임 스트리머다. 게임을 고르면 <b>AI 시청자</b>가 당신의 플레이를 실시간으로 ' +
-        '관측하고 채팅으로 반응한다 — 칭찬하고, 야유하고, 훈수를 둔다.</p>' +
-        '<p class="fine">시청자 수가 곧 체력이자 점수다. 0명이 되면 방송은 그대로 끝난다. ' +
-        '그리고 <b>같은 게임만 파면 물린다</b> — 그래서 종겜을 하는 것이다.</p>' +
+      $('overlay').innerHTML = '<div class="panel hub">' +
+        '<div class="hubTop">' +
+          '<img class="hubCam" src="games/shell/faces/adventurer_silence.png" alt="스트리머">' +
+          '<div><h2>방송 준비</h2>' +
+          '<p>당신은 종합게임 스트리머다. 카테고리를 고르면 송출이 시작되고, <b>AI 시청자</b>가 ' +
+          '플레이를 실시간으로 관측하며 떠든다 — 칭찬, 야유, 훈수.</p>' +
+          '<div class="chanline">📺 <b>종겜러</b> 채널 · 구독자 <b>' + this.ch.subs.toLocaleString() + '</b>명 · ' +
+            '방송 <b>' + this.ch.shows + '</b>회</div></div>' +
+        '</div>' +
         '<div id="hubGrid">' + cards + '</div>' +
-        '<div class="chanline">채널 누적 구독자 <b>' + this.ch.subs.toLocaleString() + '</b>명 · ' +
-          '방송 <b>' + this.ch.shows + '</b>회</div>' +
-        '</div>';
+        '<p class="fine">시청자 수가 곧 체력이자 점수다 — 0명이 되면 송출이 끊긴다. ' +
+        '그리고 <b>같은 게임만 파면 물린다</b>. 그래서 종겜을 하는 것이다.</p>' +
+        recent + '</div>';
+
+      // 카드 썸네일 — 게임이 자기 미리보기를 그린다 (thumb 없으면 타이틀 카드)
+      this.games.forEach(function (g) {
+        var cv = $('overlay').querySelector('[data-thumb="' + g.id + '"]');
+        if (!cv) return;
+        var c = cv.getContext('2d');
+        if (g.thumb) g.thumb(c, cv.width, cv.height);
+        else {
+          c.fillStyle = '#1d1728'; c.fillRect(0, 0, cv.width, cv.height);
+          c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
+          c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
+        }
+      });
       $('overlay').querySelector('#hubGrid').addEventListener('click', function (e) {
         var btn = e.target.closest('[data-game]');
         if (btn) self.start(btn.getAttribute('data-game'));
@@ -167,9 +239,14 @@
       $('chainMeter').classList.remove('hot');
       $('foot').innerHTML = g.foot || '';
       $('panel').innerHTML = '';
+      $('camBox').classList.remove('hidden');
+      this._camMood = 'silence'; $('camImg').src = 'games/shell/faces/adventurer_silence.png';
+      this._graph = [{ t: 0, v: g.startViewers }]; this._graphT = 0; this._upT = 0;
+      this.updateTopbar();
 
       Chat.reset();
       Chat.load(g.chat.T, g.chat.BURST);
+      if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
 
       this.stage = this.makeStage();
@@ -200,7 +277,8 @@
           return actual;
         },
         lose: function (n) { self.loseViewers(n); },        // 조용히 (규약 2)
-        emit: function (ev, facts) { Chat.react(ev, facts); }, // C3 — 채팅은 관측만
+        // C3 — 채팅·캠은 관측만 한다. emit은 단방향이고 반환값이 없다
+        emit: function (ev, facts) { self.camReact(ev); Chat.react(ev, facts); },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
         ticker: function (text, muted) { self.showTicker(text, muted); },
@@ -267,21 +345,25 @@
       var newSubs = Math.floor(final / 100); // 최종 시청자의 1%가 채널에 남는다
       this.ch.subs += newSubs;
       this.ch.shows++;
+      this.ch.log.unshift({ g: g.title, v: final, r: isRecord });
+      if (this.ch.log.length > 4) this.ch.log.length = 4;
       this.saveChannel();
+      this.updateTopbar();
 
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
       var stats = (this.inst && this.inst.summary) ? this.inst.summary() : [];
       var rows = stats.map(function (r) { return '<span>' + r[0] + '</span><b>' + r[1] + '</b>'; }).join('');
 
-      var head = reason === 'dead' ? '방송 강제 종료' : (reason === 'quit' ? '방송 중단' : '방송 종료');
+      var head = reason === 'dead' ? '송출 끊김' : '방송 리포트';
       var lead = reason === 'dead' ? '시청자가 전부 떠났다. 검은 화면만 남았다.'
         : reason === 'clear' ? '오늘 방송, 잘 뽑혔다.'
-        : g.title + ' 방송이 끝났다.';
+        : g.title + ' 방송이 끝났다. 오늘의 그래프:';
 
       $('overlay').classList.remove('hidden');
       $('overlay').innerHTML = '<div class="panel">' +
         '<h2>' + head + '</h2><p>' + lead + '</p>' +
+        '<canvas id="repGraph" width="620" height="150"></canvas>' +
         '<div class="statgrid">' +
           '<span>최종 시청자</span><b>' + final.toLocaleString() + '명 ' +
             (isRecord ? '<span class="rec">★ 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
@@ -297,6 +379,8 @@
         '</div></div>';
       $('btnAgain').onclick = function () { self.start(g.id); };
       $('btnHub').onclick = function () { self.showHub(); };
+      this.drawReport($('repGraph'));
+      $('camBox').classList.add('hidden');
     },
 
     // ---------- 루프 ----------
@@ -311,9 +395,71 @@
         if (this.timeLeft <= 0) { this.timeLeft = 0; this.endShow('time'); }
       }
       if (this.phase === 'live' && this.inst) this.inst.step(dt);
+      if (this.phase === 'live') {
+        // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
+        this._graphT += dt; this._upT += dt;
+        if (this._graphT >= 1) {
+          this._graphT = 0;
+          this._graph.push({ t: this._upT, v: this.viewers });
+          if (this._graph.length > 240) this._graph.shift();
+          this.drawSpark();
+        }
+        var up = $('tallyUp');
+        if (up) up.textContent = Shell.util.fmtTime(this._upT);
+        // 캠 표정은 2.6초 뒤 무표정으로 돌아온다
+        if (this._camMood !== 'silence' && this.now - this._camAt > 2.6) {
+          this._camMood = 'silence';
+          var f = this._camFaces.silence;
+          if (f && f.complete) $('camImg').src = f.src;
+        }
+      }
       this.drainFx();
       this.draw(dt);
       requestAnimationFrame(this.loop.bind(this));
+    },
+
+    drawSpark: function () {
+      var cv = $('sparkCv'); if (!cv) return;
+      var c = cv.getContext('2d'), W2 = cv.width, H2 = cv.height;
+      c.clearRect(0, 0, W2, H2);
+      var g = this._graph; if (g.length < 2) return;
+      var vmax = 1; for (var i = 0; i < g.length; i++) vmax = Math.max(vmax, g[i].v);
+      c.strokeStyle = '#ffd27a'; c.lineWidth = 1.5; c.beginPath();
+      for (var k = 0; k < g.length; k++) {
+        var x = k / (g.length - 1) * (W2 - 2) + 1;
+        var y = H2 - 2 - (g[k].v / vmax) * (H2 - 5);
+        k ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    },
+
+    // 방송 리포트의 시청자 추이 그래프 — "숫자가 아니라 방송의 서사"를 보여준다
+    drawReport: function (cv) {
+      var c = cv.getContext('2d'), W2 = cv.width, H2 = cv.height, g = this._graph;
+      c.fillStyle = '#0e0b14'; c.fillRect(0, 0, W2, H2);
+      if (g.length < 2) return;
+      var vmax = 1, vmaxAt = 0;
+      for (var i = 0; i < g.length; i++) if (g[i].v > vmax) { vmax = g[i].v; vmaxAt = i; }
+      var X = function (k) { return 8 + k / (g.length - 1) * (W2 - 16); };
+      var Y = function (v) { return H2 - 14 - (v / vmax) * (H2 - 34); };
+      var fill = c.createLinearGradient(0, 0, 0, H2);
+      fill.addColorStop(0, 'rgba(255,180,71,.35)'); fill.addColorStop(1, 'rgba(255,180,71,0)');
+      c.beginPath(); c.moveTo(X(0), H2 - 14);
+      for (var k = 0; k < g.length; k++) c.lineTo(X(k), Y(g[k].v));
+      c.lineTo(X(g.length - 1), H2 - 14); c.closePath();
+      c.fillStyle = fill; c.fill();
+      c.strokeStyle = '#ffb447'; c.lineWidth = 2; c.beginPath();
+      for (var j = 0; j < g.length; j++) j ? c.lineTo(X(j), Y(g[j].v)) : c.moveTo(X(j), Y(g[j].v));
+      c.stroke();
+      // 피크 마커
+      c.fillStyle = '#ffd27a';
+      c.beginPath(); c.arc(X(vmaxAt), Y(vmax), 3.5, 0, Math.PI * 2); c.fill();
+      c.font = '10px system-ui, sans-serif'; c.textAlign = vmaxAt > g.length * .7 ? 'right' : 'left';
+      c.fillText('피크 ' + Math.round(vmax).toLocaleString() + '명', X(vmaxAt) + (vmaxAt > g.length * .7 ? -8 : 8), Y(vmax) - 6);
+      c.fillStyle = '#8a8478'; c.textAlign = 'left';
+      c.fillText('0:00', 8, H2 - 3);
+      c.textAlign = 'right';
+      c.fillText(Shell.util.fmtTime(g[g.length - 1].t), W2 - 8, H2 - 3);
     },
 
     draw: function (dt) {

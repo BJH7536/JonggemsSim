@@ -10,27 +10,35 @@
 </head>
 <body>
 
-<div id="header">
-  <h1>종겜스</h1>
-  <div class="sub">종합게임 스트리머 시뮬레이터 — 게임을 고르고, 방송하고, AI 시청자를 만족시켜라
-    <span class="badge">AI 시청자 · 로컬 시뮬레이션</span></div>
+<!-- 플랫폼 크롬 — "방송 플랫폼 안에 있다"는 감각은 여기서 시작된다 -->
+<div id="topbar">
+  <div class="tbL">
+    <span class="tbLogo">JGS<span>.tv</span></span>
+    <span class="tbStudio">스트리머 스튜디오</span>
+  </div>
+  <div class="tbR">
+    <span id="tbLive" class="off">OFFLINE</span>
+    <span class="tbStat">구독자 <b id="tbSubs">0</b></span>
+    <span class="tbStat">방송 <b id="tbShows">0</b>회</span>
+  </div>
 </div>
 
 <div id="stagewrap">
   <div id="showRow">
   <div id="viewport">
     <canvas id="scene" width="960" height="430"></canvas>
-    <div id="tally"><span>● ON AIR</span><span id="tallyR">—</span></div>
-    <div id="liveBar">👁 시청자 <b id="viewerCount">0</b>명</div>
+    <div id="tally"><span>● ON AIR <b id="tallyUp"></b></span><span id="tallyR">—</span></div>
+    <div id="liveBar">👁 <b id="viewerCount">0</b>명 <canvas id="sparkCv" width="92" height="20"></canvas></div>
     <div id="plaque"></div>
     <div id="chainMeter"><div class="lab">연쇄 배수</div><div class="val" id="chainVal">×1.0</div></div>
     <div class="vpopup" id="vpopup"></div>
+    <div id="camBox" class="hidden"><img id="camImg" src="games/shell/faces/adventurer_silence.png" alt="스트리머 캠"><span>LIVE CAM</span></div>
     <div id="ticker"></div>
     <div id="bigStamp"><div id="bigStampText"></div></div>
     <div id="overlay" class="hidden"></div>
   </div>
   <div id="chatCol">
-    <div id="chatHead"><span>💬 실시간 채팅</span><span class="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
+    <div id="chatHead"><span>💬 실시간 채팅</span><span class="chatBadge" id="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
     <div id="chatFeed"></div>
   </div>
   </div>
@@ -39,13 +47,17 @@
 </div>
 
 <!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 -->
+<script src="games/shell/config.js"></script>
 <script src="games/shell/chat.js"></script>
+<script src="games/shell/llm.js"></script>
 <script src="games/shell/shell.js"></script>
 <!-- 게임 — 각자 자기 이벤트 어휘(chat-data)와 룰(game)을 가지고 셸에 등록한다 -->
 <script src="games/hwaryeok/chat-data.js"></script>
 <script src="games/hwaryeok/game.js"></script>
 <script src="games/giving-up/chat-data.js"></script>
 <script src="games/giving-up/game.js"></script>
+<script src="games/pocket/chat-data.js"></script>
+<script src="games/pocket/game.js"></script>
 <script>Shell.boot();</script>
 
 </body>

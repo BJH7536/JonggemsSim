@@ -13,8 +13,10 @@ NAN 2026은 **외부 에셋 사용 시 출처와 라이선스를 AI 활용 기�
 ## `faces/` — 17개, 5406KB
 
 - **원본 위치**: `C:/stopresent/Unity/TheSword/Assets/@Resources/Sprites/Emoji`
-- **판정**: 자작 가능성 높음
+- **판정**: 사용 승인 — 팀 자작 (사용자 확인 2026-08-07, "무료라고 판단되는 것들은 사용" 지시)
 - **근거**: TheSword 자체 캐릭터(Adventurer/MagicalSword)를 그린 손그림 말풍선 리액션 시퀀스. 스톡에서 나올 수 없는 IP 종속 아트.
+- **배포 사본**: `games/shell/faces/` — Adventurer 7종을 96px로 가공해 스트리머 캠으로 사용 중.
+  제출물 4번(AI 활용 기술 문서)의 에셋 출처란에 "팀 자작 (TheSword 프로젝트)"로 기재할 것.
 
 | 파일 | 크기 |
 |---|--:|
