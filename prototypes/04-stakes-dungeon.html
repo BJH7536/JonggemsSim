@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>판돈 던전</title>
+<style>
+:root {
+  --gold: #e0a940; --gold2: #f5cf7a; --ink: #f0e6d2; --muted: #a89886;
+  --blood: #c0392b; --good: #6fbf73; --parch: #e9dbb8; --parchink: #2a2118;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 0 40px;
+  font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+  background: #0b0806 radial-gradient(1100px 520px at 50% -120px, #1c130a, #0b0806);
+  color: var(--ink);
+  -webkit-user-select: none; user-select: none;
+}
+#header { text-align: center; padding: 16px 10px 10px; }
+#header h1 {
+  margin: 0; font-family: Georgia, 'Nanum Myeongjo', serif; font-size: 30px;
+  color: var(--gold); letter-spacing: 8px; text-shadow: 0 0 22px rgba(224,169,64,.35);
+}
+#header .sub { color: var(--muted); font-size: 12.5px; margin-top: 5px; }
+.badge {
+  display: inline-block; border: 1px solid var(--gold); color: var(--gold);
+  font-size: 11px; padding: 1px 9px; border-radius: 10px; margin-left: 8px; vertical-align: 1px;
+}
+#stagewrap { max-width: 980px; margin: 0 auto; padding: 0 10px; }
+
+/* ---------- 관중 발코니 ---------- */
+#balcony {
+  display: flex; gap: 8px; padding: 9px 10px 11px; margin-bottom: 2px;
+  background:
+    repeating-linear-gradient(90deg, #00000022 0 3px, transparent 3px 46px),
+    linear-gradient(#241a10, #170f09);
+  border: 3px solid #120c07; border-bottom: 7px solid #0c0805; border-radius: 8px 8px 0 0;
+}
+.pcard {
+  flex: 1 1 0; min-width: 0; text-align: center; position: relative;
+  background: linear-gradient(#241b12, #1a120c);
+  border: 1px solid #3a2d20; border-radius: 8px; padding: 7px 6px 8px;
+}
+.pportrait {
+  width: 42px; height: 42px; line-height: 40px; font-size: 24px; margin: 0 auto 3px;
+  background: radial-gradient(#3d2e1c, #221809); border: 2px solid #4a3b28; border-radius: 50%;
+}
+.pname { font-size: 12px; font-weight: bold; color: var(--gold2); }
+.ptrust { height: 4px; background: #000; border-radius: 2px; overflow: hidden; margin: 4px 8px; }
+.ptrust i { display: block; height: 100%; background: var(--gold); }
+.pchip {
+  display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; margin-top: 2px;
+  background: #33261a; border: 1px solid #4a3b28;
+}
+.pchip.correct { background: #24391f; border-color: #3f6b36; color: #9fdd8f; }
+.pchip.wrong   { background: #3d1b18; border-color: #6b3630; color: #e8938c; }
+.pbubble {
+  margin-top: 6px; background: var(--parch); color: var(--parchink); border-radius: 8px;
+  padding: 5px 7px; font-size: 11px; line-height: 1.45; text-align: left; min-height: 34px;
+  position: relative;
+}
+.pbubble::before {
+  content: ''; position: absolute; top: -6px; left: 50%; margin-left: -6px;
+  border: 6px solid transparent; border-bottom-color: var(--parch); border-top: none;
+}
+.pbubble.thinking { color: #8a7a5e; font-style: italic; }
+.pbubble.pop { animation: bpop .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes bpop { from { transform: scale(.7); opacity: 0; } }
+
+/* ---------- 던전 뷰포트 ---------- */
+#viewport {
+  position: relative; border: 4px solid #100b07; outline: 1px solid #3a2d20;
+  border-radius: 0 0 6px 6px; overflow: hidden; box-shadow: 0 14px 44px #000c;
+  background: #0b0806;
+}
+#scene { display: block; width: 100%; height: auto; }
+#roomPlaque {
+  position: absolute; top: 10px; left: 10px; z-index: 2;
+  background: linear-gradient(#3a2d20, #241a10); border: 1px solid #55432c; border-radius: 4px;
+  padding: 4px 13px; font-size: 13px; letter-spacing: 1px; color: var(--gold2);
+  box-shadow: 0 3px 10px #0009;
+}
+#board {
+  position: absolute; top: 10px; right: 10px; z-index: 2; width: 196px;
+  background: rgba(18,12,7,.85); border: 1px solid #4a3b28; border-radius: 8px; padding: 8px 9px;
+}
+#board h4 { margin: 0 0 6px; font-size: 11px; color: var(--muted); letter-spacing: 3px; text-align: center; }
+.brow {
+  display: flex; justify-content: space-between; font-size: 12.5px;
+  padding: 3px 7px; border-radius: 4px; margin: 2px 0; background: #ffffff08;
+}
+.brow .mult { color: var(--gold2); }
+.brow.hl { background: #3d2f12; outline: 1px solid var(--gold); }
+.brow.dim { opacity: .45; }
+.potline { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+#liveBar {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2;
+  background: rgba(18,12,7,.85); border: 1px solid #4a3b28; border-radius: 20px;
+  padding: 4px 14px; font-size: 13px; letter-spacing: 1px;
+}
+#liveBar .dot { color: #ff4d4d; animation: liveBlink 1.6s infinite; }
+@keyframes liveBlink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+#liveBar b { color: var(--gold2); }
+.vpopup {
+  position: absolute; top: 46px; left: 50%; transform: translateX(-50%); z-index: 2;
+  font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: var(--gold2);
+  text-shadow: 0 2px 6px #000; pointer-events: none; opacity: 0; white-space: nowrap;
+}
+.vpopup.show { animation: vpop 1.15s forwards; }
+@keyframes vpop {
+  0% { opacity: 0; transform: translate(-50%, 6px) scale(.7); }
+  18% { opacity: 1; transform: translate(-50%, 0) scale(1.15); }
+  70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+#accPanel { position: absolute; top: 44px; left: 10px; z-index: 2; width: 200px; }
+.acard {
+  background: rgba(40,14,10,.88); border: 1px solid #6b3630; border-left: 4px solid #d9534f;
+  border-radius: 6px; padding: 5px 9px; margin-bottom: 5px; font-size: 12px; color: #f0d8d2;
+  animation: bpop .3s cubic-bezier(.34,1.56,.64,1);
+}
+.acard .chain { color: #ffb0a6; font-size: 10.5px; margin-top: 1px; }
+.acard.meta { background: rgba(20,14,9,.85); border-color: #4a3b28; border-left-color: var(--gold); color: #d5c8b2; }
+#btnExploit {
+  width: 100%; margin-top: 2px; font-size: 13px; padding: 7px 10px;
+  background: linear-gradient(#5e2a8a, #3a1a56); border-top-color: #9a5cd0; color: #ead8ff;
+}
+.fresh { font-size: 10px; color: var(--muted); }
+#ticker {
+  position: absolute; bottom: 13px; left: 50%; transform: translateX(-50%); z-index: 2;
+  font-size: 15px; text-shadow: 0 2px 5px #000; opacity: 0; pointer-events: none; white-space: nowrap;
+}
+#ticker.show { animation: tick 2.2s forwards; }
+@keyframes tick {
+  0% { opacity: 0; transform: translate(-50%, 8px); }
+  12% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; } 100% { opacity: 0; }
+}
+#stamp {
+  position: absolute; top: 42%; left: 50%; z-index: 3; text-align: center;
+  transform: translate(-50%,-50%) rotate(-6deg); opacity: 0; pointer-events: none;
+}
+#stamp.show { animation: stampIn .55s cubic-bezier(.2,1.4,.45,1) forwards; }
+@keyframes stampIn {
+  0%   { opacity: 0; transform: translate(-50%,-50%) rotate(-15deg) scale(2.6); }
+  60%  { opacity: 1; transform: translate(-50%,-50%) rotate(-6deg) scale(.94); }
+  100% { opacity: 1; transform: translate(-50%,-50%) rotate(-6deg) scale(1); }
+}
+#stampMult {
+  font-family: Georgia, serif; font-size: 52px; font-weight: bold; color: var(--gold);
+  border: 5px double var(--gold); border-radius: 10px; padding: 2px 26px;
+  background: rgba(18,11,4,.6); text-shadow: 0 0 26px rgba(224,169,64,.55);
+}
+#stampSub { margin-top: 9px; font-size: 18px; color: #9fdd8f; text-shadow: 0 2px 6px #000; }
+#stampSub.negative { color: #e8938c; }
+#fader {
+  position: absolute; inset: 0; z-index: 4; background: #000; opacity: 0;
+  transition: opacity .45s; pointer-events: none;
+}
+#overlay {
+  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+  background: rgba(7,4,2,.74);
+}
+#overlay.hidden { display: none; }
+.panel {
+  width: min(540px, 92%); background: linear-gradient(#241b12, #150e08);
+  border: 1px solid #4a3b28; border-radius: 10px; padding: 22px 28px; box-shadow: 0 18px 56px #000d;
+}
+.panel h2 { margin: 0 0 10px; font-family: Georgia, 'Nanum Myeongjo', serif; color: var(--gold); letter-spacing: 3px; }
+.panel p, .panel li { font-size: 13.5px; line-height: 1.65; color: #d5c8b2; }
+.panel ul { padding-left: 18px; margin: 8px 0; }
+.panel .fine { font-size: 12px; color: var(--muted); }
+.panel .fine.gold { color: var(--gold); }
+.btnrow { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.shopgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 12px 0 2px; }
+.price { color: var(--gold2); font-size: 12px; }
+.goldtext { color: var(--gold2); }
+
+/* ---------- HUD ---------- */
+#hud {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  margin-top: 10px; padding: 11px 16px;
+  background: linear-gradient(#20180f, #140d08); border: 1px solid #3a2d20; border-radius: 8px;
+}
+.hud-center { display: flex; gap: 9px; }
+#hpwrap {
+  position: relative; width: 225px; height: 20px;
+  background: #140b08; border: 1px solid #3a2d20; border-radius: 10px; overflow: hidden;
+}
+#hpfill { height: 100%; background: linear-gradient(#e06a4f, #8e1e14); transition: width .25s; border-radius: 10px; }
+#hptext { position: absolute; inset: 0; text-align: center; font-size: 12px; line-height: 20px; text-shadow: 0 1px 2px #000; }
+.stat { font-size: 14px; color: #d5c8b2; margin-left: 12px; }
+.stat b, #goldval { color: var(--gold2); }
+.slab {
+  background: linear-gradient(#4a3b28, #2c2114); color: var(--ink);
+  border: 1px solid #1a140e; border-top-color: #6b573b; border-radius: 6px;
+  padding: 10px 18px; font-size: 15px; cursor: pointer;
+  box-shadow: 0 3px 0 #120d08, inset 0 1px 0 #ffffff14; transition: transform .06s;
+}
+.slab:hover:not(:disabled) { border-color: var(--gold); color: var(--gold2); }
+.slab:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #120d08; }
+.slab:disabled { opacity: .35; cursor: default; }
+.slab.primary { background: linear-gradient(#8a6a2c, #5c451c); color: #ffedc4; border-top-color: #c9a355; }
+#foot { text-align: center; color: #6b6152; font-size: 11.5px; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>판돈 던전</h1>
+  <div class="sub">불신을 뒤집으면 보상이 된다 — 관중이 나를 의심할수록, 뒤집었을 때의 보상은 커진다
+    <span class="badge">AI 관람객 — 로컬 시뮬레이션</span></div>
+</div>
+
+<div id="stagewrap">
+  <div id="balcony"></div>
+  <div id="viewport">
+    <canvas id="scene" width="960" height="460"></canvas>
+    <div id="roomPlaque"></div>
+    <div id="liveBar"><span class="dot">●</span> LIVE <b id="viewerCount">-</b>명</div>
+    <div class="vpopup" id="vpopup"></div>
+    <div id="accPanel"></div>
+    <div id="board"></div>
+    <div id="ticker"></div>
+    <div id="stamp"><div id="stampMult"></div><div id="stampSub"></div></div>
+    <div id="fader"></div>
+    <div id="overlay" class="hidden"></div>
+  </div>
+  <div id="hud">
+    <div class="hud-left">
+      <div id="hpwrap"><div id="hpfill"></div><span id="hptext"></span></div>
+    </div>
+    <div class="hud-center">
+      <button id="btnMain" class="slab primary" onclick="mainAction()">전투 개시</button>
+      <button id="btnAttack" class="slab" onclick="playerAction('attack')">⚔️ 공격</button>
+      <button id="btnDefend" class="slab" onclick="playerAction('defend')" title="이번 턴 받는 피해 절반">🛡️ 방어</button>
+      <button id="btnPotion" class="slab" onclick="playerAction('potion')" title="체력 25 회복">🧪 포션</button>
+      <button id="btnFix" class="slab" onclick="playerAction('fix')" title="가장 최근 사고를 수습한다 — 몬스터는 그 틈을 노린다">🧯 수습</button>
+    </div>
+    <div class="hud-right">
+      <span class="stat">⚔️ <b id="atkval"></b> · 🛡️ <b id="defval"></b></span>
+      <span class="stat">💰 <span id="goldval">0</span>G</span>
+    </div>
+  </div>
+  <div id="foot">전투: 공격 / 방어(피해 절반) / 포션(+25) / 수습(사고 해결 — 몬스터가 틈을 노림) · 같은 행동만 반복하면 시청자가 지루해한다 · 사고 5회 중첩 = 방송 붕괴 · 시청자 수가 판돈의 크기다</div>
+</div>
+
+<script>
+// ================= 상수 (로직은 검증된 원본 유지) =================
+const STORAGE_KEY = 'aispec-proto-04-personas';
+const BET_LABELS = { win: '승리', lose: '패배', nodamage: '무피해' };
+const BET_ICONS = { win: '🗡️', lose: '☠️', nodamage: '✨' };
+
+// ===== 스트리머-시청자 기획서 융합 상수 =====
+const VIEWER_BASE = 120; // 시청자 = 체력바·점수·판돈 배율 (기획서 규약 1)
+const FRESH_MULT = [1, .7, .45, .25, .1]; // 신선도 감쇠 100→70→45→25→10% (기획서 규약 4)
+const ACCIDENT_NAMES = [
+  '무기가 손에서 미끄러졌다', '횃불이 꺼져 화면이 어둡다', '포션 가방 끈이 터졌다',
+  '갑옷 끈이 풀려 덜그럭거린다', '카메라 골렘이 비틀거린다', '바닥 돌이 들려 발이 걸렸다',
+];
+
+const PERSONAS = [
+  { id: 'taeho', name: '태호', emoji: '🔥', desc: '패기 넘치는 낙관주의자', bias: 0.6, volatility: 0.3 },
+  { id: 'minseo', name: '민서', emoji: '☔', desc: '매사에 신중한 비관주의자', bias: -0.6, volatility: 0.2 },
+  { id: 'yujin', name: '유진', emoji: '📊', desc: '숫자만 믿는 통계광', bias: 0, volatility: 0.1 },
+  { id: 'daon', name: '다온', emoji: '🎲', desc: '기분파 즉흥러', bias: 0, volatility: 0.9 },
+  { id: 'haram', name: '하람', emoji: '🎖️', desc: '관록의 노장 팬', bias: 0.2, volatility: 0.15 },
+];
+
+const MONSTERS = [
+  { name: '슬라임', hp: 24, atk: 5, size: 0.9, draw: drawSlime },
+  { name: '고블린', hp: 36, atk: 8, size: 1.0, draw: drawGoblin },
+  { name: '해골 전사', hp: 48, atk: 11, size: 1.05, draw: drawSkeleton },
+  { name: '오크 전사', hp: 60, atk: 14, size: 1.12, draw: drawOrc },
+  { name: '던전 군주', hp: 80, atk: 17, size: 1.25, draw: drawLord, boss: true },
+];
+
+// 베팅 방향별 근거 템플릿 (무드당 6개, 비반복성 검사를 통과할 만큼 다양하게)
+const TEMPLATES = {
+  bet_win: [
+    "{monster} 상대로 체력 {hp} 정도면 {room}번째 방은 무난하게 넘긴다. 승리에 건다.",
+    "지금까지 봐온 실력이면 {monster} 상대로 {room}번 방 승리는 어렵지 않아 보여. 체력도 {hp}나 남았고.",
+    "{room}번 방, {monster} 등장. 체력 {hp} 유지 중이면 승산 있다고 본다.",
+    "체력 {hp}, {monster} 정도 상대라면 이번 {room}번째 방은 이긴다에 걸어야지.",
+    "{monster} 앞에서도 체력 {hp}면 충분히 승리한다. {room}번째 방 승리 예상.",
+    "{room}번째 방 {monster} 등장 — 체력 {hp} 남은 걸 보니 이번엔 이긴다.",
+  ],
+  bet_lose: [
+    "{monster} 상대는 만만치 않아. 체력 {hp}로 {room}번 방 넘기기엔 위험해 보인다. 패배에 건다.",
+    "{room}번째 방, {monster} 상대로 체력 {hp}는 부족해 보여. 이번엔 패배 쪽에 걸겠다.",
+    "체력 {hp}밖에 안 남았는데 {monster} 등장이라니... {room}번 방에서 무너질 것 같다.",
+    "{monster} 앞에서 체력 {hp}는 불안하다. {room}번째 방, 패배 쪽에 걸어야겠어.",
+    "솔직히 {room}번 방 {monster} 상대로 체력 {hp}는 버티기 힘들어 보인다. 패배 예상.",
+    "체력 {hp}로 {monster}까지 만났다고? {room}번째 방에서 여기까지인 듯.",
+  ],
+  bet_nodamage: [
+    "체력 {hp} 그대로 {monster} 상대를 무피해로 잡을 것 같은 느낌이 온다. {room}번째 방, 무피해에 건다.",
+    "{room}번 방 {monster} 상대로 상처 하나 안 입고 끝낼 것 같은데? 체력 {hp} 유지 예상.",
+    "지금 컨디션(체력 {hp})이면 {monster} 상대로 스치지도 않고 {room}번째 방 클리어할 듯.",
+    "{monster} 정도는 체력 {hp} 그대로 무피해 클리어 각이다. {room}번째 방에 걸어본다.",
+    "느낌이 좋다. {room}번 방 {monster} 등장, 체력 {hp} 안 깎이고 완벽하게 끝낼 것 같아.",
+    "체력 {hp} 그대로 {room}번째 방 {monster}까지 상처 없이 넘길 거라 본다. 무피해에 건다.",
+  ],
+  settle_correct: [
+    "{tone}! 결과는 {result}, 배당 {multiplier} — 이 맛에 관중석에 앉아있는 거지.",
+    "{tone}. {result}로 끝날 줄 알았다니까. 배당 {multiplier}는 덤이네.",
+    "봐, 내 말이 맞잖아. {tone} — {result}에 배당 {multiplier}까지.",
+    "{result}. {tone} — 배당 {multiplier} 챙겨간다.",
+    "{tone}! 이번 {result} 예측 제대로 들어맞았다. 배당 {multiplier}.",
+    "{tone} — {result}까지 정확히 맞혔다. 배당 {multiplier}면 만족스럽네.",
+  ],
+  settle_wrong: [
+    "{tone}... {result}가 나올 줄이야. 배당 {multiplier}는 남 얘기가 됐다.",
+    "이건 {tone}이다. {result}라니, 배당 {multiplier}도 못 챙기고.",
+    "{tone}. 설마 {result}일 줄은 몰랐다. 배당 {multiplier} 놓쳤네.",
+    "{result}? {tone}... 다음엔 신중해져야겠다. 배당 {multiplier} 아쉽네.",
+    "{tone} — {result}는 예상 밖이었다. 배당 {multiplier} 놓친 게 아프다.",
+    "믿었는데 {result}라니, {tone}이 따로 없네. 배당 {multiplier}는 그림의 떡.",
+  ],
+};
+
+// ================= 유틸 =================
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function $(id) { return document.getElementById(id); }
+
+// ================= SFX (합성음 — 외부 리소스 없음) =================
+let actx = null;
+function audio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, delay) {
+  const a = audio(); if (!a) return;
+  type = type || 'sine'; vol = vol == null ? .1 : vol; delay = delay || 0;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, a.currentTime + delay);
+  g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + delay + dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(a.currentTime + delay); o.stop(a.currentTime + delay + dur + .03);
+}
+function noiseBurst(dur, vol, freq) {
+  const a = audio(); if (!a) return;
+  const n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(); s.buffer = buf;
+  const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq;
+  const g = a.createGain(); g.gain.value = vol;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+}
+const sfxSwing = () => noiseBurst(.14, .1, 1500);
+const sfxHit = () => { noiseBurst(.1, .15, 500); tone(120, .12, 'square', .07); };
+const sfxHurt = () => { noiseBurst(.15, .16, 300); tone(82, .2, 'sawtooth', .07); };
+const sfxBlock = () => tone(220, .1, 'square', .06);
+const sfxPotion = () => { tone(520, .1, 'sine', .07); tone(780, .14, 'sine', .06, .08); };
+const sfxCoin = () => { tone(1180, .08, 'sine', .07); tone(1567, .1, 'sine', .055, .05); };
+const sfxDoor = () => { tone(66, .3, 'sine', .18); noiseBurst(.18, .06, 200); };
+const sfxStamp = () => { noiseBurst(.22, .16, 300); tone(90, .22, 'square', .09); };
+const sfxKill = () => { noiseBurst(.3, .16, 260); tone(392, .16, 'triangle', .09); tone(523, .24, 'triangle', .08, .1); };
+document.addEventListener('pointerdown', () => audio(), { once: true });
+
+// ================= 판간 기억 (localStorage) =================
+function loadPersonaState() {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+  const state = {};
+  PERSONAS.forEach(p => { state[p.id] = (raw && raw[p.id]) ? raw[p.id] : { trust: 1, drift: 0 }; });
+  return state;
+}
+function savePersonaState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(game.personaState)); } catch (e) {}
+}
+function resetPersonaMemory() {
+  PERSONAS.forEach(p => { game.personaState[p.id] = { trust: 1, drift: 0 }; });
+  savePersonaState();
+  try { localStorage.removeItem('aispec-proto-04-fame'); } catch (e) {}
+  renderBalcony();
+  if (game.screen === 'start') showOverlay('start');
+}
+
+// ================= AI 관람객 목업 (공통 규약 참조 구현) =================
+const Spectator = {
+  history: [], N: 3, SIM_MAX: 0.72,
+  async speak(facts, mood, templates) {
+    await new Promise(r => setTimeout(r, 300 + Math.random() * 600)); // 호출 지연 시뮬레이션
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const text = this.generate(facts, mood, templates);
+      if (this.verify(text, facts)) {
+        this.history.push(text);
+        if (this.history.length > 8) this.history.shift();
+        return { ok: true, text };
+      }
+    }
+    return { ok: false, text: null }; // 폐기 — 호출부가 미채택 처리
+  },
+  generate(facts, mood, templates) { // [LLM-INTEGRATION-POINT] 실제 서비스에서는 LLM 호출로 교체
+    const pool = templates[mood] || templates.default;
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    return t.replace(/\{(\w+)\}/g, (_, k) => String(facts[k] ?? ''));
+  },
+  verify(text, facts) {
+    const factsIn = Object.values(facts).every(v => text.includes(String(v)));
+    const sim = (a, b) => {
+      const A = new Set(a.split(/\s+/)), B = new Set(b.split(/\s+/));
+      let i = 0; A.forEach(w => B.has(w) && i++);
+      return i / Math.max(A.size, B.size);
+    };
+    const fresh = this.history.slice(-this.N).every(h => sim(text, h) < this.SIM_MAX);
+    return factsIn && fresh;
+  }
+};
+
+// [LLM-INTEGRATION-POINT] pickBetDirection() — 실제 서비스에서는 이 함수가 LLM 호출로 교체된다.
+// 베팅 '방향'만 결정한다: 페르소나 편향 + 상황 휴리스틱 + 변동성. 금액은 이 함수가 관여하지 않는다(룰의 몫).
+function pickBetDirection(persona, pState, facts) {
+  const bias = clamp(persona.bias + pState.drift, -1, 1);
+  const vol = persona.volatility;
+  const hpFactor = (facts.hpRatio - 0.5) * 0.4;
+  const tierFactor = (facts.tier / 5) * 0.3;
+  const noise = () => (Math.random() - 0.5) * vol;
+  const scores = {
+    win: 0.5 + bias * 0.3 + hpFactor - tierFactor + noise(),
+    lose: 0.5 - bias * 0.3 - hpFactor + tierFactor + noise(),
+    nodamage: 0.28 + bias * 0.22 + hpFactor * 0.8 - tierFactor * 1.1 + noise() * 0.7,
+  };
+  let pick = 'win';
+  for (const k in scores) if (scores[k] > scores[pick]) pick = k;
+  const sorted = Object.values(scores).sort((a, b) => b - a);
+  const confidence = clamp(0.7 + (sorted[0] - sorted[1]) * 1.5, 0.6, 1.6);
+  return { pick, confidence };
+}
+
+// 룰: 베팅 금액 = 기본액 × 확신도 × 누적 신뢰도 — LLM은 경제 수치를 직접 부풀릴 수 없다.
+function calcBetAmount(confidence, trust) {
+  return clamp(Math.round(12 * confidence * trust), 5, 40);
+}
+
+// ================= 게임 상태 =================
+let game = {
+  screen: 'start', room: 0,
+  player: { hp: 100, maxHp: 100, atk: 12, def: 2, potions: 2, gold: 0 },
+  viewers: VIEWER_BASE,
+  fresh: { attack: 0, defend: 0, potion: 0, fix: 0 },
+  personaState: {},
+  currentBets: [],
+  combat: null,
+  lastSettlement: null,
+  settleDone: false,
+};
+
+// 씬(연출) 상태 — 게임 로직과 분리
+const scene = {
+  now: 0, shake: 0, flashRed: 0, flashWhite: 0,
+  slashAt: -9, burstAt: -9, burstX: 480, burstY: 250,
+  dmg: [], coins: [], embers: [],
+  monster: { scale: .6, scaleTarget: .6, pose: 'idle', poseAt: 0, alpha: 1 },
+  zoom: 1, zoomTarget: 1, busy: false, displayGold: 0,
+};
+function setPose(p) { scene.monster.pose = p; scene.monster.poseAt = scene.now; }
+
+// ================= 시청자 경제 (기획서 융합) =================
+// 시청자 수는 체력바·점수·판돈 배율을 겸한다 (규약 1).
+// 획득은 과하게 연출하고, 손실은 숫자만 조용히 줄인다 (규약 2).
+const fxQueue = []; let lastFxAt = 0;
+function gainViewers(n, label) {
+  if (n <= 0) return;
+  game.viewers += n; renderLive();
+  fxQueue.push(label ? `+${n} · ${label}` : `+${n}`);
+}
+function loseViewers(n) { // 무연출 — 조용히 빠져나가야 아프다
+  game.viewers = Math.max(0, game.viewers - n); renderLive();
+  if (game.viewers <= 0 && game.screen === 'combat' && game.combat && !game.combat.over) {
+    game.combat.over = true; game.combat.broadcastDead = true;
+    showTicker('시청자 전원 이탈 — 방송 종료');
+    setTimeout(() => endCombat('lose'), 650);
+  }
+}
+function viewerScale() { return clamp(game.viewers / VIEWER_BASE, .5, 3); }
+// 명성 이월: 방송이 끝날 때의 시청자 규모가 소문이 되어 다음 판 시작 관객을 늘린다.
+// 대참사의 "구경꾼 폭주"가 다음 판 판돈으로 실제로 이어지는 경로 (붕괴도 보상이 되는 지점).
+function saveFame() { try { localStorage.setItem('aispec-proto-04-fame', String(game.viewers)); } catch (e) {} }
+function loadFameBonus() {
+  try {
+    const v = parseInt(localStorage.getItem('aispec-proto-04-fame'));
+    if (!isNaN(v)) return clamp(Math.round((v - VIEWER_BASE) * .25), 0, 60);
+  } catch (e) {}
+  return 0;
+}
+function renderLive() {
+  $('viewerCount').textContent = game.viewers;
+  $('liveBar').style.display = game.screen === 'start' ? 'none' : '';
+  renderBoard(); // 보드의 시청자·배율 줄 동기화
+}
+function drainFx() { // 큰 자극은 겹치지 않는다 — 최소 0.4초 간격 큐 (규약 3)
+  if (!fxQueue.length || scene.now - lastFxAt < .4) return;
+  lastFxAt = scene.now;
+  const el = $('vpopup');
+  el.textContent = fxQueue.shift();
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
+// 신선도 감쇠 (규약 4): 같은 행동의 시청자 반응은 100→70→45→25→10%,
+// 다른 행동을 쓰면 +30%p씩 회복. 전투 수치는 건드리지 않고 관전 경제만 지배한다.
+function useFresh(action) {
+  const mult = FRESH_MULT[game.fresh[action]];
+  game.fresh[action] = Math.min(4, game.fresh[action] + 1);
+  for (const k in game.fresh) if (k !== action) game.fresh[k] = Math.max(0, game.fresh[k] - 1);
+  return mult;
+}
+function freshTag(a) {
+  const m = FRESH_MULT[game.fresh[a]];
+  return m < 1 ? ` <span class="fresh">${Math.round(m * 100)}%</span>` : '';
+}
+
+// ================= 연쇄사고 =================
+// 사고는 방치하면 연쇄하고(스택당 확률 증가), 5번째에 방송이 뒤집힌다.
+// 수습하면 스택이 깊을수록 시청자가 폭등한다 — 실수가 곧 컨텐츠다.
+function spawnAccident(reason) {
+  const c = game.combat;
+  if (!c || c.over) return;
+  if (c.accidents.length >= 4) { catastrophe(); return; }
+  const name = ACCIDENT_NAMES[rnd(0, ACCIDENT_NAMES.length - 1)];
+  c.accidents.push({ name, turn: c.turn });
+  gainViewers(6, '사고 구경'); // 사고도 구경거리다
+  showTicker(`사고! ${name}`);
+  sfxHurt();
+  renderAccidents(); renderHUD();
+}
+function chainRoll() {
+  const c = game.combat;
+  if (!c || c.over || !c.accidents.length) return;
+  const aged = c.accidents.some(a => a.turn < c.turn);
+  if (!aged) return;
+  if (Math.random() < .35 + .15 * (c.accidents.length - 1)) {
+    if (c.accidents.length >= 4) { catastrophe(); return; }
+    spawnAccident('chain');
+    showTicker('사고가 사고를 불렀다!');
+  }
+}
+function catastrophe() {
+  const c = game.combat;
+  if (!c || c.over) return;
+  c.over = true; c.catastrophe = true;
+  c.accidents = [];
+  renderAccidents();
+  gainViewers(Math.round(game.viewers * .35), '대참사 구경꾼 폭주'); // 붕괴도 구경거리 — 다음 판 판돈이 커진다
+  scene.flashWhite = .5; scene.shake = 14; sfxStamp();
+  showTicker('대참사! 방송이 뒤집혔다');
+  setTimeout(() => endCombat('lose'), 900);
+}
+// 역이용: 사고 스택을 통째로 쇼로 만드는 도박 — 성공 60%, 실패 시 사고 +2
+function exploitAccidents() {
+  const c = game.combat;
+  if (!c || c.over || scene.busy || c.exploitUsed || c.accidents.length < 2) return;
+  c.exploitUsed = true; scene.busy = true; renderHUD(); renderAccidents();
+  const stack = c.accidents.length;
+  showTicker('역이용 — 사고를 쇼로 만든다...');
+  setTimeout(() => {
+    if (!game.combat || game.combat !== c || c.over) return;
+    if (Math.random() < .6) {
+      c.accidents = [];
+      gainViewers(30 * stack, '역이용 대성공');
+      game.player.gold += 20;
+      scene.flashWhite = .4; sfxKill();
+      showTicker('사고 스택을 전부 쇼로 승화시켰다!');
+    } else {
+      showTicker('역이용 실패... 사고가 불어난다');
+      spawnAccident('exploit');
+      if (!c.over) spawnAccident('exploit');
+    }
+    if (!c.over) { scene.busy = false; }
+    renderAccidents(); renderHUD();
+  }, 700);
+}
+function renderAccidents() {
+  const el = $('accPanel'), c = game.combat;
+  if (!c || game.screen !== 'combat' || !c.accidents.length) { el.innerHTML = ''; return; }
+  const n = c.accidents.length;
+  el.innerHTML = c.accidents.map((a, i) => `<div class="acard">⚠ ${a.name}
+      <div class="chain">${i === n - 1 ? '수습 대상' : '방치 중 — 연쇄 위험'}</div></div>`).join('')
+    + `<div class="acard meta">사고 ${n} / 4 — 5번째에 방송이 뒤집힌다</div>`
+    + (n >= 2 && !c.exploitUsed ? `<button id="btnExploit" class="slab" onclick="exploitAccidents()">🎭 역이용 (60%) — 전부 쇼로</button>` : '');
+}
+
+// ================= 진행 플로우 =================
+function startRun() {
+  game.player = { hp: 100, maxHp: 100, atk: 12, def: 2, potions: 2, gold: 0 };
+  game.room = 0;
+  const fame = loadFameBonus();
+  game.viewers = VIEWER_BASE + fame;
+  if (fame > 0) fxQueue.push(`+${fame} · 소문 듣고 온 시청자`);
+  game.fresh = { attack: 0, defend: 0, potion: 0, fix: 0 };
+  scene.displayGold = 0;
+  enterRoom();
+}
+function restartRun() { startRun(); }
+
+function enterRoom() {
+  game.screen = 'betting';
+  game.combat = null; game.currentBets = []; game.lastSettlement = null; game.settleDone = false;
+  const m = MONSTERS[game.room];
+  scene.monster = { scale: .58 * m.size, scaleTarget: .72 * m.size, pose: 'idle', poseAt: scene.now, alpha: 1 };
+  scene.embers = [];
+  hideStamp(); showOverlay(null);
+  renderAll();
+  showTicker(`${game.room + 1}번째 방 — ${m.name}${m.boss ? ' [보스]' : ''}`);
+  runBettingRound();
+}
+
+async function runBettingRound() {
+  const monster = MONSTERS[game.room];
+  const hpRatio = game.player.hp / game.player.maxHp;
+  const facts = { monster: monster.name, hp: game.player.hp, room: game.room + 1 };
+  game.currentBets = PERSONAS.map(p => ({ personaId: p.id, pending: true }));
+  renderAll();
+
+  await Promise.all(PERSONAS.map(async (persona, idx) => {
+    const pState = game.personaState[persona.id];
+    const dir = pickBetDirection(persona, pState, { hpRatio, tier: game.room + 1 });
+    // 판돈은 시청자 규모에 비례한다 — 시청자가 판돈의 원천 (규약 1)
+    const amount = Math.max(3, Math.round(calcBetAmount(dir.confidence, pState.trust) * viewerScale()));
+    const mood = 'bet_' + dir.pick;
+
+    // 베팅 마감 타임아웃(2초, 무응답 시 기본 베팅) — 드물게 느린 응답을 흉내내 경로를 실제로 시연
+    const isSlow = Math.random() < 0.08;
+    const think = isSlow
+      ? new Promise(res => setTimeout(() => res({ ok: false, text: null }), 2600))
+      : Spectator.speak(facts, mood, TEMPLATES);
+    const timeout = new Promise(res => setTimeout(() => res({ ok: false, text: null, timedOut: true }), 2000));
+    const result = await Promise.race([think, timeout]);
+
+    const comment = result.ok ? result.text
+      : (result.timedOut ? '(응답 지연 — 기본 베팅 적용)' : '(근거 검증 실패 — 기본 베팅 적용)');
+    game.currentBets[idx] = { personaId: persona.id, pick: dir.pick, amount, comment, pending: false, verified: !!result.ok };
+    renderAll();
+  }));
+  renderHUD();
+}
+
+function startCombat() {
+  const m = MONSTERS[game.room];
+  game.combat = { monsterHp: m.hp, monsterMaxHp: m.hp, damageTaken: 0, defending: false, over: false,
+    accidents: [], exploitUsed: false, turn: 0, catastrophe: false, broadcastDead: false };
+  game.screen = 'combat';
+  scene.monster.scaleTarget = 1.15 * m.size;
+  scene.shake = Math.max(scene.shake, 6);
+  sfxDoor();
+  scene.busy = true;
+  setTimeout(() => { scene.busy = false; renderHUD(); }, 600);
+  renderHUD(); renderBoard();
+  showTicker('전투 개시!');
+}
+
+function playerAction(action) {
+  if (game.screen !== 'combat' || scene.busy) return;
+  const c = game.combat, p = game.player, m = MONSTERS[game.room];
+  if (!c || c.over) return;
+  if (action === 'potion' && p.potions <= 0) return;
+  if (action === 'fix' && !c.accidents.length) return;
+  scene.busy = true; renderHUD();
+  c.defending = false;
+  c.turn++;
+
+  // 양념: 드물게 익명의 도네가 온다 (규약 5 — 랜덤 스파이크는 양념, 뼈대가 아니다)
+  if (Math.random() < .06) {
+    const d = rnd(6, 18);
+    p.gold += d;
+    fxQueue.push(`💝 익명의 도네 +${d}G`);
+  }
+
+  if (action === 'attack') {
+    const mult = useFresh('attack');
+    const risky = p.hp / p.maxHp < .3;
+    if (mult <= .25) loseViewers(2); // 반복은 지루하다 — 조용히 빠져나간다
+    else { game.viewers += Math.round(3 * mult) + (risky ? 3 : 0); renderLive(); }
+    const dmg = Math.max(1, p.atk + rnd(-2, 2));
+    sfxSwing(); scene.slashAt = scene.now;
+    setTimeout(() => {
+      c.monsterHp = Math.max(0, c.monsterHp - dmg);
+      setPose('hit');
+      scene.burstAt = scene.now; scene.burstX = 480 + rnd(-20, 20); scene.burstY = 230 + rnd(-20, 20);
+      scene.shake = Math.max(scene.shake, 6); sfxHit();
+      spawnDmg(480 + rnd(-30, 30), 190, '-' + dmg, '#ffd27a');
+      showTicker(`${m.name}에게 ${dmg} 피해!`);
+      if (c.monsterHp <= 0) { killMonster(); return; }
+      monsterCounter(action);
+    }, 150);
+  } else if (action === 'defend') {
+    c.defending = true;
+    if (useFresh('defend') <= .25) loseViewers(1);
+    sfxBlock(); showTicker('방어 태세 — 받는 피해 절반');
+    monsterCounter(action);
+  } else if (action === 'potion') {
+    p.potions--; p.hp = Math.min(p.maxHp, p.hp + 25);
+    if (useFresh('potion') <= .25) loseViewers(1);
+    sfxPotion(); spawnDmg(480, 400, '+25', '#8fe08a');
+    showTicker('포션 사용 — 체력 25 회복');
+    renderHUD();
+    monsterCounter(action);
+  } else { // fix — 수습: 실수가 컨텐츠가 된다. 몬스터는 그 틈을 노린다
+    const stack = c.accidents.length;
+    const acc = c.accidents.pop();
+    const gain = Math.max(2, Math.round(14 * stack * useFresh('fix')));
+    gainViewers(gain, '수습 성공');
+    sfxCoin(); scene.flashWhite = .22;
+    showTicker(`수습 — ${acc.name}`);
+    renderAccidents();
+    monsterCounter(action);
+  }
+}
+
+function monsterCounter(action) {
+  const c = game.combat, p = game.player, m = MONSTERS[game.room];
+  setTimeout(() => {
+    if (!c || c.over || game.screen !== 'combat') return;
+    setPose('lunge');
+    setTimeout(() => {
+      if (!c || c.over || game.screen !== 'combat') return;
+      const raw = m.atk + rnd(-2, 2) + Math.min(4, c.accidents.length); // 사고가 쌓이면 틈이 커진다
+      let incoming = raw - p.def;
+      if (c.defending) incoming = Math.floor(incoming / 2);
+      incoming = Math.max(0, incoming); // 방어가 충분하면 0피해 가능 — "무피해" 베팅이 살아있는 선택지가 된다
+      p.hp = Math.max(0, p.hp - incoming);
+      c.damageTaken += incoming;
+      if (incoming > 0) {
+        scene.flashRed = .45; scene.shake = Math.max(scene.shake, 10);
+        sfxHurt(); spawnDmg(480, 425, '-' + incoming, '#ff7b6b');
+        showTicker(`${m.name}의 공격! ${incoming} 피해`);
+      } else {
+        sfxBlock(); spawnDmg(480, 425, 'BLOCK', '#9fb7dd');
+        showTicker(`${m.name}의 공격을 완전히 막아냈다!`);
+      }
+      renderHUD();
+      if (p.hp <= 0) {
+        c.over = true;
+        setTimeout(() => endCombat('lose'), 650);
+        return;
+      }
+      // 연쇄사고 판정 — 새 사고 발생 → 방치된 사고의 연쇄 순
+      if (Math.random() < (action === 'fix' ? .05 : .1 + .04 * game.room)) spawnAccident('risk');
+      if (c.over) return; // 대참사면 여기서 끝
+      chainRoll();
+      if (c.over) return;
+      scene.busy = false; renderHUD();
+    }, 230);
+  }, 420);
+}
+
+function killMonster() {
+  const c = game.combat;
+  c.over = true;
+  setPose('dead'); scene.flashWhite = .45; sfxKill();
+  const outcome = c.damageTaken === 0 ? 'nodamage' : 'win';
+  showTicker(`${MONSTERS[game.room].name} 처치!`);
+  if (game.player.hp / game.player.maxHp < .3) gainViewers(25, '위기에서 해냈다'); // 실력 연동 스파이크가 뼈대 (규약 5)
+  setTimeout(() => endCombat(outcome), 800);
+}
+
+function endCombat(outcome) {
+  game.screen = 'settlement'; game.settleDone = false; scene.busy = false;
+  renderHUD();
+  runSettlement(outcome);
+}
+
+// ================= 정산 (배당 계수 = 총 판돈 / 적중 판돈, 역배일수록 계수 큼) =================
+function settleBets(outcome) {
+  const potByOutcome = { win: 0, lose: 0, nodamage: 0 };
+  game.currentBets.forEach(b => potByOutcome[b.pick] += b.amount);
+  const totalPot = potByOutcome.win + potByOutcome.lose + potByOutcome.nodamage;
+  const winPot = potByOutcome[outcome];
+  const rawMult = winPot > 0 ? totalPot / winPot : 6;
+  const multiplier = clamp(rawMult, 1, 6);
+  return { totalPot, potByOutcome, multiplier, reward: Math.round(totalPot * multiplier) };
+}
+
+async function runSettlement(outcome) {
+  const s = settleBets(outcome);
+  const correctCount = game.currentBets.filter(b => b.pick === outcome).length;
+  const isUnderdog = correctCount <= 2; // 5명 중 2명 이하만 맞혔다면 역배
+  const multStr = s.multiplier.toFixed(1) + '배';
+  game.lastSettlement = { outcome, totalPot: s.totalPot, potByOutcome: s.potByOutcome, multiplier: s.multiplier, reward: s.reward, results: [] };
+  renderBoard();
+  showStamp(s.multiplier, outcome === 'lose' ? 0 : s.reward, outcome);
+  sfxStamp();
+  if (outcome !== 'lose') {
+    game.player.gold += s.reward;
+    spawnCoins(Math.min(34, 8 + Math.round(s.reward / 10)));
+    for (let i = 0; i < 3; i++) setTimeout(sfxCoin, 150 + i * 130);
+  }
+  renderHUD();
+
+  // 정산 관전 반응: 승리는 화려하게, 실망은 조용히 (규약 2)
+  if (outcome === 'nodamage') gainViewers(22, '완벽한 무피해');
+  else if (outcome === 'win') gainViewers(isUnderdog ? 30 : 12, isUnderdog ? '대이변' : '승리 축하');
+  else if (!(game.combat && (game.combat.catastrophe || game.combat.broadcastDead))) loseViewers(15);
+
+  for (const bet of game.currentBets) {
+    const pState = game.personaState[bet.personaId];
+    const correct = bet.pick === outcome;
+    let tone;
+    if (correct) {
+      tone = isUnderdog ? '역배 적중' : '예상대로 적중';
+      pState.trust = clamp(pState.trust + (isUnderdog ? 0.35 : 0.1), 0.5, 2.2);
+      if (isUnderdog) pState.drift = clamp(pState.drift + 0.25, -1, 1); // 대담해진다
+    } else {
+      const betrayed = (bet.pick === 'win' || bet.pick === 'nodamage') && outcome === 'lose';
+      tone = betrayed ? '배신' : '빗나감';
+      pState.trust = clamp(pState.trust - (betrayed ? 0.25 : 0.1), 0.5, 2.2);
+      if (betrayed) pState.drift = clamp(pState.drift - 0.3, -1, 1); // 회의적으로 변한다
+    }
+    const facts = { result: BET_LABELS[outcome], multiplier: multStr, tone };
+    const r = await Spectator.speak(facts, correct ? 'settle_correct' : 'settle_wrong', TEMPLATES);
+    game.lastSettlement.results.push({
+      personaId: bet.personaId, tone, correct,
+      comment: r.ok ? r.text : `${tone} — ${BET_LABELS[outcome]}, 배당 ${multStr}.`,
+    });
+    renderBalcony();
+  }
+  savePersonaState();
+  game.settleDone = true; renderHUD();
+}
+
+function afterSettlement() {
+  hideStamp();
+  if (game.lastSettlement.outcome === 'lose') { saveFame(); game.screen = 'gameover'; showOverlay('gameover'); renderHUD(); return; }
+  if (game.room + 1 >= MONSTERS.length) { saveFame(); game.screen = 'victory'; showOverlay('victory'); renderHUD(); return; }
+  game.screen = 'shop'; showOverlay('shop'); renderHUD();
+}
+
+function mainAction() {
+  if (game.screen === 'betting') {
+    const ready = game.currentBets.length && game.currentBets.every(b => !b.pending);
+    if (ready) startCombat();
+  } else if (game.screen === 'settlement' && game.settleDone) {
+    afterSettlement();
+  }
+}
+
+// ================= 상점 =================
+function buyItem(type) {
+  const p = game.player;
+  let bought = false;
+  if (type === 'potion' && p.gold >= 15) { p.gold -= 15; p.potions++; bought = true; }
+  else if (type === 'atk' && p.gold >= 25) { p.gold -= 25; p.atk += 2; bought = true; }
+  else if (type === 'def' && p.gold >= 25) { p.gold -= 25; p.def += 1; bought = true; }
+  else if (type === 'rest' && p.gold >= 10 && p.hp < p.maxHp) { p.gold -= 10; p.hp = Math.min(p.maxHp, p.hp + 20); bought = true; }
+  if (bought) sfxCoin();
+  renderHUD(); showOverlay('shop');
+}
+function proceedNextRoom() {
+  showOverlay(null);
+  $('fader').style.opacity = 1;
+  scene.zoomTarget = 1.5;
+  sfxDoor();
+  setTimeout(() => {
+    game.room++;
+    scene.zoom = 1; scene.zoomTarget = 1;
+    enterRoom();
+    $('fader').style.opacity = 0;
+  }, 520);
+}
+
+// ================= DOM 렌더링 =================
+function renderAll() { renderBalcony(); renderBoard(); renderHUD(); renderLive(); renderAccidents(); }
+
+function renderHUD() {
+  const p = game.player;
+  $('hpfill').style.width = (p.hp / p.maxHp * 100) + '%';
+  $('hptext').textContent = `HP ${p.hp} / ${p.maxHp}`;
+  $('atkval').textContent = p.atk;
+  $('defval').textContent = p.def;
+  const combat = game.screen === 'combat';
+  ['btnAttack', 'btnDefend', 'btnPotion', 'btnFix'].forEach(id => { $(id).style.display = combat ? '' : 'none'; });
+  $('btnAttack').innerHTML = '⚔️ 공격' + freshTag('attack');
+  $('btnDefend').innerHTML = '🛡️ 방어' + freshTag('defend');
+  $('btnPotion').innerHTML = `🧪 포션 ${p.potions}` + freshTag('potion');
+  const accN = combat && game.combat ? game.combat.accidents.length : 0;
+  $('btnFix').innerHTML = `🧯 수습${accN ? ' ' + accN : ''}` + freshTag('fix');
+  const bm = $('btnMain');
+  if (game.screen === 'betting') {
+    const ready = game.currentBets.length && game.currentBets.every(b => !b.pending);
+    bm.style.display = ''; bm.disabled = !ready;
+    bm.textContent = ready ? '⚔️ 전투 개시' : '관중이 베팅하는 중…';
+  } else if (game.screen === 'settlement') {
+    bm.style.display = ''; bm.disabled = !game.settleDone;
+    bm.textContent = game.settleDone ? '다음으로 ▸' : '관중 정산 중…';
+  } else {
+    bm.style.display = 'none';
+  }
+  if (combat) {
+    const c = game.combat, dis = scene.busy || !c || c.over;
+    $('btnAttack').disabled = dis;
+    $('btnDefend').disabled = dis;
+    $('btnPotion').disabled = dis || p.potions <= 0;
+    $('btnFix').disabled = dis || !accN;
+  }
+  const m = MONSTERS[Math.min(game.room, MONSTERS.length - 1)];
+  $('roomPlaque').textContent = `방 ${Math.min(game.room + 1, 5)} / 5 — ${m.name}`;
+}
+
+function renderBoard() {
+  const b = $('board');
+  if (game.screen === 'start') { b.style.display = 'none'; return; }
+  b.style.display = '';
+  const pots = { win: 0, lose: 0, nodamage: 0 };
+  game.currentBets.forEach(x => { if (!x.pending && x.pick) pots[x.pick] += x.amount; });
+  const total = pots.win + pots.lose + pots.nodamage;
+  const s = game.lastSettlement;
+  const rows = ['win', 'lose', 'nodamage'].map(k => {
+    const mult = pots[k] > 0 ? clamp(total / pots[k], 1, 6).toFixed(1) : '—';
+    const cls = s ? (s.outcome === k ? ' hl' : ' dim') : '';
+    return `<div class="brow${cls}"><span>${BET_ICONS[k]} ${BET_LABELS[k]}</span><span>${pots[k]}G <span class="mult">×${mult}</span></span></div>`;
+  }).join('');
+  b.innerHTML = `<h4>판돈 보드</h4>${rows}
+    <div class="potline">총 판돈 ${total}G${s && s.outcome !== 'lose' ? ` · 보상 ${s.reward}G` : ''}</div>
+    <div class="potline">시청자 ${game.viewers}명 → 판돈 ×${viewerScale().toFixed(1)}</div>`;
+}
+
+const prevBubbles = {};
+function renderBalcony() {
+  const el = $('balcony');
+  el.innerHTML = PERSONAS.map(p => {
+    const st = game.personaState[p.id] || { trust: 1, drift: 0 };
+    const trustPct = Math.round(clamp(st.trust / 2.2, 0, 1) * 100);
+    const bet = game.currentBets.find(b => b.personaId === p.id);
+    const res = game.lastSettlement && game.lastSettlement.results.find(r => r.personaId === p.id);
+    let chip = '', bubble = '', extra = '';
+    if (res && bet) {
+      chip = `<span class="pchip ${res.correct ? 'correct' : 'wrong'}">${BET_LABELS[bet.pick]} ${bet.amount}G · ${res.correct ? '적중' : '실패'}</span>`;
+      bubble = res.comment;
+    } else if (bet && !bet.pending) {
+      chip = `<span class="pchip">${BET_ICONS[bet.pick]} ${BET_LABELS[bet.pick]} · ${bet.amount}G</span>`;
+      bubble = bet.comment;
+    } else if (bet && bet.pending) {
+      bubble = '…베팅을 고민하는 중'; extra = ' thinking';
+    } else {
+      bubble = '다음 판을 기다리는 중.'; extra = ' thinking';
+    }
+    const pop = prevBubbles[p.id] !== bubble ? ' pop' : '';
+    prevBubbles[p.id] = bubble;
+    return `<div class="pcard" title="${p.desc} · 신뢰도 ${st.trust.toFixed(2)}">
+      <div class="pportrait">${p.emoji}</div>
+      <div class="pname">${p.name}</div>
+      <div class="ptrust"><i style="width:${trustPct}%"></i></div>
+      ${chip}
+      <div class="pbubble${extra}${pop}">${bubble}</div>
+    </div>`;
+  }).join('');
+}
+
+function showOverlay(name) {
+  const o = $('overlay');
+  if (!name) { o.classList.add('hidden'); o.innerHTML = ''; return; }
+  o.classList.remove('hidden');
+  if (name === 'start') {
+    const hasMemory = Object.values(game.personaState).some(s => s.trust !== 1 || s.drift !== 0);
+    o.innerHTML = `<div class="panel">
+      <h2>판돈 던전</h2>
+      <p>방 5개를 통과하는 턴제 던전. 방마다 관중 5명이 <b>승리 / 패배 / 무피해</b>에 판돈을 걸고,
+      베팅이 쏠린 만큼 <b>뒤집었을 때의 배당</b>이 커진다.</p>
+      <ul>
+        <li>보상 = 총 판돈 × 배당 계수 — 역배(소수 의견) 적중일수록 계수가 크다</li>
+        <li>피해를 전혀 입지 않고 이기면 <b>무피해</b>로 별도 판정</li>
+        <li>관중은 판을 넘어 기억한다 — 배신하면 회의적으로, 역배를 맞혀주면 대담해진다</li>
+      </ul>
+      <p class="fine">베팅 방향과 근거는 AI(로컬 목업)가 결정하고, 금액은 규칙(확신도×신뢰도)이 계산한다.</p>
+      ${hasMemory ? '<p class="fine gold">관중이 이전 판을 기억하고 있다.</p>' : ''}
+      <div class="btnrow">
+        <button class="slab primary" onclick="startRun()">던전 입장</button>
+        <button class="slab" onclick="resetPersonaMemory()">관중 기억 초기화</button>
+      </div></div>`;
+  } else if (name === 'shop') {
+    const p = game.player;
+    o.innerHTML = `<div class="panel">
+      <h2>행상인의 골방</h2>
+      <p>정산 골드로 정비하라. 보유 <b class="goldtext">${p.gold}G</b> · HP ${p.hp}/${p.maxHp}</p>
+      <div class="shopgrid">
+        <button class="slab" onclick="buyItem('potion')" ${p.gold < 15 ? 'disabled' : ''}>🧪 포션 +1 <span class="price">15G</span></button>
+        <button class="slab" onclick="buyItem('atk')" ${p.gold < 25 ? 'disabled' : ''}>⚔️ 공격력 +2 <span class="price">25G</span></button>
+        <button class="slab" onclick="buyItem('def')" ${p.gold < 25 ? 'disabled' : ''}>🛡️ 방어력 +1 <span class="price">25G</span></button>
+        <button class="slab" onclick="buyItem('rest')" ${(p.gold < 10 || p.hp >= p.maxHp) ? 'disabled' : ''}>💤 휴식 +20HP <span class="price">10G</span></button>
+      </div>
+      <div class="btnrow"><button class="slab primary" onclick="proceedNextRoom()">다음 방으로 ▸</button></div></div>`;
+  } else if (name === 'victory') {
+    o.innerHTML = `<div class="panel">
+      <h2>던전 클리어!</h2>
+      <p>5개의 방을 모두 통과했다. 최종 소지금 <b class="goldtext">${game.player.gold}G</b> · 최종 시청자 <b>${game.viewers}명</b>.</p>
+      <p class="fine">관중들은 오늘의 승부를 기억한 채 다음 판을 기다린다.</p>
+      <div class="btnrow"><button class="slab primary" onclick="restartRun()">다시 도전</button></div></div>`;
+  } else if (name === 'gameover') {
+    const cat = game.combat && game.combat.catastrophe;
+    const bd = game.combat && game.combat.broadcastDead;
+    const title = bd ? '방송 종료' : (cat ? '대참사' : '던전에서 쓰러지다');
+    const body = bd
+      ? '시청자가 전부 떠났다. 아무도 보지 않는 던전은 그저 어두운 지하실이다.'
+      : (cat
+        ? `사고가 다섯 번 겹치며 방송이 뒤집혔다. 구경꾼 ${game.viewers}명이 몰려들었지만, 이번 판돈은 당신 것이 아니다.`
+        : `${game.room + 1}번째 방, <b>${MONSTERS[game.room].name}</b> 앞에서 무너졌다.`);
+    o.innerHTML = `<div class="panel">
+      <h2>${title}</h2>
+      <p>${body}</p>
+      <p class="fine">당신을 의심했던 관중은 판돈을 챙겼고, 믿었던 관중은 회의적으로 변했다.</p>
+      <div class="btnrow"><button class="slab primary" onclick="restartRun()">다시 도전</button></div></div>`;
+  }
+}
+
+let tickerKey = 0;
+function showTicker(text) {
+  const t = $('ticker');
+  t.textContent = text;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+}
+function showStamp(mult, reward, outcome) {
+  $('stampMult').textContent = '배당 ×' + mult.toFixed(1);
+  const sub = $('stampSub');
+  if (outcome === 'lose') { sub.textContent = '패배 — 당신의 몫은 없다'; sub.className = 'negative'; }
+  else { sub.textContent = `+${reward}G${outcome === 'nodamage' ? ' · 무피해!' : ''}`; sub.className = ''; }
+  const st = $('stamp');
+  st.classList.remove('show'); void st.offsetWidth; st.classList.add('show');
+}
+function hideStamp() { $('stamp').classList.remove('show'); }
+
+// ================= 캔버스 씬 =================
+const canvas = $('scene'), ctx = canvas.getContext('2d');
+const TAU = Math.PI * 2;
+
+function ell(c, x, y, rx, ry) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); }
+function line(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+
+function spawnDmg(x, y, text, color) { scene.dmg.push({ x, y, text, color, born: scene.now }); }
+function spawnCoins(n) {
+  for (let i = 0; i < n; i++) scene.coins.push({
+    x: 480 + rnd(-40, 40), y: 180 + rnd(-20, 20),
+    vx: (Math.random() - .5) * 300, vy: -Math.random() * 240 - 80,
+    rot: Math.random() * TAU, born: scene.now,
+  });
+}
+
+let prevFrame = 0;
+function loop(ms) {
+  const t = ms / 1000;
+  const dt = Math.min(.05, t - prevFrame || .016);
+  prevFrame = t; scene.now = t;
+
+  scene.zoom += (scene.zoomTarget - scene.zoom) * .08;
+  const M = scene.monster;
+  M.scale += (M.scaleTarget - M.scale) * .09;
+  if (M.pose === 'hit' && t - M.poseAt > .18) M.pose = 'idle';
+  if (M.pose === 'lunge' && t - M.poseAt > .55) M.pose = 'idle';
+  scene.shake *= .88; scene.flashRed *= .9; scene.flashWhite *= .88;
+
+  // 골드 카운트업
+  const g = game.player.gold;
+  if (Math.abs(scene.displayGold - g) >= 1) {
+    scene.displayGold += (g - scene.displayGold) * .12;
+    $('goldval').textContent = Math.round(scene.displayGold);
+  } else if ($('goldval').textContent !== String(g)) {
+    scene.displayGold = g; $('goldval').textContent = g;
+  }
+
+  drainFx();
+  drawScene(dt);
+  requestAnimationFrame(loop);
+}
+
+function drawScene(dt) {
+  const W = 960, H = 460;
+  ctx.fillStyle = '#0b0806'; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  const sx = (Math.random() - .5) * scene.shake, sy = (Math.random() - .5) * scene.shake;
+  ctx.translate(W / 2 + sx, H / 2 + sy);
+  ctx.scale(scene.zoom, scene.zoom);
+  ctx.translate(-W / 2, -H / 2);
+
+  drawRoom();
+  drawTorch(215, 182, -1);
+  drawTorch(745, 182, 1);
+  if (MONSTERS[game.room] && MONSTERS[game.room].boss && game.screen !== 'start') drawEmbers(dt);
+  drawMonsterLayer();
+  drawSlash();
+  drawBurst();
+  drawParticles(dt);
+
+  ctx.restore();
+  drawLighting();
+}
+
+function drawRoom() {
+  const c = ctx;
+  // 천장
+  c.fillStyle = '#161009';
+  c.beginPath(); c.moveTo(0, 0); c.lineTo(960, 0); c.lineTo(630, 95); c.lineTo(330, 95); c.closePath(); c.fill();
+  // 바닥
+  const fg = c.createLinearGradient(0, 335, 0, 460);
+  fg.addColorStop(0, '#4f4230'); fg.addColorStop(1, '#271e12');
+  c.fillStyle = fg;
+  c.beginPath(); c.moveTo(0, 460); c.lineTo(960, 460); c.lineTo(630, 335); c.lineTo(330, 335); c.closePath(); c.fill();
+  // 좌측 벽
+  const lw = c.createLinearGradient(0, 0, 330, 0);
+  lw.addColorStop(0, '#1d150b'); lw.addColorStop(1, '#372b1c');
+  c.fillStyle = lw;
+  c.beginPath(); c.moveTo(0, 0); c.lineTo(330, 95); c.lineTo(330, 335); c.lineTo(0, 460); c.closePath(); c.fill();
+  // 우측 벽
+  const rw = c.createLinearGradient(960, 0, 630, 0);
+  rw.addColorStop(0, '#1b130a'); rw.addColorStop(1, '#332719');
+  c.fillStyle = rw;
+  c.beginPath(); c.moveTo(960, 0); c.lineTo(630, 95); c.lineTo(630, 335); c.lineTo(960, 460); c.closePath(); c.fill();
+  // 안쪽 벽
+  c.fillStyle = '#2a2014'; c.fillRect(330, 95, 300, 240);
+
+  // 안쪽 벽 벽돌
+  c.strokeStyle = 'rgba(0,0,0,.26)'; c.lineWidth = 1;
+  for (let y = 125; y < 335; y += 30) line(c, 330, y, 630, y);
+  for (let r = 0; r < 8; r++) {
+    const y = 95 + r * 30, off = (r % 2) * 30;
+    for (let x = 330 + off; x < 630; x += 60) line(c, x, y, x, Math.min(y + 30, 335));
+  }
+  // 측벽 몰타르 라인 (원근 수렴)
+  c.strokeStyle = 'rgba(0,0,0,.2)';
+  for (let i = 1; i < 6; i++) {
+    line(c, 0, i * 76.7, 330, 95 + i * 40);
+    line(c, 960, i * 76.7, 630, 95 + i * 40);
+  }
+  // 바닥 타일 (수렴선 + 가로선)
+  c.strokeStyle = 'rgba(0,0,0,.3)';
+  for (let i = 0; i <= 6; i++) line(c, 330 + i * 50, 335, i * 160, 460);
+  for (let r = 1; r < 5; r++) {
+    const f = Math.pow(r / 5, 1.4);
+    const y = 335 + 125 * f;
+    line(c, 330 * (1 - f), y, 630 + 330 * f, y);
+  }
+  // 안쪽 문 (아치)
+  c.fillStyle = '#0d0905';
+  c.beginPath(); c.moveTo(432, 335); c.lineTo(432, 220);
+  c.quadraticCurveTo(480, 168, 528, 220); c.lineTo(528, 335); c.closePath(); c.fill();
+  c.strokeStyle = '#4a3b28'; c.lineWidth = 5; c.stroke();
+  c.fillStyle = '#5a4632';
+  [[445, 240], [515, 240], [445, 310], [515, 310]].forEach(([x, y]) => ell(c, x, y, 3, 3));
+}
+
+function drawTorch(x, y, side) {
+  const c = ctx, t = scene.now;
+  const fl = .72 + .28 * (.5 + .5 * Math.sin(t * 11 + side * 7) + .25 * Math.sin(t * 23 + side * 3));
+  // 받침
+  c.strokeStyle = '#3a2c1c'; c.lineWidth = 5; line(c, x, y + 18, x, y + 2);
+  c.fillStyle = '#4a3826'; c.fillRect(x - 6, y, 12, 6);
+  // 빛무리 + 불꽃
+  c.save(); c.globalCompositeOperation = 'lighter';
+  const g = c.createRadialGradient(x, y - 8, 0, x, y - 8, 175);
+  g.addColorStop(0, `rgba(255,160,60,${.27 * fl})`); g.addColorStop(1, 'rgba(255,120,30,0)');
+  c.fillStyle = g; c.fillRect(x - 175, y - 183, 350, 350);
+  c.fillStyle = 'rgba(255,120,30,.85)'; ell(c, x, y - 11, 9, 15 * fl);
+  c.fillStyle = 'rgba(255,190,60,.9)'; ell(c, x, y - 9, 5.5, 10 * fl);
+  c.fillStyle = 'rgba(255,240,160,.95)'; ell(c, x, y - 7, 3, 5.5 * fl);
+  c.restore();
+}
+
+function drawEmbers(dt) {
+  if (scene.embers.length < 16 && Math.random() < .3)
+    scene.embers.push({ x: 480 + rnd(-130, 130), y: 358, vy: -(22 + Math.random() * 42), a: .8, r: 1.5 + Math.random() * 2 });
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  scene.embers.forEach(e => {
+    e.y += e.vy * dt; e.a -= .22 * dt;
+    ctx.fillStyle = `rgba(190,90,255,${Math.max(0, e.a)})`;
+    ctx.beginPath(); ctx.arc(e.x + Math.sin(scene.now * 2 + e.y * .05) * 7, e.y, e.r, 0, TAU); ctx.fill();
+  });
+  scene.embers = scene.embers.filter(e => e.a > 0);
+  ctx.restore();
+}
+
+function drawMonsterLayer() {
+  if (game.screen === 'start' || game.screen === 'victory') return;
+  const m = MONSTERS[game.room], M = scene.monster;
+  if (!m || M.alpha <= .02) return;
+  const t = scene.now;
+  let s = M.scale, x = 480, baseY = 366, deadP = 0;
+  const bob = Math.sin(t * 2.1) * 4;
+  if (M.pose === 'lunge') {
+    const p = Math.min(1, (t - M.poseAt) / .5), l = Math.sin(p * Math.PI);
+    s *= 1 + .15 * l; baseY += 16 * l;
+  }
+  if (M.pose === 'hit') x += (Math.random() - .5) * 10;
+  if (M.pose === 'dead') { deadP = Math.min(1, (t - M.poseAt) / .7); M.alpha = 1 - deadP; }
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, M.alpha);
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ell(ctx, x, 372, 82 * s, 14 * s);
+  ctx.translate(x, baseY + bob * s);
+  ctx.scale(s, s * (1 - deadP * .5));
+  m.draw(ctx, t);
+  ctx.restore();
+
+  // 몬스터 HP 바 (전투 중)
+  if (game.screen === 'combat' && game.combat && M.pose !== 'dead') {
+    const c = game.combat;
+    const topY = 366 - 212 * s + bob;
+    ctx.fillStyle = 'rgba(10,6,3,.78)'; ctx.fillRect(x - 87, topY - 14, 174, 12);
+    ctx.fillStyle = '#d9534f';
+    ctx.fillRect(x - 85, topY - 12, 170 * (c.monsterHp / c.monsterMaxHp), 8);
+    ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 2; ctx.strokeRect(x - 87, topY - 14, 174, 12);
+    ctx.fillStyle = '#f0e6d2'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`${c.monsterHp} / ${c.monsterMaxHp}`, x, topY - 20);
+  }
+}
+
+function drawSlash() {
+  const p = (scene.now - scene.slashAt) / .2;
+  if (p < 0 || p > 1) return;
+  ctx.save(); ctx.translate(480, 240); ctx.rotate(-.5 + p * .3);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = `rgba(255,255,255,${(1 - p) * .9})`; ctx.lineWidth = 10 * (1 - p * .5);
+  ctx.beginPath(); ctx.arc(0, 0, 95, -1.1, .9); ctx.stroke();
+  ctx.strokeStyle = `rgba(255,220,140,${(1 - p) * .5})`; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(0, 0, 80, -1, .8); ctx.stroke();
+  ctx.restore();
+}
+
+function drawBurst() {
+  const p = (scene.now - scene.burstAt) / .25;
+  if (p < 0 || p > 1) return;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(scene.burstX, scene.burstY, 0, scene.burstX, scene.burstY, 60 * p + 10);
+  g.addColorStop(0, `rgba(255,240,200,${(1 - p) * .8})`); g.addColorStop(1, 'rgba(255,200,80,0)');
+  ctx.fillStyle = g; ctx.fillRect(scene.burstX - 80, scene.burstY - 80, 160, 160);
+  ctx.restore();
+}
+
+function drawParticles(dt) {
+  // 대미지 숫자
+  ctx.textAlign = 'center'; ctx.font = 'bold 22px Georgia, serif';
+  scene.dmg = scene.dmg.filter(d => {
+    const age = scene.now - d.born;
+    if (age > 1) return false;
+    const y = d.y - age * 46;
+    ctx.globalAlpha = 1 - age;
+    ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 3; ctx.strokeText(d.text, d.x, y);
+    ctx.fillStyle = d.color; ctx.fillText(d.text, d.x, y);
+    return true;
+  });
+  ctx.globalAlpha = 1;
+  // 금화
+  scene.coins = scene.coins.filter(cn => {
+    const age = scene.now - cn.born;
+    if (age > 1.8) return false;
+    cn.vy += 760 * dt; cn.x += cn.vx * dt; cn.y += cn.vy * dt; cn.rot += 4 * dt;
+    if (cn.y > 438) { cn.y = 438; cn.vy *= -.42; cn.vx *= .75; }
+    ctx.save();
+    ctx.translate(cn.x, cn.y); ctx.globalAlpha = Math.min(1, 1.8 - age);
+    const squish = .3 + .7 * Math.abs(Math.cos(cn.rot));
+    ctx.fillStyle = '#e8b64c';
+    ctx.beginPath(); ctx.ellipse(0, 0, 7, 7 * squish, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#8a6a2c'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+    return true;
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawLighting() {
+  const t = scene.now;
+  const fl = 1 + .04 * Math.sin(t * 11) + .03 * Math.sin(t * 23);
+  let edge = .46; // 사고가 쌓이면 무대가 어두워진다 (횃불이 흔들린다)
+  if (game.screen === 'combat' && game.combat) edge = Math.min(.62, .46 + game.combat.accidents.length * .045);
+  const g = ctx.createRadialGradient(480, 240, 150 * fl, 480, 240, 590);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${edge})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 960, 460);
+  if (scene.flashRed > .01) { ctx.fillStyle = `rgba(190,30,20,${scene.flashRed})`; ctx.fillRect(0, 0, 960, 460); }
+  if (scene.flashWhite > .01) { ctx.fillStyle = `rgba(255,245,220,${scene.flashWhite})`; ctx.fillRect(0, 0, 960, 460); }
+  if (game.screen === 'combat' && game.player.hp / game.player.maxHp < .3) {
+    const p = .22 + .13 * Math.sin(t * 5);
+    const rg = ctx.createRadialGradient(480, 230, 220, 480, 230, 540);
+    rg.addColorStop(0, 'rgba(140,10,10,0)'); rg.addColorStop(1, `rgba(140,10,10,${p})`);
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, 960, 460);
+  }
+}
+
+// ================= 몬스터 아트 (발 기준 원점, 위가 -y) =================
+function drawSlime(c, t) {
+  const w = 1 + .05 * Math.sin(t * 3.1);
+  const g = c.createRadialGradient(-20, -75, 10, 0, -55, 85);
+  g.addColorStop(0, '#8fe08a'); g.addColorStop(.55, '#4caf50'); g.addColorStop(1, '#26602c');
+  c.fillStyle = g; c.strokeStyle = '#183a1b'; c.lineWidth = 4;
+  c.beginPath(); c.ellipse(0, -52, 76 * w, 58 / w, 0, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = g;
+  ell(c, -58 * w, -18, 16, 12); ell(c, 55 * w, -14, 12, 9);
+  c.fillStyle = 'rgba(255,255,255,.4)';
+  c.beginPath(); c.ellipse(-26, -84, 16, 9, -.5, 0, TAU); c.fill();
+  c.fillStyle = '#fff'; ell(c, -20, -64, 10, 10); ell(c, 16, -62, 9, 9);
+  c.fillStyle = '#143314'; ell(c, -18, -62, 4.5, 4.5); ell(c, 18, -60, 4, 4);
+  c.strokeStyle = '#143314'; c.lineWidth = 3;
+  c.beginPath(); c.arc(-2, -46, 12, .2, Math.PI - .2); c.stroke();
+}
+
+function drawGoblin(c, t) {
+  c.lineWidth = 4; c.strokeStyle = '#1a140e';
+  c.fillStyle = '#4a3a26';
+  c.fillRect(-30, -34, 22, 34); c.strokeRect(-30, -34, 22, 34);
+  c.fillRect(8, -34, 22, 34); c.strokeRect(8, -34, 22, 34);
+  c.fillStyle = '#6b4a2e';
+  c.fillRect(-40, -98, 80, 66); c.strokeRect(-40, -98, 80, 66);
+  c.fillStyle = '#2c2115'; c.fillRect(-40, -46, 80, 10);
+  c.strokeStyle = '#5c8f42'; c.lineWidth = 12; c.lineCap = 'round';
+  line(c, -36, -88, -60, -58); line(c, 36, -88, 62, -60);
+  c.fillStyle = '#b8c0c8'; c.strokeStyle = '#1a140e'; c.lineWidth = 2.5;
+  c.beginPath(); c.moveTo(62, -66); c.lineTo(94, -98); c.lineTo(72, -58); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#6da34d'; c.strokeStyle = '#1f3a17'; c.lineWidth = 4;
+  c.beginPath(); c.arc(0, -128, 34, 0, TAU); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(-30, -140); c.lineTo(-62, -152); c.lineTo(-27, -120); c.closePath(); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(30, -140); c.lineTo(62, -152); c.lineTo(27, -120); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#ffd23e';
+  c.beginPath(); c.ellipse(-13, -132, 7, 4.5, -.15, 0, TAU); c.fill();
+  c.beginPath(); c.ellipse(13, -132, 7, 4.5, .15, 0, TAU); c.fill();
+  c.fillStyle = '#161006'; ell(c, -12, -132, 2.2, 2.2); ell(c, 14, -132, 2.2, 2.2);
+  c.strokeStyle = '#1f3a17'; c.lineWidth = 3;
+  c.beginPath(); c.arc(0, -114, 14, .15, Math.PI - .15); c.stroke();
+  c.fillStyle = '#fff';
+  c.beginPath(); c.moveTo(-8, -110); c.lineTo(-5, -103); c.lineTo(-2, -110); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(4, -109); c.lineTo(7, -102); c.lineTo(10, -109); c.closePath(); c.fill();
+}
+
+function drawSkeleton(c, t) {
+  c.strokeStyle = '#cfc9bd'; c.lineWidth = 7; c.lineCap = 'round';
+  line(c, -16, -4, -14, -52); line(c, 16, -4, 14, -52);
+  line(c, 0, -56, 0, -118);
+  c.fillStyle = '#cfc9bd'; ell(c, 0, -56, 20, 10);
+  c.lineWidth = 5;
+  for (let i = 0; i < 3; i++) {
+    const y = -112 + i * 14;
+    c.beginPath(); c.ellipse(0, y, 22 - i * 2, 7, 0, 0, Math.PI); c.stroke();
+  }
+  c.lineWidth = 6;
+  line(c, -4, -112, -42, -84); line(c, 4, -112, 42, -86);
+  c.fillStyle = '#5a4632'; c.strokeStyle = '#2c2115'; c.lineWidth = 4;
+  c.beginPath(); c.arc(-48, -80, 26, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = '#8a744e'; ell(c, -48, -80, 7, 7);
+  c.fillStyle = '#b8c0c8'; c.strokeStyle = '#6f7880'; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(38, -92); c.lineTo(46, -92); c.lineTo(45, -176); c.lineTo(39, -176); c.closePath(); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(39, -176); c.lineTo(45, -176); c.lineTo(42, -190); c.closePath(); c.fill();
+  c.fillStyle = '#8a744e'; c.fillRect(30, -98, 24, 6);
+  c.fillStyle = '#e3ddd0'; c.strokeStyle = '#8f887a'; c.lineWidth = 3;
+  c.beginPath(); c.arc(0, -148, 27, 0, TAU); c.fill(); c.stroke();
+  c.fillRect(-14, -132, 28, 16); c.strokeRect(-14, -132, 28, 16);
+  c.fillStyle = '#0d0a08'; ell(c, -11, -150, 7, 7); ell(c, 11, -150, 7, 7);
+  const fl = .6 + .4 * Math.sin(t * 5);
+  c.fillStyle = `rgba(255,80,60,${fl})`; ell(c, -11, -149, 2.5, 2.5); ell(c, 11, -149, 2.5, 2.5);
+  c.fillStyle = '#0d0a08';
+  c.beginPath(); c.moveTo(0, -142); c.lineTo(-3, -135); c.lineTo(3, -135); c.closePath(); c.fill();
+  c.strokeStyle = '#8f887a'; c.lineWidth = 2;
+  for (let x = -8; x <= 8; x += 5) line(c, x, -130, x, -118);
+}
+
+function drawOrc(c, t) {
+  c.lineWidth = 4; c.strokeStyle = '#141008';
+  c.fillStyle = '#3d3222';
+  c.fillRect(-42, -40, 32, 40); c.strokeRect(-42, -40, 32, 40);
+  c.fillRect(12, -40, 32, 40); c.strokeRect(12, -40, 32, 40);
+  const g = c.createLinearGradient(0, -150, 0, -40);
+  g.addColorStop(0, '#66744a'); g.addColorStop(1, '#454f31');
+  c.fillStyle = g;
+  c.beginPath(); c.moveTo(-62, -46); c.lineTo(-56, -140); c.lineTo(56, -140); c.lineTo(62, -46); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#2c2115'; c.fillRect(-62, -58, 124, 12);
+  c.fillStyle = '#cfc9bd'; ell(c, 0, -52, 7, 7);
+  c.fillStyle = '#57452c'; c.strokeStyle = '#141008';
+  c.beginPath(); c.ellipse(-56, -136, 26, 16, -.3, 0, TAU); c.fill(); c.stroke();
+  c.strokeStyle = '#5b6a41'; c.lineWidth = 16; c.lineCap = 'round';
+  line(c, -56, -128, -84, -70); line(c, 56, -128, 86, -78);
+  c.strokeStyle = '#4a3826'; c.lineWidth = 7;
+  line(c, 86, -40, 86, -162);
+  c.fillStyle = '#9aa2ab'; c.strokeStyle = '#141008'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(86, -160); c.quadraticCurveTo(132, -152, 126, -108);
+  c.quadraticCurveTo(105, -125, 86, -122); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#728149'; c.strokeStyle = '#141008'; c.lineWidth = 4;
+  c.beginPath(); c.arc(0, -166, 30, 0, TAU); c.fill(); c.stroke();
+  c.fillRect(-24, -154, 48, 18); c.strokeRect(-24, -154, 48, 18);
+  c.fillStyle = '#e8e2d2';
+  c.beginPath(); c.moveTo(-19, -138); c.lineTo(-14, -158); c.lineTo(-9, -140); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(19, -138); c.lineTo(14, -158); c.lineTo(9, -140); c.closePath(); c.fill();
+  c.fillStyle = '#d94a3a'; ell(c, -11, -172, 4, 3); ell(c, 11, -172, 4, 3);
+  c.strokeStyle = '#141008'; c.lineWidth = 3;
+  line(c, -20, -181, -4, -178); line(c, 20, -181, 4, -178);
+}
+
+function drawLord(c, t) {
+  const g = c.createLinearGradient(0, -230, 0, 0);
+  g.addColorStop(0, '#241329'); g.addColorStop(1, '#0d0812');
+  c.fillStyle = g; c.strokeStyle = '#000'; c.lineWidth = 4;
+  c.beginPath(); c.moveTo(-86, 0);
+  c.quadraticCurveTo(-70, -90, -48, -168);
+  c.quadraticCurveTo(-30, -198, 0, -198);
+  c.quadraticCurveTo(30, -198, 48, -168);
+  c.quadraticCurveTo(70, -90, 86, 0); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = '#5e2a8a'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(-60, 0); c.quadraticCurveTo(-44, -100, -28, -160); c.stroke();
+  c.beginPath(); c.moveTo(60, 0); c.quadraticCurveTo(44, -100, 28, -160); c.stroke();
+  c.fillStyle = '#160d1b'; c.strokeStyle = '#000';
+  c.beginPath(); c.arc(0, -184, 34, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = '#c9bfae'; c.strokeStyle = '#141008'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(-24, -206); c.quadraticCurveTo(-58, -224, -64, -262);
+  c.quadraticCurveTo(-44, -236, -14, -216); c.closePath(); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(24, -206); c.quadraticCurveTo(58, -224, 64, -262);
+  c.quadraticCurveTo(44, -236, 14, -216); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#e0a940';
+  [[-14, -212], [0, -216], [14, -212]].forEach(([x, y]) => {
+    c.beginPath(); c.moveTo(x - 5, y); c.lineTo(x, y - 14); c.lineTo(x + 5, y); c.closePath(); c.fill();
+  });
+  const fl = .7 + .3 * Math.sin(t * 6);
+  c.save(); c.globalCompositeOperation = 'lighter';
+  const eg = c.createRadialGradient(0, -186, 2, 0, -186, 32);
+  eg.addColorStop(0, `rgba(190,90,255,${.5 * fl})`); eg.addColorStop(1, 'rgba(190,90,255,0)');
+  c.fillStyle = eg; c.fillRect(-34, -220, 68, 68);
+  c.restore();
+  c.fillStyle = '#c77dff'; ell(c, -12, -188, 5, 3); ell(c, 12, -188, 5, 3);
+  c.fillStyle = '#e0a940'; ell(c, 0, -150, 6, 6);
+}
+
+// ================= 초기화 =================
+function init() {
+  game.personaState = loadPersonaState();
+  renderAll();
+  showOverlay('start');
+  requestAnimationFrame(loop);
+}
+init();
+</script>
+
+<!-- 원본 아이디어: 10-ideas.md #4 "판돈 던전 — 불신을 뒤집으면 보상이 된다" -->
+<!-- 시각 레퍼런스: 고전 1인칭 던전 크롤러 (Eye of the Beholder / Legend of Grimrock 계열) -->
+</body>
+</html>

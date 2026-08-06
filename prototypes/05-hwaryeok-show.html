@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>화력쇼 — 수습 윈도우</title>
+<style>
+:root {
+  --tally: #ff2d2d; --amber: #ffb447; --amber2: #ffd27a; --ink: #ece7dd; --dim: #8a8478;
+  --ok: #6fd98f; --steel: #2a2e35; --panel: #16141020;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 0 40px;
+  font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+  background: #0b0908 radial-gradient(1100px 520px at 50% -120px, #1b1410, #0b0908);
+  color: var(--ink);
+  -webkit-user-select: none; user-select: none;
+}
+#header { text-align: center; padding: 16px 10px 10px; }
+#header h1 {
+  margin: 0; font-family: Georgia, 'Nanum Myeongjo', serif; font-size: 30px;
+  color: var(--amber); letter-spacing: 8px; text-shadow: 0 0 22px rgba(255,180,71,.35);
+}
+#header .sub { color: var(--dim); font-size: 12.5px; margin-top: 5px; }
+.badge {
+  display: inline-block; border: 1px solid var(--amber); color: var(--amber);
+  font-size: 11px; padding: 1px 9px; border-radius: 10px; margin-left: 8px; vertical-align: 1px;
+}
+#stagewrap { max-width: 1280px; margin: 0 auto; padding: 0 10px; }
+
+/* ---------- AI 시청자 채팅 ---------- */
+/* 행 높이는 뷰포트가 정한다 — 채팅을 absolute로 띄워 내용량이 레이아웃을 밀지 못하게 */
+#showRow { position: relative; }
+#showRow #viewport { margin-right: 282px; }
+#chatCol {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 272px;
+  display: flex; flex-direction: column; min-height: 0;
+  background: linear-gradient(#17130d, #0f0c08); border: 1px solid #3a332a; border-radius: 8px;
+}
+#chatHead {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 8px 10px; border-bottom: 1px solid #2a251d;
+  font-size: 11px; color: var(--dim); letter-spacing: 1px; white-space: nowrap;
+}
+.chatBadge { border: 1px solid var(--amber); color: var(--amber); font-size: 9.5px; padding: 1px 7px; border-radius: 9px; letter-spacing: 0; }
+#chatFeed { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 10px; font-size: 12px; line-height: 1.5; scrollbar-width: thin; scrollbar-color: #3a332a transparent; }
+.cline { margin-bottom: 4px; word-break: break-all; color: #d5cdbd; animation: cin .18s ease-out; }
+@keyframes cin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.cline b { margin-right: 6px; }
+.cline.csys { color: var(--dim); font-size: 11px; text-align: center; margin: 6px 0; }
+.cline.cdon { color: #ffdf9e; background: rgba(255,180,71,.07); border-radius: 4px; padding: 2px 5px; }
+@media (max-width: 900px) {
+  #showRow #viewport { margin-right: 0; }
+  #chatCol { position: static; height: 180px; margin-top: 8px; }
+}
+
+/* ---------- 뷰포트 ---------- */
+#viewport {
+  position: relative; border: 4px solid #100c08; outline: 1px solid #3a332a;
+  border-radius: 6px; overflow: hidden; box-shadow: 0 14px 44px #000c; background: #0b0908;
+}
+#scene { display: block; width: 100%; height: auto; }
+#tally {
+  position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 2;
+  background: var(--tally); color: #fff; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 12px; font-size: 11px; font-weight: 700;
+  letter-spacing: .22em; animation: tpulse 2.4s infinite;
+}
+@keyframes tpulse { 0%, 100% { opacity: 1; } 50% { opacity: .75; } }
+#liveBar {
+  position: absolute; top: 34px; left: 50%; transform: translateX(-50%); z-index: 2;
+  background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 20px;
+  padding: 4px 14px; font-size: 13px; letter-spacing: 1px;
+}
+#liveBar b { color: var(--amber2); font-variant-numeric: tabular-nums; }
+.vpopup {
+  position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 2;
+  font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: var(--amber2);
+  text-shadow: 0 2px 6px #000; pointer-events: none; opacity: 0; white-space: nowrap;
+}
+.vpopup.show { animation: vpop 1.15s forwards; }
+@keyframes vpop {
+  0% { opacity: 0; transform: translate(-50%, 6px) scale(.7); }
+  18% { opacity: 1; transform: translate(-50%, 0) scale(1.15); }
+  70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+#plaque {
+  position: absolute; top: 34px; left: 10px; z-index: 2;
+  background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 6px;
+  padding: 6px 12px; font-size: 12px; line-height: 1.7; color: #cfc7b8;
+}
+#plaque b { color: var(--amber2); font-variant-numeric: tabular-nums; }
+#chainMeter {
+  position: absolute; top: 34px; right: 10px; z-index: 2; text-align: center;
+  background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 8px;
+  padding: 6px 16px; transition: box-shadow .3s, border-color .3s;
+}
+#chainMeter .lab { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+#chainMeter .val { font-size: 22px; font-weight: 700; color: var(--amber2); font-variant-numeric: tabular-nums; }
+#chainMeter.hot { border-color: var(--amber); box-shadow: 0 0 18px rgba(255,180,71,.45); }
+#chainMeter.hot .val { color: #ffdf9e; text-shadow: 0 0 12px rgba(255,180,71,.8); }
+#ticker {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
+  font-size: 14px; text-shadow: 0 2px 5px #000; opacity: 0; pointer-events: none; white-space: nowrap;
+}
+#ticker.show { animation: tick 2.2s forwards; }
+#ticker.muted { color: #9a9184; font-size: 12.5px; }
+/* 손실 고지는 팝 없이 정적 표시 후 소멸 — 슬라이드·페이드인 없음 (규약 2, critic M5) */
+#ticker.muted.show { animation: mutedtick 2.2s forwards; }
+@keyframes mutedtick { 0%, 78% { opacity: .85; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 0); } }
+@keyframes tick {
+  0% { opacity: 0; transform: translate(-50%, 8px); }
+  12% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; } 100% { opacity: 0; }
+}
+#bigStamp {
+  position: absolute; top: 42%; left: 50%; z-index: 3; text-align: center;
+  transform: translate(-50%,-50%) rotate(-5deg); opacity: 0; pointer-events: none;
+}
+#bigStamp.show { animation: stampIn .55s cubic-bezier(.2,1.4,.45,1) forwards; }
+@keyframes stampIn {
+  0%   { opacity: 0; transform: translate(-50%,-50%) rotate(-13deg) scale(2.6); }
+  60%  { opacity: 1; transform: translate(-50%,-50%) rotate(-5deg) scale(.94); }
+  100% { opacity: 1; transform: translate(-50%,-50%) rotate(-5deg) scale(1); }
+}
+#bigStampText {
+  font-family: Georgia, serif; font-size: 44px; font-weight: bold; color: var(--amber);
+  border: 5px double var(--amber); border-radius: 10px; padding: 4px 28px;
+  background: rgba(20,13,4,.6); text-shadow: 0 0 26px rgba(255,180,71,.55);
+}
+#overlay {
+  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+  background: rgba(8,5,3,.76);
+}
+#overlay.hidden { display: none; }
+.panel {
+  width: min(560px, 92%); background: linear-gradient(#221a10, #150e08);
+  border: 1px solid #4a4232; border-radius: 10px; padding: 22px 28px; box-shadow: 0 18px 56px #000d;
+}
+.panel h2 { margin: 0 0 10px; font-family: Georgia, 'Nanum Myeongjo', serif; color: var(--amber); letter-spacing: 3px; }
+.panel p, .panel li { font-size: 13.5px; line-height: 1.65; color: #d5cdbd; }
+.panel ul { padding-left: 18px; margin: 8px 0; }
+.panel .fine { font-size: 12px; color: var(--dim); }
+.panel .rec { color: var(--ok); font-weight: bold; }
+.btnrow { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin: 10px 0; font-size: 14px; }
+.statgrid b { color: var(--amber2); font-variant-numeric: tabular-nums; }
+.slab {
+  background: linear-gradient(#4a3f28, #2c2414); color: var(--ink);
+  border: 1px solid #1a150e; border-top-color: #6b5d3b; border-radius: 6px;
+  padding: 10px 18px; font-size: 15px; cursor: pointer;
+  box-shadow: 0 3px 0 #120e08, inset 0 1px 0 #ffffff14; transition: transform .06s;
+}
+.slab:hover:not(:disabled) { border-color: var(--amber); color: var(--amber2); }
+.slab:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #120e08; }
+.slab:disabled { opacity: .35; cursor: default; }
+.slab.primary { background: linear-gradient(#8a6f2c, #5c4a1c); color: #ffedc4; border-top-color: #c9ab55; }
+
+/* ---------- 화구 조작 스트립 ---------- */
+#strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.bcol {
+  background: linear-gradient(#1d1810, #130e08); border: 1px solid #3a332a; border-radius: 8px;
+  padding: 10px 12px; min-height: 118px; position: relative; transition: border-color .15s;
+}
+.bcol.hot { border-color: var(--tally); background: linear-gradient(#2a1512, #170d0a); }
+.bcol.locked { opacity: .55; }
+.bnum { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+.bdish { font-size: 14px; font-weight: 700; margin-top: 5px; }
+.bmode { font-size: 11px; color: var(--amber); margin-top: 1px; }
+.prog { height: 5px; background: #000; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: #4dd8e6; border-radius: 3px; }
+.win { height: 7px; background: #3a1418; border-radius: 3px; margin-top: 7px; overflow: hidden; }
+.win i { display: block; height: 100%; background: var(--tally); border-radius: 3px; }
+.accname { font-size: 12.5px; color: #ff8d7a; font-weight: 700; margin-top: 8px; }
+.accfresh { color: var(--dim); font-weight: 400; font-size: 10.5px; }
+.fixbtn {
+  width: 100%; margin-top: 6px; padding: 8px; font-size: 14px; font-weight: 700;
+  background: linear-gradient(#8a2c2c, #571a1a); color: #ffe1d8;
+  border: 1px solid #1a0e0e; border-top-color: #c95555; border-radius: 6px; cursor: pointer;
+  box-shadow: 0 3px 0 #120808;
+}
+.fixbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #120808; }
+.modes { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.modes button {
+  flex: 1 1 auto; background: #241e14; border: 1px solid #3a332a; color: var(--ink);
+  font-size: 11px; padding: 6px 4px; border-radius: 5px; cursor: pointer;
+}
+.modes button:hover:not(:disabled) { border-color: var(--amber); color: var(--amber2); }
+.modes button:disabled { opacity: .4; cursor: default; }
+.bhint { font-size: 10px; color: var(--dim); margin-top: 6px; line-height: 1.5; }
+.bhint b { color: #cfc7b8; }
+#foot { text-align: center; color: #6b6455; font-size: 11.5px; margin-top: 12px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>화력쇼</h1>
+  <div class="sub">완벽한 요리는 +40. 사고를 수습하면 +520. 대참사는 +1,400 — 실수 없는 방송이 최악의 전략이다
+    <span class="badge">수습 윈도우 검증 프로토타입</span></div>
+</div>
+
+<div id="stagewrap">
+  <div id="showRow">
+  <div id="viewport">
+    <canvas id="scene" width="960" height="430"></canvas>
+    <div id="tally"><span>● ON AIR</span><span id="tallyR">쿠킹 스트리밍</span></div>
+    <div id="liveBar">👁 시청자 <b id="viewerCount">300</b>명</div>
+    <div id="plaque">⏱ 방송 <b id="timeLeft">3:00</b> · 수습 <b id="recStat">0/0</b> · 완성 <b id="doneStat">0</b> · 참사 <b id="disStat">0</b></div>
+    <div id="chainMeter"><div class="lab">연쇄 배수</div><div class="val" id="chainVal">×1.0</div></div>
+    <div class="vpopup" id="vpopup"></div>
+    <div id="ticker"></div>
+    <div id="bigStamp"><div id="bigStampText"></div></div>
+    <div id="overlay" class="hidden"></div>
+  </div>
+  <div id="chatCol">
+    <div id="chatHead"><span>💬 실시간 채팅</span><span class="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
+    <div id="chatFeed"></div>
+  </div>
+  </div>
+  <div id="strip"></div>
+  <div id="foot">
+    <kbd>1</kbd>~<kbd>4</kbd> 또는 버튼으로 수습 — <b>빨리 반응하라.</b> 배율은 사고 유형이 정한다(창이 짧을수록 높다, 최대 ×2.5)<br>
+    같은 사고만 반복 수습하면 시청자가 물린다(신선도 감쇠) · 기름 화재를 놓치면 대참사(+시청자 폭등, 화구 12초 파손) · 빈 화구는 조용히 시청자를 잃는다
+  </div>
+</div>
+
+<script>
+// ================= 상수 (p02 원본 코어 유지) =================
+const SHOW_TIME = 180;
+const START_VIEWERS = 300;
+const BEST_KEY = 'aispec-proto-05hw-best';
+
+const MODES = [
+  { n: '정석', rate: 0.05, mul: 1.0 },
+  { n: '속성', rate: 0.25, mul: 1.8 },
+  { n: '무모', rate: 0.60, mul: 3.2, lockAt: 90000 },
+];
+const ACC = [
+  { n: '팬 과열',    win: 2.5, ok: 180, fail: '요리 손실' },
+  { n: '소금 과다',  win: 4.0, ok: 240, fail: '맛 등급 하락' },
+  { n: '기름 화재',  win: 1.2, ok: 900, fail: '대참사', catastrophic: true },
+  { n: '칼 미끄러짐', win: 0.8, ok: 350, fail: '재료 손실' },
+];
+const DISHES = [
+  { n: '볶음밥', c: '#d8a24a' }, { n: '스테이크', c: '#7a3b2e' }, { n: '파스타', c: '#e0c060' },
+  { n: '튀김', c: '#c98a3a' }, { n: '수프', c: '#c96a4a' }, { n: '전골', c: '#a05a3a' },
+];
+// 규약 4 — 신선도 감쇠 (사고 유형별): 같은 사고 반복 수습은 물린다
+const FRESH_MULT = [1, .7, .45, .25, .1];
+// 규약 1 — 시청자가 언락 통화: 도달 시 개방
+const UNLOCKS = [ // 임계 (critic 최종 룰셋 순차 이진 탐색): 무모 해금이 가속 지점이라 임계가 서로 되먹임
+  { at: 30000,  key: 'b3',    label: '화구 3 개방!' },    // 숙련 중앙값 41초 (100%)
+  { at: 90000,  key: 'mode3', label: "'무모' 모드 해금!" }, // 95초 (100%)
+  { at: 350000, key: 'b4',    label: '화구 4 개방!' },    // 154초 (69%) — 잘한 판의 막판 목표. 예비안 30k/75k/300k
+];
+
+// ================= 유틸 =================
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const TAU = Math.PI * 2;
+
+// ================= SFX (합성음) =================
+let actx = null;
+function audio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur, type, vol, delay) {
+  const a = audio(); if (!a) return;
+  type = type || 'sine'; vol = vol == null ? .1 : vol; delay = delay || 0;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, a.currentTime + delay);
+  g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + delay + dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(a.currentTime + delay); o.stop(a.currentTime + delay + dur + .03);
+}
+function noiseBurst(dur, vol, freq) {
+  const a = audio(); if (!a) return;
+  const n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(); s.buffer = buf;
+  const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq;
+  const g = a.createGain(); g.gain.value = vol;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+}
+// 같은 효과음의 동시 다발 재생은 1회로 병합 — 큰 자극 겹침 방지 (규약 3, critic M2)
+const sfxLast = {};
+function sfxGate(key) {
+  const t = performance.now();
+  if (sfxLast[key] && t - sfxLast[key] < 100) return false;
+  sfxLast[key] = t;
+  return true;
+}
+const sfxIgnite = () => { if (!sfxGate('ig')) return; noiseBurst(.18, .08, 900); tone(140, .15, 'sine', .06); };
+const sfxAlarm = () => { if (!sfxGate('al')) return; tone(880, .09, 'square', .07); tone(880, .09, 'square', .07, .14); };
+const sfxFix = () => { if (!sfxGate('fx')) return; tone(523, .09, 'triangle', .1); tone(659, .1, 'triangle', .1, .07); tone(784, .16, 'triangle', .1, .14); };
+const sfxBoom = () => { if (!sfxGate('bm')) return; noiseBurst(.4, .22, 220); tone(60, .35, 'sine', .18); };
+const sfxDone = () => { if (!sfxGate('dn')) return; tone(660, .1, 'sine', .06); tone(880, .14, 'sine', .05, .08); };
+const sfxDon = () => { if (!sfxGate('do')) return; tone(1180, .08, 'sine', .07); tone(1567, .1, 'sine', .055, .05); };
+const sfxUnlock = () => { if (!sfxGate('ul')) return; tone(523, .1, 'triangle', .1); tone(659, .1, 'triangle', .1, .09); tone(784, .1, 'triangle', .1, .18); tone(1047, .22, 'triangle', .11, .27); };
+document.addEventListener('pointerdown', () => audio(), { once: true });
+
+// ================= 상태 =================
+let S = null;
+const scene = { now: 0, shake: 0, flashWhite: 0, steam: [], bursts: [], soot: [] };
+const fxQueue = []; let lastFxAt = 0; // 규약 3 — 큰 자극은 0.4초 간격 큐로만 방출
+
+function newShow() {
+  S = {
+    phase: 'live', t: SHOW_TIME, viewers: START_VIEWERS,
+    chain: 1, chainT: 0, maxChain: 1,
+    recOK: 0, recTry: 0, done: 0, disaster: 0,
+    fresh: [0, 0, 0, 0], freshRec: [0, 0, 0, 0], lastAccType: -1,
+    unlocked: { b3: false, mode3: false, b4: false },
+    donT: 8 + Math.random() * 7,
+    showId: ++showSeq, chatT: 2.5, mileIdx: 0,
+    burners: [0, 1, 2, 3].map(i => ({
+      i, on: i < 2, broken: 0, dish: null, mode: null, p: 0, acc: null,
+    })),
+  };
+  scene.bursts = []; scene.soot = []; scene.steam = [];
+  scene.shake = 0; scene.flashWhite = 0;
+  fxQueue.length = 0; // 이전 방송의 잔여 팝업 제거 (M-1)
+  showOverlay(null);
+  buildStrip();
+  renderHUDAll();
+  showTicker('방송 시작! 화구에 요리를 올려라', false);
+  Chat.reset();
+  Chat.sys('— 생방송 시작 —');
+  Chat.react('start');
+}
+
+// ================= 시청자 (규약 1·2) =================
+function addViewers(n) { // 모든 시청자 증가의 단일 경로 — 언락 검사 누락 방지 (H-1)
+  S.viewers += n;
+  checkUnlocks();
+  renderLive();
+}
+function gainViewers(n, label) { // 획득은 과하게 — FX 큐로
+  if (n <= 0 || !S) return;
+  addViewers(n);
+  fxQueue.push(`+${n} · ${label}`);
+}
+function loseViewers(n) { // 손실은 숫자만 조용히 (연출·효과음 없음)
+  if (!S) return;
+  S.viewers = Math.max(0, S.viewers - n);
+  renderLive();
+  if (S.viewers <= 0 && S.phase === 'live') endShow(true);
+}
+function drainFx() {
+  if (!S || S.phase !== 'live') return; // 결과·타이틀 화면에서 팝업 방출 금지 (M-4)
+  if (!fxQueue.length || scene.now - lastFxAt < .4) return;
+  lastFxAt = scene.now;
+  const el = $('vpopup');
+  el.textContent = fxQueue.shift();
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+function checkUnlocks() {
+  const fired = [];
+  for (const u of UNLOCKS) {
+    if (!S.unlocked[u.key] && S.viewers >= u.at) {
+      S.unlocked[u.key] = true;
+      if (u.key === 'b3') S.burners[2].on = true;
+      if (u.key === 'b4') S.burners[3].on = true;
+      fired.push(u.label);
+    }
+  }
+  if (fired.length) { // 동시 발동 시 스탬프·SFX·재구성은 1회로 합침 (M-3)
+    showStamp(fired.join(' · '));
+    sfxUnlock();
+    scene.flashWhite = .3;
+    buildStrip();
+    Chat.react('unlock', { label: fired.join(' · ') });
+  }
+}
+
+// ================= AI 시청자 채팅 (연출 전용) =================
+// C3: 채팅은 룰 수치(시청자·보상·사고)에 일절 관여하지 않는다 — 상태를 읽고 "말"만 한다.
+// PROTOTYPE-SPEC 규약 적용: 사실 슬롯 검증 / 비반복(직전 3회 유사도 <0.72) / 재실패 시 폐기 / 목업 배지.
+// 빠른 반응이 목표라 지연은 스펙 기본(300~900ms)보다 짧다: 첫 줄 120~300ms, 이후 90~310ms 간격.
+let showSeq = 0;
+const CHAT_PERSONAS = [
+  { nick: '불멍장인',     color: '#ff8d5a', tones: ['hype', 'mock'] },
+  { nick: '안전제일',     color: '#7fd4ff', tones: ['worry', 'question'] },
+  { nick: '10년차주방장', color: '#ffd27a', tones: ['info', 'mock'] },
+  { nick: '오늘첫방문',   color: '#b8f5c4', tones: ['question', 'cheer'] },
+  { nick: 'ㅋㅋ자판기',   color: '#f0a8ff', tones: ['hype', 'mock'] },
+  { nick: '냉정한미식가', color: '#c9c4ba', tones: ['mock', 'info'] },
+  { nick: '응원봉',       color: '#ffb0c8', tones: ['cheer', 'hype'] },
+  { nick: '길가던행인',   color: '#a8c8f0', tones: ['question', 'worry', 'cheer'] },
+];
+// 이벤트별 템플릿 — facts: 사실 슬롯 포함(검증 대상), flavor: [톤, 리액션]. 버스트의 첫 줄만 사실을 말한다
+const CHAT_T = {
+  start: { facts: [], flavor: [
+    ['hype', '왔다!!'], ['cheer', '오늘도 불쇼 가즈아'], ['question', '오늘 메뉴 뭐예요?'],
+    ['cheer', '출첵합니다'], ['hype', '드디어 켰네 ㅋㅋ'], ['worry', '오늘은 주방 안 태우겠지…'],
+    ['info', '초보는 정석 모드부터 보면 됨'], ['mock', '지각 방송 ㅋㅋ'] ] },
+  accident: { facts: ['화구 {b} {acc}!!', '{b}번 {acc} 떴다', '어어 {b}번 {acc} 각이다'], flavor: [
+    ['hype', '사고다!!! 집중!!'], ['worry', '빨리 꺼요 빨리!!'], ['question', '저거 놔두면 어떻게 돼요?'],
+    ['mock', '이 주방 오늘도 평화롭네 ㅋㅋ'], ['cheer', '수습쇼 보여줘!!'], ['hype', '왔다 왔다 ㅋㅋㅋ'],
+    ['worry', '아 심장 떨려'], ['info', '침착하게 번호 누르면 됨'] ] },
+  oilfire: { facts: ['기름 화재!! {b}번!!', '{b}번 기름불이다!!'], flavor: [
+    ['hype', '끄지 마 끄지 마 ㅋㅋㅋ'], ['worry', '꺼!!! 제발 꺼!!!'], ['mock', '솔직히 대참사 보고 싶다'],
+    ['hype', '불기둥 ㄷㄷㄷ'], ['worry', '이번엔 진짜 위험해'], ['question', '이거 일부러 놔두는 사람도 있어요?'],
+    ['info', '1.2초 안에 못 끄면 터진다'], ['cheer', '침착해 소화각이야!!'] ] },
+  rescue: { facts: ['+{gain} ㄷㄷ', '수습 +{gain}!!', '{gain}명 유입 ㅋㅋ'], flavor: [
+    ['hype', '손 뭐냐 ㄷㄷ'], ['cheer', '이게 방송이지!!'], ['info', '반응속도 미쳤다'],
+    ['mock', '운빨 반박 불가 ㅋㅋ'], ['question', '방금 뭐 누른 거예요?'], ['hype', '개잘하네 ㅋㅋㅋ'],
+    ['cheer', '폼 미쳤다!!'] ] },
+  rescue_big: { facts: ['고배율 수습 +{gain}!!!', '+{gain} ㅋㅋㅋ 미쳤다', '{gain}명 폭발 유입 ㄷㄷㄷ'], flavor: [
+    ['hype', '방금 그거 클립 각!!!'], ['cheer', '캬아아아 이거지!!!'], ['info', '프레임 단위 수습이다 저건'],
+    ['hype', 'ㄷㄷㄷㄷㄷ'], ['mock', '저걸 살리네;;'], ['cheer', '박수 갈겨!!!'], ['question', '이 사람 프로임??'] ] },
+  fail: { facts: ['아 {acc} 놓쳤다', '{acc} 실패…'], flavor: [
+    ['mock', '집중 안 하냐'], ['worry', '아깝다…'], ['mock', '음 식었네'],
+    ['info', '창 끝나기 전에 눌러야 함'], ['mock', '…'], ['worry', '괜찮아 다음 거 잡자'] ] },
+  disaster: { facts: ['대참사 +{gain} ㅋㅋㅋㅋ', '주방 터졌는데 +{gain}명 ㅋㅋㅋ', '{gain}명 유입 레전드'], flavor: [
+    ['hype', 'ㅋㅋㅋㅋㅋㅋㅋㅋ'], ['hype', '레전드 방송사고'], ['mock', '소방서 안 부르냐 ㅋㅋ'],
+    ['cheer', '이거 보러 왔다!!!'], ['hype', '클립 각 미쳤다'], ['question', '화구 저거 고쳐지는 거예요??'],
+    ['info', '12초 파손이면 손해 꽤 큰데'], ['worry', '진짜 괜찮은 거 맞지…?'] ] },
+  done: { facts: ['{dish} 완성이요'], flavor: [
+    ['cheer', '오 맛있겠다'], ['mock', '무사고 방송 노잼'], ['info', '완성은 +40밖에 안 줌'],
+    ['mock', '잘하는데… 심심하네'], ['question', '사고는 언제 나요?'], ['cheer', '플레이팅 좋다'],
+    ['mock', '안전운전 ㅋㅋ'] ] },
+  unlock: { facts: ['{label}'], flavor: [
+    ['hype', '드디어!!!'], ['cheer', '커진다 커져!!'], ['hype', '이제 시작이지 ㅋㅋ'],
+    ['info', '여기서부터 스노볼임'], ['cheer', '가즈아!!!'], ['question', '뭐가 열린 거예요?'] ] },
+  donation: { facts: ['{d}명 몰고 온 도네 ㄷㄷ', '도네 유입 +{d} ㄷㄷ'], flavor: [
+    ['cheer', '큰손 등장 ㄷㄷ'], ['hype', '도네 감사합니다!!'], ['mock', '나도 쏘고 싶다…'],
+    ['question', '방금 도네 얼마예요?'], ['cheer', '역시 갓청자'], ['hype', '도네버프 가즈아'] ] },
+  chain3: { facts: [], flavor: [
+    ['hype', '연쇄 ×3 풀배율!!!'], ['info', '지금부터 수습 하나가 세 배다'], ['cheer', '폼 미쳤다 유지해!!'],
+    ['hype', '불 붙었다 ㅋㅋㅋ'], ['worry', '끊기면 아까운데 집중'], ['cheer', '가보자 가보자!!'] ] },
+  milestone: { facts: ['{v}명 돌파 ㄷㄷ', '벌써 {v}명 ㅋㅋ'], flavor: [
+    ['hype', '떡상 중 ㄷㄷ'], ['cheer', '축하합니다!!'], ['info', '이 속도면 다음 언락 금방임'],
+    ['mock', '어디서 다 왔대 ㅋㅋ'], ['hype', '차트 역주행 각'], ['question', '최고 기록이 몇 명이에요?'] ] },
+  nag: { facts: ['화구 {b}번 놀고 있어요'], flavor: [
+    ['worry', '빈 화구 시청자 샌다…'], ['mock', '화구 놀리는 방송 처음 봄'], ['info', '빈 화구는 초당 0.5%씩 빠짐'],
+    ['question', '왜 불 안 올려요?'], ['mock', '월세 아깝다 월세'], ['worry', '빨리 뭐라도 올려요'] ] },
+  idle: { facts: [], flavor: [
+    ['question', '오늘 메뉴 추천 받아요?'], ['cheer', '보는 맛이 있다'], ['mock', '불맛 좀 보여줘 봐'],
+    ['info', '속성 모드가 기대값은 더 높음'], ['question', '몇 시까지 방송해요?'], ['cheer', '정주행 중입니다'],
+    ['hype', '슬슬 사고 하나 각인데'], ['mock', '평화롭다… 너무 평화로운데?'] ] },
+  end: { facts: [], flavor: [
+    ['cheer', '수고하셨습니다!!'], ['question', '다음 방송 언제예요?'], ['cheer', '잘 봤습니다'],
+    ['mock', '마지막에 아쉬웠다 ㅋㅋ'], ['hype', '오늘 레전드였다'], ['info', '클립 정리하러 갑니다'] ] },
+};
+const CHAT_BURST = { disaster: 4, rescue_big: 3, oilfire: 3, rescue: 2, accident: 2, unlock: 2, chain3: 2, start: 2, end: 2 };
+const CHAT_MILES = [1000, 5000, 15000, 60000, 150000, 500000]; // 언락 임계(30k/90k/350k)와 겹치지 않게
+
+const Chat = {
+  history: [], N: 3, SIM_MAX: 0.72,
+  reset() { $('chatFeed').innerHTML = ''; this.history.length = 0; },
+  sys(text) { this.append(`<div class="cline csys">${text}</div>`); },
+  push(p, text, cls) { this.append(`<div class="cline${cls ? ' ' + cls : ''}"><b style="color:${p.color}">${p.nick}</b>${text}</div>`); },
+  append(html) {
+    const f = $('chatFeed');
+    f.insertAdjacentHTML('beforeend', html);
+    while (f.children.length > 70) f.firstChild.remove();
+    f.scrollTop = f.scrollHeight;
+  },
+  // [LLM-INTEGRATION-POINT] compose()가 실제 서비스에서는 LLM 호출(페르소나 프로필 + 사실 슬롯 + 게임 상황)로 교체된다.
+  compose(persona, ev, facts, wantFact) {
+    const T = CHAT_T[ev];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let text;
+      if (wantFact) {
+        text = T.facts[rnd(0, T.facts.length - 1)].replace(/\{(\w+)\}/g, (_, k) => String(facts[k] ?? ''));
+      } else {
+        let pool = T.flavor.filter(f => persona.tones.includes(f[0]));
+        if (!pool.length) pool = T.flavor;
+        text = pool[rnd(0, pool.length - 1)][1];
+      }
+      if (this.verify(text, wantFact ? facts : {})) {
+        this.history.push(text);
+        if (this.history.length > 10) this.history.shift();
+        return text;
+      }
+    }
+    return null; // 검증 재실패 — 발화 폐기 (어색한 반복보다 침묵)
+  },
+  verify(text, facts) {
+    if (!Object.values(facts).every(v => text.includes(String(v)))) return false;
+    const sim = (a, b) => {
+      const A = new Set(a.split(/\s+/)), B = new Set(b.split(/\s+/));
+      let i = 0; A.forEach(w => B.has(w) && i++);
+      return i / Math.max(A.size, B.size);
+    };
+    return this.history.slice(-this.N).every(h => sim(text, h) < this.SIM_MAX);
+  },
+  react(ev, facts = {}, opts = {}) {
+    if (!S) return;
+    const token = S.showId, phase = opts.phase || 'live';
+    let n = CHAT_BURST[ev] || 1;
+    if (n > 1 && S.viewers >= 30000) n = Math.min(4, n + 1); // 대형 방송은 채팅도 두껍다
+    const used = new Set();
+    let delay = 120 + Math.random() * 180; // 첫 반응은 빠르게
+    for (let i = 0; i < n; i++) {
+      let p;
+      do { p = CHAT_PERSONAS[rnd(0, CHAT_PERSONAS.length - 1)]; } while (used.has(p.nick) && used.size < CHAT_PERSONAS.length);
+      used.add(p.nick);
+      const wantFact = i === 0 && CHAT_T[ev].facts.length > 0;
+      setTimeout(() => {
+        if (!S || S.showId !== token || S.phase !== phase) return; // 방송이 바뀌었으면 폐기
+        const text = this.compose(p, ev, facts, wantFact);
+        if (text) this.push(p, text, ev === 'donation' ? 'cdon' : '');
+      }, delay);
+      delay += 90 + Math.random() * 220;
+    }
+  },
+};
+function ambientChat(emptyCount) { // 잡담 소재: 마일스톤 > 빈 화구 잔소리 > 일반
+  if (S.mileIdx < CHAT_MILES.length && S.viewers >= CHAT_MILES[S.mileIdx]) {
+    Chat.react('milestone', { v: CHAT_MILES[S.mileIdx++].toLocaleString() });
+    return;
+  }
+  if (emptyCount > 0 && Math.random() < .45) {
+    const b = S.burners.find(b => b.on && !b.dish && b.broken <= 0);
+    if (b) { Chat.react('nag', { b: b.i + 1 }); return; }
+  }
+  Chat.react('idle');
+}
+
+// ================= 조리 =================
+function startDish(i, mi) {
+  const b = S.burners[i];
+  if (!b.on || b.broken > 0 || b.dish || S.phase !== 'live') return;
+  if (MODES[mi].lockAt && !S.unlocked.mode3) return;
+  b.dish = DISHES[rnd(0, DISHES.length - 1)];
+  b.mode = MODES[mi]; b.p = 0; b.acc = null;
+  sfxIgnite();
+  buildCol(i);
+}
+function completeDish(b) {
+  const gain = Math.round(40 * b.mode.mul);
+  addViewers(gain); S.done++; // 소액 — FX 큐는 쓰지 않고 접시 연출 + 티커로만 (사고 없는 완성은 시시하다)
+  spawnBurst('plate', bx(b.i), 268);
+  sfxDone();
+  showTicker(`${b.dish.n} 완성 +${gain} (사고 없음)`, false);
+  if (Math.random() < .6) Chat.react('done', { dish: b.dish.n }); // 무사고 완성엔 채팅도 미지근하다
+  b.dish = null; b.mode = null; b.p = 0;
+  renderLive(); renderHUDAll(); buildCol(b.i);
+}
+
+// ================= 사고·수습·대참사 (코어) =================
+function spawnAccident(b) {
+  // 사고는 반복되는 경향 (critic H3): 직전 유형 2.2배 가중 — 같은 사고의 연속이 실제로
+  // 생겨야 신선도 감쇠가 막을 "파밍"이 존재한다
+  const w = [1, 1, 1, 1];
+  if (S.lastAccType >= 0) w[S.lastAccType] = 2.2;
+  const totalW = w[0] + w[1] + w[2] + w[3];
+  let r = Math.random() * totalW, ti = 0;
+  while (r >= w[ti]) { r -= w[ti]; ti++; }
+  S.lastAccType = ti;
+  b.acc = { ti, at: ACC[ti].win, win: ACC[ti].win };
+  sfxAlarm();
+  showTicker(`화구 ${b.i + 1} — ${ACC[ti].n} 발생!`, false);
+  Chat.react(ACC[ti].catastrophic ? 'oilfire' : 'accident', { b: b.i + 1, acc: ACC[ti].n });
+  buildCol(b.i);
+}
+function fix(i) {
+  if (!S || S.phase !== 'live') return;
+  const b = S.burners[i];
+  if (!b || !b.acc) return;
+  const a = ACC[b.acc.ti];
+  S.recTry++; S.recOK++;
+  // 유형 배율 (critic 4차 확정): 실사용 구간(윈도우−0.4초) 기준 정규화 — 배율은 사고 유형이
+  // 정한다. 짧은 창(칼 0.8s)은 즉시 수습만으로 ×2.3, 긴 창(소금 4.0s)은 대기해야 오르지만
+  // 대기는 처리량 손실로 항상 손해(전략 스윕 −45%) — "빠른 반응이 정답"이 의도된 구조.
+  // 뼈대(규약 5)는 연쇄 배수가 담당하고 유형 배율은 보상의 질감이다
+  const usable = Math.max(0.2, b.acc.win - 0.4);
+  const close = 1 + 1.5 * clamp((b.acc.win - b.acc.at) / usable, 0, 1);
+  // 신선도 (규약 4): 같은 사고 유형 반복은 감쇠. 회복은 타 유형 "2회 수습당" 1단계 —
+  // 매회 회복하면 감쇠가 0으로 수렴해 규약이 형해화된다 (critic H1: 평균 감쇠 0.866 → 0.611)
+  const fm = FRESH_MULT[S.fresh[b.acc.ti]];
+  S.fresh[b.acc.ti] = Math.min(4, S.fresh[b.acc.ti] + 1);
+  S.freshRec[b.acc.ti] = 0;
+  for (let k = 0; k < 4; k++) if (k !== b.acc.ti) {
+    if (++S.freshRec[k] >= 2) { S.freshRec[k] = 0; S.fresh[k] = Math.max(0, S.fresh[k] - 1); }
+  }
+  const gain = Math.max(1, Math.round(a.ok * S.chain * b.mode.mul * close * fm));
+  const prevChain = S.chain;
+  S.chain = Math.min(3, S.chain + .5); S.chainT = 5;
+  S.maxChain = Math.max(S.maxChain, S.chain);
+  gainViewers(gain, close >= 1.9 ? `고배율 수습 ×${close.toFixed(1)}` : '수습 성공');
+  Chat.react(close >= 1.9 ? 'rescue_big' : 'rescue', { gain: gain.toLocaleString() });
+  if (S.chain >= 3 && prevChain < 3) Chat.react('chain3');
+  spawnBurst('fixflash', bx(i), 270);
+  scene.flashWhite = .22; scene.shake = Math.max(scene.shake, 5);
+  sfxFix();
+  b.acc = null;
+  renderHUDAll(); buildCol(i);
+}
+function accidentExpire(b) {
+  const a = ACC[b.acc.ti];
+  S.recTry++;
+  if (a.catastrophic) { // 대참사 — 시청자는 폭등(과연출), 화구는 12초 파손(기회비용)
+    const g = Math.round(1400 * S.chain);
+    S.disaster++;
+    spawnBurst('boom', bx(b.i), 270);
+    if (!scene.soot.includes(b.i)) scene.soot.push(b.i); // 그을음 중복 누적 방지 (L-1)
+    scene.shake = 16; scene.flashWhite = .5;
+    sfxBoom();
+    gainViewers(g, '대참사!!');
+    b.broken = 12;
+    showTicker(`대참사 — ${a.n}! 화구 ${b.i + 1} 파손`, false);
+    Chat.react('disaster', { gain: g.toLocaleString() });
+  } else { // 일반 실패 — 숫자만 조용히 줄어든다 (규약 2: 무연출·무효과음, 채팅도 마른 1줄만)
+    loseViewers(120);
+    showTicker(`${a.n} 실패 — ${a.fail} −120`, true);
+    Chat.react('fail', { acc: a.n });
+  }
+  // (M6 연쇄 리셋은 4차 검증에서 롤백 — 끝자락 버티기는 L4가 구조적으로 제거했고,
+  //  대참사 방치 억제는 M7 비례 이탈이 담당. 원본 p02에도 실패 리셋은 없다)
+  b.dish = null; b.mode = null; b.acc = null; b.p = 0;
+  renderHUDAll(); buildCol(b.i);
+}
+
+// ================= 세션 =================
+function endShow(early) {
+  if (!S || S.phase !== 'live') return; // 이중 종료 방지 (H-2)
+  S.phase = 'result';
+  S.burners.forEach(b => { b.acc = null; }); // 스트립이 사고 상태로 얼어붙지 않게 (M-2)
+  buildStrip();
+  Chat.sys(early ? '— 방송 강제 종료 —' : '— 방송 종료 —');
+  Chat.react('end', {}, { phase: 'result' });
+  const final = Math.round(S.viewers);
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  const isRecord = final > best;
+  if (isRecord) { try { localStorage.setItem(BEST_KEY, String(final)); } catch (e) {} }
+  const rate = S.recTry ? Math.round(S.recOK / S.recTry * 100) : 0;
+  $('overlay').classList.remove('hidden');
+  $('overlay').innerHTML = `<div class="panel">
+    <h2>${early ? '방송 강제 종료' : '방송 종료'}</h2>
+    <p>${early ? '시청자가 전부 떠났다. 불 꺼진 주방만 남았다.' : '3분의 화력쇼가 끝났다.'}</p>
+    <div class="statgrid">
+      <span>최종 시청자</span><b>${final.toLocaleString()}명 ${isRecord ? '<span class="rec">★ 신기록</span>' : `(기록 ${Math.max(best, final).toLocaleString()})`}</b>
+      <span>수습 성공률</span><b>${S.recOK} / ${S.recTry} (${rate}%)</b>
+      <span>최고 연쇄</span><b>×${S.maxChain.toFixed(1)}</b>
+      <span>완성 / 대참사</span><b>${S.done} / ${S.disaster}</b>
+    </div>
+    <p class="fine">무사고 완성만으로는 시청자가 늘지 않는다 — 사고를 부르고, 끝자락에서 수습하라.</p>
+    <div class="btnrow"><button class="slab primary" onclick="newShow()">다시 방송 (R)</button></div></div>`;
+}
+
+function showOverlay(name) {
+  const o = $('overlay');
+  if (!name) { o.classList.add('hidden'); o.innerHTML = ''; return; }
+  o.classList.remove('hidden');
+  if (name === 'title') {
+    let best = 0;
+    try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+    o.innerHTML = `<div class="panel">
+      <h2>화력쇼</h2>
+      <p>3분 요리 생방송. 화구에 요리를 올리고, <b>사고가 나면 수습하라</b> —
+      완벽한 요리는 +40이지만 수습은 수백, 대참사는 +1,400이다.</p>
+      <ul>
+        <li>모드가 리스크 다이얼: 정석(사고 5%/×1.0) · 속성(25%/×1.8) · 무모(60%/×3.2, 해금 필요)</li>
+        <li>배율은 사고 유형이 정한다 — 창이 짧은 사고일수록 즉시 수습만으로 높은 배율 (최대 ×2.5)</li>
+        <li>기름 화재를 놓치면 <b>대참사</b>: 시청자 폭등 + 화구 12초 파손</li>
+        <li>시청자 수가 화구·모드를 연다 (30,000 / 90,000 / 350,000명)</li>
+      </ul>
+      ${best ? `<p class="fine">최고 기록: <b style="color:var(--amber2)">${best.toLocaleString()}명</b></p>` : ''}
+      <div class="btnrow"><button class="slab primary" onclick="newShow()">방송 시작</button></div></div>`;
+  }
+}
+let stampTimer = 0;
+function showStamp(text) {
+  $('bigStampText').textContent = text;
+  const st = $('bigStamp');
+  st.classList.remove('show'); void st.offsetWidth; st.classList.add('show');
+  clearTimeout(stampTimer); // 연속 스탬프의 조기 소멸 방지 (L-2)
+  stampTimer = setTimeout(() => st.classList.remove('show'), 1600);
+}
+function showTicker(text, muted) {
+  const t = $('ticker');
+  t.textContent = text;
+  t.className = muted ? 'muted' : '';
+  t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+}
+
+// ================= DOM 렌더 =================
+function renderLive() { $('viewerCount').textContent = Math.ceil(S.viewers).toLocaleString(); } // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
+function renderHUDAll() {
+  renderLive();
+  $('recStat').textContent = `${S.recOK}/${S.recTry}`;
+  $('doneStat').textContent = S.done;
+  $('disStat').textContent = S.disaster;
+  const cm = $('chainMeter');
+  $('chainVal').textContent = '×' + S.chain.toFixed(1);
+  cm.classList.toggle('hot', S.chain >= 2);
+}
+function buildStrip() { $('strip').innerHTML = S.burners.map(b => `<div class="bcol" id="col${b.i}"></div>`).join(''); S.burners.forEach(b => buildCol(b.i)); }
+function buildCol(i) {
+  const b = S.burners[i], el = $('col' + i);
+  if (!el) return;
+  el.className = 'bcol' + (b.acc ? ' hot' : '') + (!b.on ? ' locked' : '');
+  if (!b.on) {
+    const need = i === 2 ? 30000 : 350000;
+    el.innerHTML = `<div class="bnum">화구 ${i + 1}</div><div class="bhint" style="margin-top:22px">🔒 시청자 <b>${need.toLocaleString()}명</b> 달성 시 개방</div>`;
+    return;
+  }
+  if (b.broken > 0) {
+    el.innerHTML = `<div class="bnum">화구 ${i + 1}</div><div class="bdish" style="color:#9a9184">🔧 수리 중</div>
+      <div class="bhint">대참사 여파 — <b><span id="rep${i}">${b.broken.toFixed(1)}</span>초</b> 후 복구</div>`;
+    return;
+  }
+  if (!b.dish) {
+    el.innerHTML = `<div class="bnum">화구 ${i + 1}</div>
+      <div class="modes">${MODES.map((m, mi) => {
+        const locked = m.lockAt && !S.unlocked.mode3;
+        return `<button onclick="startDish(${i},${mi})" ${locked ? 'disabled' : ''}>${locked ? '🔒 ' : ''}${m.n} ×${m.mul}</button>`;
+      }).join('')}</div>
+      <div class="bhint">사고율 ${MODES.map(m => Math.round(m.rate * 100) + '%').join(' / ')}<br>빈 화구는 시청자가 샌다</div>`;
+    return;
+  }
+  let accHtml = '';
+  if (b.acc) {
+    const a = ACC[b.acc.ti];
+    const fm = FRESH_MULT[S.fresh[b.acc.ti]];
+    accHtml = `<div class="accname">⚠ ${a.n} <span class="accfresh">신선도 ${Math.round(fm * 100)}%</span></div>
+      <div class="win"><i id="win${i}" style="width:100%"></i></div>
+      <button class="fixbtn" id="fixb${i}" onclick="fix(${i})">${i + 1} — 수습! ×1.0</button>`;
+  }
+  el.innerHTML = `<div class="bnum">화구 ${i + 1}</div>
+    <div class="bdish">${b.dish.n}</div>
+    <div class="bmode">${b.mode.n} · 수입 ×${b.mode.mul}</div>
+    <div class="prog"><i id="prog${i}" style="width:${Math.round(b.p * 100)}%"></i></div>
+    ${accHtml || '<div class="bhint" style="margin-top:10px">조리 중…</div>'}`;
+}
+
+// ================= 게임 루프 =================
+function step(dt) {
+  if (!S || S.phase !== 'live') return;
+  S.t -= dt;
+  if (S.t <= 0) { S.t = 0; endShow(false); return; }
+  $('timeLeft').textContent = `${Math.floor(S.t / 60)}:${String(Math.floor(S.t % 60)).padStart(2, '0')}`;
+
+  if (S.chainT > 0) { S.chainT -= dt; if (S.chainT <= 0) { S.chain = 1; renderHUDAll(); } }
+
+  // 양념 (규약 5): 랜덤 도네는 드물게
+  S.donT -= dt;
+  if (S.donT <= 0) {
+    S.donT = 8 + Math.random() * 7;
+    if (Math.random() < .5) { // 양념 — 규모 비례 1~3%, 최소 10명 (critic L5)
+      const d = Math.max(10, Math.round(S.viewers * (0.01 + Math.random() * 0.02)));
+      gainViewers(d, '익명의 도네'); sfxDon();
+      Chat.react('donation', { d: d.toLocaleString() });
+    }
+  }
+
+  let emptyCount = 0;
+  for (const b of S.burners) {
+    if (!b.on) continue;
+    if (b.broken > 0) {
+      emptyCount++; // 파손 화구도 방치다 — 이탈 면제 없음 (critic L2)
+      b.broken -= dt;
+      const rep = $('rep' + b.i);
+      if (rep) rep.textContent = Math.max(0, b.broken).toFixed(1);
+      if (b.broken <= 0) { b.broken = 0; buildCol(b.i); }
+      continue;
+    }
+    if (!b.dish) { emptyCount++; continue; }
+
+    if (b.acc) {
+      b.acc.at -= dt;
+      const w = $('win' + b.i);
+      if (w) w.style.width = Math.max(0, b.acc.at / b.acc.win * 100) + '%';
+      const fb = $('fixb' + b.i); // 유형 배율 실시간 표시 (critic L3) — 반응 학습 채널
+      if (fb) {
+        const usable = Math.max(0.2, b.acc.win - 0.4);
+        const cl = 1 + 1.5 * clamp((b.acc.win - Math.max(0, b.acc.at)) / usable, 0, 1);
+        fb.textContent = `${b.i + 1} — 수습! ×${cl.toFixed(1)}`;
+      }
+      if (b.acc.at <= 0) {
+        accidentExpire(b);
+        if (S.phase !== 'live') return; // 수습 실패 −120으로 방송이 끝났으면 루프 중단 (H-2)
+      }
+      continue;
+    }
+
+    b.p += dt / 12;
+    const pr = $('prog' + b.i);
+    if (pr) pr.style.width = Math.round(clamp(b.p, 0, 1) * 100) + '%';
+    if (Math.random() < b.mode.rate * dt * 0.9) { spawnAccident(b); continue; }
+    if (b.p >= 1) completeDish(b);
+  }
+  // AI 시청자 잡담 — 빈도는 시청자 규모에 비례해 빨라진다. 연출 전용, 룰 수치는 읽기만 (C3)
+  S.chatT -= dt;
+  if (S.chatT <= 0) {
+    S.chatT = clamp(3.6 - Math.log10(S.viewers + 10) * .55, 1.1, 3.6) + Math.random() * 1.4;
+    ambientChat(emptyCount);
+  }
+  // 정체는 가장 빠르게 잃는다 — 빈·파손 화구당 초당 0.5%(최소 1명), 조용히 (규약 2, critic M7:
+  // 정액 −1/s는 후반 규모에서 무의미해 체력 역할이 형해화된다)
+  if (emptyCount > 0) {
+    const drain = emptyCount * Math.max(1, S.viewers * 0.005) * dt;
+    S.viewers = Math.max(0, S.viewers - drain);
+    renderLive();
+    if (S.viewers <= 0) { endShow(true); return; }
+  }
+}
+
+// ================= 캔버스 씬 =================
+const canvas = $('scene'), ctx = canvas.getContext('2d');
+const BX = [150, 370, 590, 810];
+const bx = i => BX[i];
+const COUNTER_Y = 285;
+
+function spawnBurst(type, x, y) { scene.bursts.push({ type, x, y, born: scene.now }); }
+
+let prevFrame = 0;
+function loop(ms) {
+  const t = ms / 1000, dt = Math.min(.05, t - prevFrame || .016);
+  prevFrame = t; scene.now = t;
+  scene.shake *= .88; scene.flashWhite *= .88;
+  step(dt);
+  drainFx();
+  drawScene(dt);
+  requestAnimationFrame(loop);
+}
+
+function drawScene(dt) {
+  const W = 960, H = 430;
+  ctx.fillStyle = '#0b0908'; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate((Math.random() - .5) * scene.shake, (Math.random() - .5) * scene.shake);
+
+  drawStudio();
+  for (const b of (S ? S.burners : [])) drawBurner(b);
+  drawSteam(dt);
+  drawBursts();
+
+  ctx.restore();
+  drawLighting();
+}
+
+function drawStudio() {
+  // 뒷벽 + 선반
+  const bg = ctx.createLinearGradient(0, 0, 0, COUNTER_Y);
+  bg.addColorStop(0, '#12100c'); bg.addColorStop(1, '#1e1a14');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, 960, COUNTER_Y);
+  ctx.fillStyle = '#17130e'; ctx.fillRect(0, 96, 960, 7);
+  ctx.fillStyle = '#100d09';
+  [[120, 70], [250, 62], [700, 66], [830, 74]].forEach(([x, h]) => { ctx.fillRect(x, 96 - h, 34, h); });
+  // 조명 램프 2기
+  for (const lx of [300, 660]) {
+    ctx.fillStyle = '#0a0806';
+    ctx.beginPath(); ctx.moveTo(lx - 26, 30); ctx.lineTo(lx + 26, 30); ctx.lineTo(lx + 16, 52); ctx.lineTo(lx - 16, 52); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const fl = 1 + .05 * Math.sin(scene.now * 9 + lx);
+    const g = ctx.createRadialGradient(lx, 54, 4, lx, 54, 40 * fl);
+    g.addColorStop(0, 'rgba(255,220,150,.8)'); g.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = g; ctx.fillRect(lx - 44, 14, 88, 88);
+    const cone = ctx.createRadialGradient(lx, 60, 20, lx, 300, 340);
+    cone.addColorStop(0, 'rgba(255,210,140,.13)'); cone.addColorStop(1, 'rgba(255,210,140,0)');
+    ctx.fillStyle = cone; ctx.fillRect(lx - 340, 40, 680, 380);
+    ctx.restore();
+  }
+  // 스테인리스 조리대
+  const st = ctx.createLinearGradient(0, COUNTER_Y - 20, 0, COUNTER_Y + 42);
+  st.addColorStop(0, '#9aa0a8'); st.addColorStop(.25, '#6a7078'); st.addColorStop(1, '#41464d');
+  ctx.fillStyle = st; ctx.fillRect(0, COUNTER_Y - 20, 960, 62);
+  ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(0, COUNTER_Y - 20, 960, 3);
+  const fr = ctx.createLinearGradient(0, COUNTER_Y + 42, 0, 430);
+  fr.addColorStop(0, '#24272c'); fr.addColorStop(1, '#141619');
+  ctx.fillStyle = fr; ctx.fillRect(0, COUNTER_Y + 42, 960, 430 - COUNTER_Y - 42);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, COUNTER_Y + 42, 960, 4);
+  // 그을음 (대참사 흔적)
+  for (const i of scene.soot) {
+    ctx.fillStyle = 'rgba(10,8,6,.55)';
+    ctx.beginPath(); ctx.ellipse(BX[i], COUNTER_Y + 6, 58, 13, 0, 0, TAU); ctx.fill();
+  }
+}
+
+function drawBurner(b) {
+  const x = bx(b.i), t = scene.now;
+  // 화구 받침
+  ctx.fillStyle = '#1a1d22';
+  ctx.beginPath(); ctx.ellipse(x, COUNTER_Y + 2, 46, 15, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#0d0f12'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = '#101318';
+  ctx.beginPath(); ctx.ellipse(x, COUNTER_Y + 1, 34, 10, 0, 0, TAU); ctx.fill();
+
+  if (!b.on) { // 잠금: 클로슈 덮개
+    ctx.fillStyle = '#3a3f46';
+    ctx.beginPath(); ctx.ellipse(x, COUNTER_Y - 16, 40, 26, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = '#14161a'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#565c64'; ctx.beginPath(); ctx.arc(x, COUNTER_Y - 42, 5, 0, TAU); ctx.fill();
+    ctx.font = '15px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🔒', x, COUNTER_Y - 52);
+    return;
+  }
+  if (b.broken > 0) { // 파손: 연기 + 수리 아크
+    if (Math.random() < .3) scene.steam.push({ x: x + rnd(-20, 20), y: COUNTER_Y - 8, vy: -(14 + Math.random() * 12), a: .35, r: 5 + Math.random() * 6, smoke: true });
+    ctx.strokeStyle = 'rgba(255,180,71,.7)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(x, COUNTER_Y - 14, 26, -Math.PI / 2, -Math.PI / 2 + (1 - b.broken / 12) * TAU); ctx.stroke();
+    ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🔧', x, COUNTER_Y - 8);
+    return;
+  }
+  if (!b.dish) return;
+
+  // 가스 불꽃 (모드별 색·세기)
+  const mi = MODES.indexOf(b.mode);
+  const cols = [['#4aa0ff', '#b0d8ff'], ['#ff9040', '#ffd27a'], ['#ff4a2d', '#ffb447']][mi] || ['#4aa0ff', '#b0d8ff'];
+  const power = [8, 12, 17][mi] || 8;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * TAU;
+    const fx = x + Math.cos(a) * 26, fy = COUNTER_Y - 2 + Math.sin(a) * 7;
+    const fh = power * (0.75 + .4 * Math.sin(t * 13 + k * 2.1));
+    ctx.fillStyle = cols[0];
+    ctx.beginPath(); ctx.moveTo(fx - 3, fy); ctx.quadraticCurveTo(fx, fy - fh, fx + 3, fy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = cols[1];
+    ctx.beginPath(); ctx.moveTo(fx - 1.4, fy); ctx.quadraticCurveTo(fx, fy - fh * .55, fx + 1.4, fy); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  // 팬 + 내용물
+  ctx.fillStyle = '#2c3138';
+  ctx.beginPath(); ctx.ellipse(x, COUNTER_Y - 14, 38, 12, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#14161a'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = '#23272d'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(x + 36, COUNTER_Y - 16); ctx.lineTo(x + 62, COUNTER_Y - 24); ctx.stroke();
+  const doneT = clamp(b.p, 0, 1);
+  ctx.fillStyle = b.dish.c;
+  ctx.globalAlpha = .55 + .45 * doneT;
+  ctx.beginPath(); ctx.ellipse(x, COUNTER_Y - 15, 30, 8.5, 0, 0, TAU); ctx.fill();
+  ctx.globalAlpha = 1;
+  // 기포
+  for (let k = 0; k < 3; k++) {
+    const bxx = x + Math.sin(t * 3 + k * 2.6) * 18;
+    ctx.fillStyle = 'rgba(255,240,210,.5)';
+    ctx.beginPath(); ctx.arc(bxx, COUNTER_Y - 15 - Math.abs(Math.sin(t * 5 + k)) * 2, 1.6, 0, TAU); ctx.fill();
+  }
+  // 김
+  if (Math.random() < .22 + doneT * .2) scene.steam.push({ x: x + rnd(-18, 18), y: COUNTER_Y - 22, vy: -(18 + Math.random() * 14), a: .3, r: 4 + Math.random() * 5 });
+
+  // 사고 연출
+  if (b.acc) {
+    const a = ACC[b.acc.ti], frac = clamp(b.acc.at / b.acc.win, 0, 1);
+    // 수습 윈도우 링 (수축)
+    ctx.save();
+    ctx.strokeStyle = frac < .3 && Math.sin(t * 22) > 0 ? '#fff' : `rgb(255,${Math.round(45 + 130 * frac)},45)`;
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(x, COUNTER_Y - 14, 50, -Math.PI / 2, -Math.PI / 2 + frac * TAU); ctx.stroke();
+    ctx.restore();
+    if (b.acc.ti === 0) { // 팬 과열
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(x, COUNTER_Y - 14, 4, x, COUNTER_Y - 14, 44);
+      g.addColorStop(0, `rgba(255,60,30,${.4 + .2 * Math.sin(t * 14)})`); g.addColorStop(1, 'rgba(255,60,30,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 48, COUNTER_Y - 62, 96, 96);
+      ctx.restore();
+      if (Math.random() < .5) scene.steam.push({ x: x + rnd(-16, 16), y: COUNTER_Y - 24, vy: -30, a: .4, r: 6, smoke: true });
+    } else if (b.acc.ti === 1) { // 소금 과다
+      for (let k = 0; k < 4; k++) {
+        ctx.fillStyle = 'rgba(255,255,255,.8)';
+        ctx.beginPath(); ctx.arc(x + Math.sin(t * 9 + k * 1.7) * 22, COUNTER_Y - 34 - (t * 30 + k * 9) % 26, 1.4, 0, TAU); ctx.fill();
+      }
+    } else if (b.acc.ti === 2) { // 기름 화재 — 큰 불기둥
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 5; k++) {
+        const fx = x + (k - 2) * 11 + Math.sin(t * 17 + k * 3) * 4;
+        const fh = 34 + 22 * Math.abs(Math.sin(t * 11 + k * 1.9)) + (1 - frac) * 22;
+        ctx.fillStyle = 'rgba(255,90,30,.85)';
+        ctx.beginPath(); ctx.moveTo(fx - 6, COUNTER_Y - 18); ctx.quadraticCurveTo(fx, COUNTER_Y - 18 - fh, fx + 6, COUNTER_Y - 18); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,200,80,.9)';
+        ctx.beginPath(); ctx.moveTo(fx - 2.6, COUNTER_Y - 18); ctx.quadraticCurveTo(fx, COUNTER_Y - 18 - fh * .55, fx + 2.6, COUNTER_Y - 18); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+      if (Math.random() < .6) scene.steam.push({ x: x + rnd(-14, 14), y: COUNTER_Y - 50, vy: -36, a: .45, r: 7, smoke: true });
+    } else { // 칼 미끄러짐 — 회전 섬광
+      ctx.save();
+      ctx.translate(x, COUNTER_Y - 34); ctx.rotate(t * 9);
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(14, 0); ctx.stroke();
+      ctx.strokeStyle = 'rgba(200,220,255,.5)'; ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+function drawSteam(dt) {
+  scene.steam = scene.steam.filter(p => {
+    p.y += p.vy * dt; p.a -= .28 * dt; p.x += Math.sin(scene.now * 2 + p.y * .06) * 12 * dt;
+    if (p.a <= 0) return false;
+    ctx.fillStyle = p.smoke ? `rgba(70,66,60,${p.a})` : `rgba(230,225,215,${p.a * .6})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+    return true;
+  });
+  if (scene.steam.length > 120) scene.steam.splice(0, scene.steam.length - 120);
+}
+
+function drawBursts() {
+  scene.bursts = scene.bursts.filter(f => {
+    const age = scene.now - f.born;
+    if (f.type === 'boom') {
+      if (age > .6) return false;
+      const p = age / .6;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(f.x, f.y, 2, f.x, f.y, 90 * p + 16);
+      g.addColorStop(0, `rgba(255,230,170,${(1 - p)})`);
+      g.addColorStop(.5, `rgba(255,120,40,${(1 - p) * .8})`);
+      g.addColorStop(1, 'rgba(255,80,30,0)');
+      ctx.fillStyle = g; ctx.fillRect(f.x - 110, f.y - 110, 220, 220);
+      ctx.restore();
+      return true;
+    }
+    if (f.type === 'fixflash') {
+      if (age > .35) return false;
+      const p = age / .35;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(f.x, f.y, 2, f.x, f.y, 55 * p + 10);
+      g.addColorStop(0, `rgba(180,255,200,${(1 - p) * .9})`); g.addColorStop(1, 'rgba(120,255,160,0)');
+      ctx.fillStyle = g; ctx.fillRect(f.x - 70, f.y - 70, 140, 140);
+      ctx.restore();
+      return true;
+    }
+    if (f.type === 'plate') {
+      if (age > .8) return false;
+      const p = age / .8;
+      ctx.globalAlpha = 1 - p;
+      ctx.fillStyle = '#f0ede6';
+      ctx.beginPath(); ctx.ellipse(f.x, f.y - p * 34, 26, 8, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#c9c4ba'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#ffdf9e';
+      for (let k = 0; k < 3; k++) {
+        const a = p * 5 + k * 2.1;
+        ctx.beginPath(); ctx.arc(f.x + Math.cos(a) * 32, f.y - p * 34 + Math.sin(a) * 10, 1.8, 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      return true;
+    }
+    return false;
+  });
+}
+
+function drawLighting() {
+  const g = ctx.createRadialGradient(480, 210, 190, 480, 210, 580);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.5)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 960, 430);
+  if (scene.flashWhite > .01) { ctx.fillStyle = `rgba(255,245,220,${scene.flashWhite})`; ctx.fillRect(0, 0, 960, 430); }
+}
+
+// ================= 입력 =================
+addEventListener('keydown', e => {
+  if (e.repeat) return; // 키 홀드 자동 수습 방지 — 반응 속도가 이 프로토타입의 측정 대상 (L-3)
+  if (e.key === 'r' || e.key === 'R') { if (!S || S.phase !== 'live') newShow(); return; }
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= 4) fix(n - 1);
+});
+
+// ================= 초기화 =================
+function init() {
+  S = null;
+  // 타이틀 상태에서도 씬은 그려지도록 최소 상태 구성
+  S = { phase: 'title', t: SHOW_TIME, viewers: START_VIEWERS, chain: 1, chainT: 0, maxChain: 1,
+    recOK: 0, recTry: 0, done: 0, disaster: 0, fresh: [0, 0, 0, 0], freshRec: [0, 0, 0, 0], lastAccType: -1,
+    unlocked: { b3: false, mode3: false, b4: false }, donT: 99,
+    burners: [0, 1, 2, 3].map(i => ({ i, on: i < 2, broken: 0, dish: null, mode: null, p: 0, acc: null })) };
+  buildStrip();
+  renderHUDAll();
+  showOverlay('title');
+  requestAnimationFrame(loop);
+}
+init();
+</script>
+
+<!-- 원본 코어: 스트리머 기획서 p02 화력쇼(수습 윈도우) — 완벽한 플레이가 최악의 전략 -->
+<!-- 규약 5종 적용: 시청자=체력·점수·통화 / 손실 무연출 / FX 0.4초 큐 / 신선도 감쇠 / 연쇄 배수(뼈대)·유형 배율(질감) vs 도네(양념) -->
+</body>
+</html>
