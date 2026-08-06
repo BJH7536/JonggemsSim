@@ -73,24 +73,31 @@
     compose: function (persona, ev, facts, wantFact) {
       var T = this.T[ev];
       if (!T) return null;
-      for (var attempt = 0; attempt < 2; attempt++) {
-        var text;
-        if (wantFact) {
-          text = T.facts[rnd(0, T.facts.length - 1)].replace(/\{(\w+)\}/g, function (_, k) {
-            return String(facts[k] != null ? facts[k] : '');
-          });
-        } else {
-          var pool = T.flavor.filter(function (f) { return persona.tones.indexOf(f[0]) >= 0; });
-          if (!pool.length) pool = T.flavor;
-          text = pool[rnd(0, pool.length - 1)][1];
-        }
+      // 풀 전체를 셔플해 한 번씩 검증한다. 이전의 "무작위 2회 재시도"는 슬롯 조합이 안 맞는
+      // 템플릿만 연속으로 뽑히면 사실 줄이 통째로 폐기됐다 (pocket risky_hit 등 — 관객 리뷰 발견).
+      var pool;
+      if (wantFact) {
+        pool = T.facts.slice();
+      } else {
+        pool = T.flavor.filter(function (f) { return persona.tones.indexOf(f[0]) >= 0; });
+        pool = (pool.length ? pool : T.flavor).slice();
+      }
+      for (var i = pool.length - 1; i > 0; i--) {
+        var j = rnd(0, i), tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+      }
+      for (var k = 0; k < pool.length; k++) {
+        var text = wantFact
+          ? pool[k].replace(/\{(\w+)\}/g, function (_, key) {
+              return String(facts[key] != null ? facts[key] : '');
+            })
+          : pool[k][1];
         if (this.verify(text, wantFact ? facts : {})) {
           this.history.push(text);
           if (this.history.length > 10) this.history.shift();
           return text;
         }
       }
-      return null; // 검증 재실패 — 발화 폐기
+      return null; // 전 템플릿 검증 실패 — 발화 폐기 (어색한 반복보다 침묵)
     },
 
     verify: function (text, facts) {
