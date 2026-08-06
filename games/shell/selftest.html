@@ -116,10 +116,35 @@ ok('망치 최소 길이가 몸통 밖이다 (자루가 몸 안으로 말리지 
 ok('망치 사거리가 최소 길이보다 크다', T.HAMMER_MAX > T.HAMMER_MIN);
 eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, .1]);
 
-document.getElementById('out').textContent =
-  log.join('\n') + '\n\n' + (fail ? 'FAIL ' + fail + ' / ' : '') + 'PASS ' + pass;
-document.getElementById('out').className = fail ? 'ng' : 'ok';
-console.log(fail ? 'SELFTEST FAIL ' + fail : 'SELFTEST PASS ' + pass);
+// ---- 배포 payload 예산 ----
+// 심사 요건 1번이 "링크 클릭만으로 브라우저에서 바로 플레이"다. 지금은 8개 파일 105KB라
+// 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
+// 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
+var SHIPPED = [
+  '../../index.html', 'shell.css', 'chat.js', 'shell.js',
+  '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
+  '../giving-up/chat-data.js', '../giving-up/game.js',
+];
+var BUDGET_KB = 250;
+Promise.all(SHIPPED.map(function (u) {
+  return fetch(u, { cache: 'no-store' }).then(function (r) { return r.text(); }).catch(function () { return null; });
+})).then(function (texts) {
+  var missing = SHIPPED.filter(function (_, i) { return texts[i] === null; });
+  eq('배포 파일이 전부 존재한다', missing, []);
+  var kb = texts.reduce(function (a, t) { return a + (t ? new Blob([t]).size : 0); }, 0) / 1024;
+  ok('배포 payload ' + kb.toFixed(0) + 'KB — 예산 ' + BUDGET_KB + 'KB 이내', kb < BUDGET_KB);
+  // Assets/는 라이선스 미확인 스테이징이라 배포물이 참조하면 안 된다 (Assets/README.md)
+  var leaks = SHIPPED.filter(function (_, i) { return texts[i] && /["'(\s]Assets\//.test(texts[i]); });
+  eq('배포물이 Assets/ 스테이징을 참조하지 않는다', leaks, []);
+  finish();
+});
+
+function finish() {
+  document.getElementById('out').textContent =
+    log.join('\n') + '\n\n' + (fail ? 'FAIL ' + fail + ' / ' : '') + 'PASS ' + pass;
+  document.getElementById('out').className = fail ? 'ng' : 'ok';
+  console.log(fail ? 'SELFTEST FAIL ' + fail : 'SELFTEST PASS ' + pass);
+}
 </script>
 </body>
 </html>

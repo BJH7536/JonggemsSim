@@ -242,6 +242,7 @@
         st.px += st.vx * dt; st.py += st.vy * dt;
       }
 
+      var contactDist = st.planted ? Math.hypot(st.tipX - st.px, st.tipY - st.py) : st.len;
       var landed = resolveBody();
       if (landed && !st.planted) {
         if (st.airVy > 260) { sfxHit(); puff(st.px, st.py + PR, 5); }
@@ -249,6 +250,12 @@
       }
       st.px = clamp(st.px, PR, W - PR);
       st.py = Math.min(st.py, GROUND_Y - PR + 40);
+
+      // 몸이 밀린 뒤 망치 끝을 다시 잡는다. 접점을 몸이 움직이기 전 좌표로 그려두면
+      // 망치가 커서를 안 가리키는 프레임이 생기고, 그게 "조준이 안 먹는다"는 감각이 된다.
+      var fdx = st.mx - st.px, fdy = st.my - st.py, fd = Math.hypot(fdx, fdy) || 1;
+      st.tipX = st.px + fdx / fd * contactDist;
+      st.tipY = st.py + fdy / fd * contactDist;
 
       if (st.planted) {
         // 밀린 만큼이 곧 속도 — 손을 떼는 순간 이 속도로 날아간다 (플릭)

@@ -55,7 +55,8 @@ body {
   position: relative; border: 4px solid #100c08; outline: 1px solid #3a332a;
   border-radius: 6px; overflow: hidden; box-shadow: 0 14px 44px #000c; background: #0b0908;
 }
-#scene { display: block; width: 100%; height: auto; }
+/* touch-action: none — 없으면 터치로 Giving Up On It의 망치를 끌 때 페이지가 같이 스크롤된다 */
+#scene { display: block; width: 100%; height: auto; touch-action: none; }
 #tally {
   position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 2;
   background: var(--tally); color: #fff; display: flex; align-items: center;
@@ -186,6 +187,8 @@ body {
 
 /* 화력쇼 — 화구 조작 스트립 */
 .strip4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* 좁은 화면에서 4칸은 모드 버튼이 뭉개진다 — 수습 버튼을 못 누르면 게임이 성립하지 않는다 */
+@media (max-width: 760px) { .strip4 { grid-template-columns: repeat(2, 1fr); } }
 .bcol {
   background: linear-gradient(#1d1810, #130e08); border: 1px solid #3a332a; border-radius: 8px;
   padding: 10px 12px; min-height: 118px; position: relative; transition: border-color .15s;
