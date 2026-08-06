@@ -16,12 +16,16 @@
 그래픽·물리는 대상이 아니다 (눈으로 본다).</p>
 <pre id="out"></pre>
 
+<script src="config.js"></script>
 <script src="chat.js"></script>
+<script src="llm.js"></script>
 <script src="shell.js"></script>
 <script src="../hwaryeok/chat-data.js"></script>
 <script src="../hwaryeok/game.js"></script>
 <script src="../giving-up/chat-data.js"></script>
 <script src="../giving-up/game.js"></script>
+<script src="../pocket/chat-data.js"></script>
+<script src="../pocket/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
 function eq(label, got, want) {
@@ -86,7 +90,7 @@ var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', 
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
 
 // ---- 등록된 게임이 계약을 지키는가 ----
-eq('게임 2종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up']);
+eq('게임 3종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket']);
 Shell.games.forEach(function (g) {
   ok(g.title + ': 필수 필드가 있다',
      g.title && g.tagline && g.duration > 0 && g.startViewers > 0 && typeof g.start === 'function');
@@ -116,22 +120,61 @@ ok('망치 최소 길이가 몸통 밖이다 (자루가 몸 안으로 말리지 
 ok('망치 사거리가 최소 길이보다 크다', T.HAMMER_MAX > T.HAMMER_MIN);
 eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, .1]);
 
+// ---- GUOI 지형: 주 루트가 기하적으로 등반 가능한가 ----
+// "발판 위치가 적절하지 않아 못 올라간다"는 피드백의 재발 방지. 연속 발판 사이의
+// 수직 간격이 망치 사거리의 3/4 이내, 수평 틈이 사거리 이내인지 계산으로 검사한다.
+(function () {
+  var bad = [];
+  for (var i = 1; i < T.ROUTE.length; i++) {
+    var a = T.ROUTE[i - 1], b = T.ROUTE[i];
+    var vGap = a.y - b.y; // 위로 갈수록 y가 작다
+    var hGap = Math.max(0, Math.max(a.x, b.x) - Math.min(a.x + a.w, b.x + b.w));
+    if (vGap <= 0 || vGap > T.HAMMER_MAX * 0.75 || hGap > T.HAMMER_MAX) {
+      bad.push(i + ':(v' + vGap + ',h' + hGap + ')');
+    }
+  }
+  eq('주 루트 ' + T.ROUTE.length + '개 발판이 전부 사거리 안에서 이어진다', bad, []);
+  // 바위가 주 루트 발판과 겹쳐 길을 막지 않는가
+  var blocked = [];
+  T.TERRAIN.forEach(function (s) {
+    if (s.t !== 'c') return;
+    T.ROUTE.forEach(function (r, ri) {
+      var cx = Math.max(r.x, Math.min(s.x, r.x + r.w));
+      var cy = Math.max(r.y - 40, Math.min(s.y, r.y)); // 발판 상단 40px = 서는 공간
+      if (Math.hypot(s.x - cx, s.y - cy) < s.r) blocked.push(ri);
+    });
+  });
+  eq('바위가 주 루트의 발 디딜 공간을 막지 않는다', blocked, []);
+})();
+
 // ---- 배포 payload 예산 ----
 // 심사 요건 1번이 "링크 클릭만으로 브라우저에서 바로 플레이"다. 지금은 8개 파일 105KB라
 // 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
-  '../../index.html', 'shell.css', 'chat.js', 'shell.js',
+  '../../index.html', 'shell.css', 'config.js', 'chat.js', 'llm.js', 'shell.js',
   '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
   '../giving-up/chat-data.js', '../giving-up/game.js',
+  '../pocket/chat-data.js', '../pocket/game.js',
 ];
-var BUDGET_KB = 250;
-Promise.all(SHIPPED.map(function (u) {
-  return fetch(u, { cache: 'no-store' }).then(function (r) { return r.text(); }).catch(function () { return null; });
-})).then(function (texts) {
-  var missing = SHIPPED.filter(function (_, i) { return texts[i] === null; });
-  eq('배포 파일이 전부 존재한다', missing, []);
-  var kb = texts.reduce(function (a, t) { return a + (t ? new Blob([t]).size : 0); }, 0) / 1024;
+// 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
+var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']
+  .map(function (m) { return 'faces/adventurer_' + m + '.png'; });
+var BUDGET_KB = 450; // 코드 ~140KB + 얼굴 ~100KB + 여유. "링크 클릭 즉시 플레이" 가드
+Promise.all([
+  Promise.all(SHIPPED.map(function (u) {
+    return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
+  })),
+  Promise.all(FACES.map(function (u) {
+    return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.arrayBuffer() : null; }).catch(function () { return null; });
+  })),
+]).then(function (rs) {
+  var texts = rs[0], imgs = rs[1];
+  var missing = SHIPPED.filter(function (_, i) { return texts[i] === null; })
+    .concat(FACES.filter(function (_, i) { return imgs[i] === null; }));
+  eq('배포 파일이 전부 존재한다 (코드 ' + SHIPPED.length + ' + 얼굴 ' + FACES.length + ')', missing, []);
+  var kb = texts.reduce(function (a, t) { return a + (t ? new Blob([t]).size : 0); }, 0) / 1024
+         + imgs.reduce(function (a, b) { return a + (b ? b.byteLength : 0); }, 0) / 1024;
   ok('배포 payload ' + kb.toFixed(0) + 'KB — 예산 ' + BUDGET_KB + 'KB 이내', kb < BUDGET_KB);
   // Assets/는 라이선스 미확인 스테이징이라 배포물이 참조하면 안 된다 (Assets/README.md)
   var leaks = SHIPPED.filter(function (_, i) { return texts[i] && /["'(\s]Assets\//.test(texts[i]); });
