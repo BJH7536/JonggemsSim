@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>셸 자체 점검</title>
+<style>
+  body { background:#0b0908; color:#ece7dd; font:13px/1.7 ui-monospace, Consolas, monospace; padding:24px; }
+  .ok { color:#6fd98f; } .ng { color:#ff6b5a; font-weight:700; }
+  h1 { font-size:16px; color:#ffb447; letter-spacing:2px; }
+  p.note { color:#8a8478; }
+</style>
+</head>
+<body>
+<h1>JONGGEMS SHELL — SELF CHECK</h1>
+<p class="note">조용히 틀리면 게임이 뒤집히는 로직만 본다: 규약 4 신선도 회전과 채팅 검증 게이트.<br>
+그래픽·물리는 대상이 아니다 (눈으로 본다).</p>
+<pre id="out"></pre>
+
+<script src="chat.js"></script>
+<script src="shell.js"></script>
+<script>
+var pass = 0, fail = 0, log = [];
+function eq(label, got, want) {
+  var g = JSON.stringify(got), w = JSON.stringify(want);
+  var ok = g === w;
+  ok ? pass++ : fail++;
+  log.push((ok ? '  ok  ' : ' FAIL ') + label + (ok ? '' : '\n        got  ' + g + '\n        want ' + w));
+}
+function ok(label, cond) { eq(label, !!cond, true); }
+
+// ---- 규약 4: 신선도 감쇠표 ----
+eq('감쇠표는 100/70/45/25/10%', Shell.FRESH_MULT, [1, .7, .45, .25, .1]);
+
+// ---- 규약 4: 같은 게임만 반복하면 바닥까지 물린다 ----
+var ids = ['a', 'b'], f = {};
+var seq = [];
+for (var i = 0; i < 6; i++) { f = Shell.rotateFresh(f, 'a', ids); seq.push(f.a); }
+eq('a만 6회 방송 → 단계 1,2,3,4,4,4', seq, [1, 2, 3, 4, 4, 4]);
+eq('그동안 b는 0에서 더 내려가지 않는다', f.b, 0);
+
+// ---- 규약 4: 종겜을 벌주면 안 된다 ----
+// 중요한 건 저장된 단계가 아니라 "방송을 시작하는 순간 적용되는 배수"다.
+// 교대로 틀면 매 방송이 ×1.0이어야 하고, 한 게임만 파면 계단식으로 떨어져야 한다.
+function multsWhilePlaying(order) {
+  var m = {}, got = [];
+  order.forEach(function (id) {
+    got.push(Shell.FRESH_MULT[m[id] || 0]);
+    m = Shell.rotateFresh(m, id, ids);
+  });
+  return got;
+}
+eq('a,b 교대 8회 → 매 방송이 100%', multsWhilePlaying(['a','b','a','b','a','b','a','b']),
+   [1, 1, 1, 1, 1, 1, 1, 1]);
+eq('a만 6회 → 100/70/45/25/10/10%', multsWhilePlaying(['a','a','a','a','a','a']),
+   [1, .7, .45, .25, .1, .1]);
+
+// ---- 규약 4: 물린 뒤 다른 게임을 방송하면 회복된다 ----
+f = {};
+for (var k = 0; k < 3; k++) f = Shell.rotateFresh(f, 'a', ids); // a: 3단계
+eq('a 3회 → 3단계', f.a, 3);
+f = Shell.rotateFresh(f, 'b', ids);
+eq('b 한 판이 a를 한 단계 회복시킨다', f.a, 2);
+
+// ---- 채팅 검증 게이트 ----
+Chat.init(document.createElement('div'));
+Chat.load({
+  t: { facts: ['수습 +{gain}!!'], flavor: [['hype', '와 미쳤다'], ['mock', '운빨 ㅋㅋ']] },
+}, {});
+Chat.history.length = 0;
+ok('사실 슬롯이 빠진 발화는 폐기된다', Chat.verify('아무 말', { gain: '1,234' }) === false);
+ok('슬롯이 그대로 들어간 발화는 통과한다', Chat.verify('수습 +1,234!!', { gain: '1,234' }) === true);
+Chat.history = ['와 미쳤다'];
+ok('직전 발화와 같으면 폐기된다 (비반복 게이트)', Chat.verify('와 미쳤다', {}) === false);
+ok('다른 말은 통과한다', Chat.verify('운빨 ㅋㅋ', {}) === true);
+Chat.history.length = 0;
+ok('어휘에 없는 이벤트는 조용히 무시된다 (셸이 죽지 않는다)',
+   (function () { try { Chat.react('없는이벤트'); return true; } catch (e) { return false; } })());
+
+// ---- 사실 슬롯 이스케이프가 검증 계약을 깨지 않는지 ----
+Chat.history.length = 0;
+var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', { gain: '9,999' }, true);
+eq('슬롯 치환 결과', composed, '수습 +9,999!!');
+
+document.getElementById('out').textContent =
+  log.join('\n') + '\n\n' + (fail ? 'FAIL ' + fail + ' / ' : '') + 'PASS ' + pass;
+document.getElementById('out').className = fail ? 'ng' : 'ok';
+console.log(fail ? 'SELFTEST FAIL ' + fail : 'SELFTEST PASS ' + pass);
+</script>
+</body>
+</html>
