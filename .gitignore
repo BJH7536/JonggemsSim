@@ -1,0 +1,13 @@
+# 제출 제외 자료 (커밋 금지 — 사용자 지시)
+submission.local/
+
+# OMC 런타임 상태
+.omc/
+
+# 빌드·의존성 (향후)
+node_modules/
+dist/
+
+# OS
+Thumbs.db
+.DS_Store
