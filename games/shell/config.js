@@ -10,5 +10,5 @@
  * 포함되어 있어야 한다 — 기본값에 이미 들어 있다.
  */
 window.JONGGEMS_CONFIG = {
-  PROXY_URL: '',
+  PROXY_URL: 'https://proxy-pi-taupe.vercel.app',
 };

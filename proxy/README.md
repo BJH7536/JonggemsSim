@@ -72,6 +72,10 @@ GitHub Pages에서는 즉시 유출이다. 그래서 키를 가진 최소한의 
 
 ## 4. 배포 절차 (5분)
 
+> **현재 프로덕션: `https://proxy-pi-taupe.vercel.app`** (2026-08-07 배포, icn1,
+> 프로젝트 `stopresents-projects/proxy`). `config.js`에 삽입 완료. 아직
+> `ANTHROPIC_API_KEY`가 없어 `live:false` — 아래 env add 단계만 남았다.
+
 전제: Vercel 계정, Anthropic API 키. 프로젝트 루트는 **`proxy/`** 다 (레포 루트 아님).
 
 ```bash
