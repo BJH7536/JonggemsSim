@@ -129,8 +129,35 @@
         (function (p, wantFact) {
           setTimeout(function () {
             if (self.epoch !== token) return; // 방송이 바뀌었으면 폐기
-            var text = self.compose(p, ev, facts, wantFact);
-            if (text) self.push(p, text, ev === 'donation' ? 'cdon' : '');
+            var localPush = function () {
+              var text = self.compose(p, ev, facts, wantFact);
+              if (text) self.push(p, text, ev === 'donation' ? 'cdon' : '');
+            };
+            // [LLM-INTEGRATION-POINT] LLM 경로 — 대형 이벤트(버스트 무게 ≥2)의 flavor 줄만.
+            // 사실 슬롯 줄(wantFact)은 정확성이 생명이라 항상 로컬 템플릿이다.
+            // LLM 발화도 아래에서 같은 verify() 게이트를 통과해야 화면에 나온다 —
+            // 게이트는 LLM을 갈아끼워도 밖에 유지한다 (CLAUDE.md · proxy/README.md 2절).
+            if (!wantFact && (self.BURST[ev] || 1) >= 2 &&
+                global.JongLLM && global.JongLLM.ready()) {
+              global.JongLLM.compose(p, ev, facts, {
+                game: global.Shell && global.Shell.game ? global.Shell.game.title : '',
+                viewers: global.Shell ? Math.round(global.Shell.viewers) : 0,
+                recent: self.history.slice(-3),
+              }).then(function (text) {
+                if (self.epoch !== token) return; // 응답이 늦게 왔는데 방송이 바뀐 경우
+                if (text && self.verify(text, {})) {
+                  self.history.push(text);
+                  if (self.history.length > 10) self.history.shift();
+                  self.push(p, esc(text), ev === 'donation' ? 'cdon' : '');
+                } else {
+                  localPush(); // 게이트 탈락 — 로컬 템플릿이 대신 말한다
+                }
+              }).catch(function () {
+                if (self.epoch === token) localPush(); // 타임아웃·오류 — 조용한 폴백
+              });
+            } else {
+              localPush();
+            }
           }, delay);
         })(p, wantFact);
         delay += 90 + Math.random() * 220;
