@@ -18,6 +18,10 @@
 
 <script src="chat.js"></script>
 <script src="shell.js"></script>
+<script src="../hwaryeok/chat-data.js"></script>
+<script src="../hwaryeok/game.js"></script>
+<script src="../giving-up/chat-data.js"></script>
+<script src="../giving-up/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
 function eq(label, got, want) {
@@ -80,6 +84,37 @@ ok('어휘에 없는 이벤트는 조용히 무시된다 (셸이 죽지 않는�
 Chat.history.length = 0;
 var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', { gain: '9,999' }, true);
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
+
+// ---- 등록된 게임이 계약을 지키는가 ----
+eq('게임 2종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up']);
+Shell.games.forEach(function (g) {
+  ok(g.title + ': 필수 필드가 있다',
+     g.title && g.tagline && g.duration > 0 && g.startViewers > 0 && typeof g.start === 'function');
+  ok(g.title + ': 채팅 어휘에 start/end가 있다', !!(g.chat.T.start && g.chat.T.end));
+  var thin = Object.keys(g.chat.T).filter(function (k) { return g.chat.T[k].flavor.length < 6; });
+  eq(g.title + ': 모든 이벤트가 flavor 6개 이상 (비반복 게이트 전제)', thin, []);
+  var tones = ['hype', 'worry', 'info', 'mock', 'cheer', 'question'];
+  var bad = [];
+  Object.keys(g.chat.T).forEach(function (k) {
+    g.chat.T[k].flavor.forEach(function (f) { if (tones.indexOf(f[0]) < 0) bad.push(k + ':' + f[0]); });
+  });
+  eq(g.title + ': 톤이 전부 공인 6종 안에 있다', bad, []);
+});
+
+// ---- Giving Up On It: 물리 상수끼리 모순되지 않는가 ----
+// 초판 버그: "낙하속도 700 이상"과 "높이 손실 3m 미만"을 동시에 요구해 clutch가 영원히 안 터졌다.
+// 값만 봐서는 안 보이고 v²=2gh를 넣어야 드러나는 종류라 여기서 계산으로 잡는다.
+var T = Shell.games.filter(function (g) { return g.id === 'giving-up'; })[0].tuning;
+var fallPxForClutch = T.CLUTCH_V * T.CLUTCH_V / (2 * T.GRAV);
+var fallMForClutch = fallPxForClutch / T.PX_PER_M;
+var mapM = (T.GROUND_Y - T.SUMMIT_Y) / T.PX_PER_M;
+ok('clutch 속도에 도달하려면 ' + fallMForClutch.toFixed(1) + 'm 낙하 — 맵 높이(' +
+   mapM.toFixed(0) + 'm) 안에서 가능하다', fallMForClutch < mapM * 0.5);
+ok('그 낙하 후에도 CLUTCH_MIN_H 위에 있을 수 있다 (조건이 서로를 배제하지 않는다)',
+   fallMForClutch + T.CLUTCH_MIN_H < mapM);
+ok('망치 최소 길이가 몸통 밖이다 (자루가 몸 안으로 말리지 않는다)', T.HAMMER_MIN > 16);
+ok('망치 사거리가 최소 길이보다 크다', T.HAMMER_MAX > T.HAMMER_MIN);
+eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, .1]);
 
 document.getElementById('out').textContent =
   log.join('\n') + '\n\n' + (fail ? 'FAIL ' + fail + ' / ' : '') + 'PASS ' + pass;

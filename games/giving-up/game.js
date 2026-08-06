@@ -9,8 +9,18 @@
  * 다만 큰 낙차는 높이 올라가야만 생기므로, "올라가라 → 떨어져라 → 물리면 더 올라가라"가
  * 하나의 루프로 닫힌다 (규약 4를 추락 신선도로 구현 — 아래 FALL_FRESH).
  *
- * ⚠ 밸런스 주의: 화력쇼와 달리 이 게임은 아직 전략 스윕 검증을 거치지 않았다.
- *   상수는 데모용 1차 조율값이다 — 05-hwaryeok-spec.md급 검증 기록이 없다는 점을 감안할 것.
+ * ── 조작감 2차 (2026-08-07) ────────────────────────────────────────────────
+ * 1차 구현의 결함 3가지를 고쳤다:
+ *   (a) 망치 길이가 고정이라 커서가 가까이 있어도 항상 최대로 뻗었다 → 커서까지만 뻗는다.
+ *       원작의 "가까운 턱에 살짝 걸치기"가 이걸로 비로소 가능해진다. 가장 큰 차이.
+ *   (b) 망치 끝점만 충돌시켜서 빠른 마우스 이동이 얇은 발판을 통과했다 → 자루를 몸통에서
+ *       바깥으로 훑어 처음 닿는 지점을 접점으로 삼는다. 막대로 취급하니 턱에 걸쳐지기도 한다.
+ *   (c) 지형이 직사각형뿐이라 미끄러짐이 없었다 → 바위(원)를 섞었다. 원작의 재미는 곡면에서
+ *       주르륵 미끄러지는 데 있고, 사각형만으로는 그 질감이 안 나온다.
+ * 그 외: 카메라 감속 추종, 사거리 링, 접점 하이라이트, 먼지, 'clutch'(살렸다) 이벤트 배선.
+ *
+ * ⚠ 밸런스 주의: 화력쇼와 달리 이 게임은 전략 스윕 검증을 거치지 않았다.
+ *   상수는 데모용 조율값이다 — 05-hwaryeok-spec.md급 검증 기록이 없다는 점을 감안할 것.
  */
 (function () {
   'use strict';
@@ -28,73 +38,119 @@
   var SUMMIT_Y = 195;         // 정상 발판 상단 → 약 66m
 
   // 고정 지형. 매 방송 같은 산이어야 최고 기록이 의미를 가진다 (절차 생성 금지).
-  var LEDGES = [
-    { x: 0, y: GROUND_Y, w: 960, h: 80 },
-    { x: 120, y: 1440, w: 200, h: 24 }, { x: 420, y: 1380, w: 160, h: 24 },
-    { x: 680, y: 1320, w: 200, h: 24 }, { x: 380, y: 1250, w: 150, h: 24 },
-    { x: 110, y: 1190, w: 180, h: 24 }, { x: 500, y: 1130, w: 130, h: 24 },
-    { x: 760, y: 1075, w: 170, h: 24 }, { x: 430, y: 1010, w: 140, h: 24 },
-    { x: 150, y: 950,  w: 160, h: 24 }, { x: 620, y: 900,  w: 150, h: 24 },
-    { x: 330, y: 840,  w: 130, h: 24 }, { x: 30,  y: 780,  w: 150, h: 24 },
-    { x: 520, y: 730,  w: 140, h: 24 }, { x: 790, y: 675,  w: 150, h: 24 },
-    { x: 400, y: 615,  w: 120, h: 24 }, { x: 120, y: 560,  w: 150, h: 24 },
-    { x: 600, y: 505,  w: 130, h: 24 }, { x: 330, y: 450,  w: 120, h: 24 },
-    { x: 700, y: 395,  w: 140, h: 24 }, { x: 140, y: 340,  w: 140, h: 24 },
-    { x: 470, y: 290,  w: 130, h: 24 }, { x: 760, y: 240,  w: 150, h: 24 },
-    { x: 350, y: SUMMIT_Y, w: 200, h: 30 },
+  // 발판(rect)과 바위(circle)를 섞는다 — 발판만 있으면 실수가 "못 올라감"으로만 끝나지만,
+  // 바위가 섞이면 실수가 "미끄러져 떨어짐"이 된다. 이 게임의 수익원은 후자다.
+  function R(x, y, w, h) { return { t: 'r', x: x, y: y, w: w, h: h }; }
+  function C(x, y, r) { return { t: 'c', x: x, y: y, r: r }; }
+  var TERRAIN = [
+    R(0, GROUND_Y, 960, 80),
+    C(180, 1492, 46), R(100, 1430, 190, 22), C(392, 1440, 40),
+    R(420, 1362, 170, 22), C(662, 1392, 46), R(680, 1300, 190, 22),
+    C(520, 1302, 34), R(350, 1240, 150, 22), C(180, 1252, 42),
+    R(90, 1176, 175, 22), C(332, 1160, 36), R(470, 1114, 140, 22),
+    C(700, 1130, 44), R(750, 1054, 165, 22), C(600, 1040, 32),
+    R(400, 994, 145, 22), C(250, 1000, 38), R(130, 934, 160, 22),
+    C(360, 920, 34), R(580, 884, 150, 22), C(790, 880, 40),
+    R(300, 824, 140, 22), C(140, 830, 36), R(20, 764, 150, 22),
+    C(260, 750, 34), R(490, 714, 145, 22), C(680, 700, 38),
+    R(760, 654, 160, 22), C(600, 640, 32), R(380, 600, 130, 22),
+    C(230, 590, 36), R(100, 544, 150, 22), C(330, 530, 34),
+    R(560, 490, 140, 22), C(760, 480, 38), R(310, 434, 130, 22),
+    C(150, 424, 34), R(670, 380, 145, 22), C(500, 370, 36),
+    R(120, 324, 145, 22), C(330, 310, 34), R(450, 274, 135, 22),
+    C(700, 264, 38), R(740, 224, 150, 22),
+    R(340, SUMMIT_Y, 210, 28),
     // 보이지 않는 양옆 벽 — 화면 밖으로 빠지지 않게
-    { x: -60, y: 0, w: 60, h: WORLD_H, hidden: true },
-    { x: 960, y: 0, w: 60, h: WORLD_H, hidden: true },
+    { t: 'r', x: -60, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
+    { t: 'r', x: 960, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
   ];
 
   // ---------- 물리 ----------
   var PR = 16;              // 항아리 반지름
-  var HAMMER_LEN = 112;
+  var HAMMER_MAX = 118;     // 사거리. 실제 길이는 커서까지의 거리로 정해진다
+  var HAMMER_MIN = 22;      // 몸통 안으로 말려들지 않게
+  var SHAFT_STEPS = 9;      // 자루를 훑는 표본 수 (막대 충돌)
   var GRAV = 1500;
-  var MAX_V = 1500;
-  var MAX_STEP = 26;        // 망치가 박혀 있을 때 한 프레임에 밀 수 있는 거리 (텔레포트 방지)
+  var MAX_V = 1600;
+  var MAX_STEP = 30;        // 박힌 망치가 한 프레임에 몸을 밀 수 있는 거리 (텔레포트 방지)
 
   // 규약 4 — 추락 신선도: 같은 짓만 반복하면 물린다. 신기록 높이 갱신으로만 회복된다.
   var FALL_FRESH = [1, .7, .45, .25, .1];
 
-  var sfxHit   = function () { if (!sfx.gate('gu_h')) return; sfx.tone(180, .05, 'square', .04); };
-  var sfxSlide = function () { if (!sfx.gate('gu_s')) return; sfx.noise(.12, .05, 400); };
+  // clutch 판정 상수. 물리와 얽혀 있어서 값만 보고는 성립 여부를 알 수 없다 —
+  // 실제로 초판에서 "속도 700 이상 + 높이 손실 3m 미만"이라는 서로를 배제하는 조건을 썼고
+  // 이벤트가 영원히 안 터졌다. 아래 tuning으로 노출해 selftest가 도달 가능성을 검사한다.
+  var CLUTCH_V = 550;      // 이 속도 이상으로 떨어지던 중이어야
+  var CLUTCH_MIN_H = 3;    // 이 높이 위에서 붙잡아야 (바닥에 처박힌 건 clutch가 아니다)
+
+  var sfxTick  = function () { if (!sfx.gate('gu_k')) return; sfx.tone(210, .04, 'square', .035); };
+  var sfxHit   = function () { if (!sfx.gate('gu_h')) return; sfx.noise(.09, .06, 260); };
+  var sfxSlide = function () { if (!sfx.gate('gu_s')) return; sfx.noise(.1, .035, 520); };
   var sfxFall  = function () { if (!sfx.gate('gu_f')) return; sfx.noise(.35, .16, 180); sfx.tone(70, .3, 'sine', .12); };
   var sfxUp    = function () { if (!sfx.gate('gu_u')) return; sfx.tone(740, .08, 'triangle', .06); sfx.tone(988, .1, 'triangle', .05, .06); };
+  var sfxSave  = function () { if (!sfx.gate('gu_v')) return; sfx.tone(880, .07, 'triangle', .08); sfx.tone(1320, .12, 'triangle', .07, .06); };
   var sfxTop   = function () { if (!sfx.gate('gu_t')) return; [523, 659, 784, 1047].forEach(function (f, i) { sfx.tone(f, .18, 'triangle', .1, i * .1); }); };
 
-  function pointInSolid(x, y) {
-    for (var i = 0; i < LEDGES.length; i++) {
-      var r = LEDGES[i];
-      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r;
+  // ---------- 지형 질의 ----------
+  function shapeAt(x, y) {
+    for (var i = 0; i < TERRAIN.length; i++) {
+      var s = TERRAIN[i];
+      if (s.t === 'r') {
+        if (x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) return s;
+      } else {
+        var dx = x - s.x, dy = y - s.y;
+        if (dx * dx + dy * dy <= s.r * s.r) return s;
+      }
     }
     return null;
   }
-  // 지형 안에 박힌 점을 가장 가까운 표면으로 밀어낸다
-  function pushOut(x, y, r) {
-    var l = x - r.x, rr = r.x + r.w - x, t = y - r.y, b = r.y + r.h - y;
-    var m = Math.min(l, rr, t, b);
-    if (m === t) return { x: x, y: r.y - .5 };
-    if (m === b) return { x: x, y: r.y + r.h + .5 };
-    if (m === l) return { x: r.x - .5, y: y };
-    return { x: r.x + r.w + .5, y: y };
+  // 도형 안에 박힌 점을 가장 가까운 표면으로
+  function surfaceOf(s, x, y) {
+    if (s.t === 'c') {
+      var dx = x - s.x, dy = y - s.y, d = Math.hypot(dx, dy) || 1;
+      return { x: s.x + dx / d * (s.r + .5), y: s.y + dy / d * (s.r + .5) };
+    }
+    var l = x - s.x, r = s.x + s.w - x, t = y - s.y, b = s.y + s.h - y;
+    var m = Math.min(l, r, t, b);
+    if (m === t) return { x: x, y: s.y - .5 };
+    if (m === b) return { x: x, y: s.y + s.h + .5 };
+    if (m === l) return { x: s.x - .5, y: y };
+    return { x: s.x + s.w + .5, y: y };
+  }
+  // 몸통을 도형 밖으로 밀어내고 법선을 돌려준다
+  function separate(s, px, py, rad) {
+    var cx, cy;
+    if (s.t === 'c') { cx = s.x; cy = s.y; }
+    else { cx = clamp(px, s.x, s.x + s.w); cy = clamp(py, s.y, s.y + s.h); }
+    var dx = px - cx, dy = py - cy, d2 = dx * dx + dy * dy;
+    var reach = s.t === 'c' ? rad + s.r : rad;
+    if (d2 >= reach * reach) return null;
+    var d = Math.sqrt(d2), nx, ny;
+    if (d > .0001) { nx = dx / d; ny = dy / d; }
+    else {
+      var o = surfaceOf(s, px, py);
+      var ox = o.x - px, oy = o.y - py, od = Math.hypot(ox, oy) || 1;
+      nx = ox / od; ny = oy / od; d = 0;
+    }
+    return { nx: nx, ny: ny, push: reach - d };
   }
 
   function start(stage) {
     var st = {
       px: 480, py: GROUND_Y - PR, vx: 0, vy: 0,
-      tipX: 560, tipY: GROUND_Y - 90,
-      mx: 560, my: GROUND_Y - 90,   // 월드 좌표
-      planted: false, camY: 0,
-      best: 0, paidM: 0, peak: 0,   // 높이(m)
+      len: HAMMER_MAX, tipX: 560, tipY: GROUND_Y - 90,
+      mx: 590, my: GROUND_Y - 60,   // 월드 좌표
+      planted: false, contact: null, camY: 0,
+      best: 0, paidM: 0, peak: 0,
       fallFresh: 0, recoverAcc: 0,
-      falls: 0, maxDrop: 0, cleared: false,
-      restT: 0, stillT: 0, lastH: 0, nagT: 0,
+      falls: 0, maxDrop: 0, saves: 0, cleared: false,
+      restT: 0, stillT: 0, lastH: 0, nagT: 0, airVy: 0, touched: false,
       donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
       dust: [],
     };
     var MILES = [1000, 5000, 15000, 60000, 150000];
     var panel = stage.panel;
+    st.camY = clamp(st.py - 250, 0, WORLD_H - VH);
 
     var heightM = function () { return Math.max(0, (GROUND_Y - PR - st.py) / PX_PER_M); };
 
@@ -104,8 +160,8 @@
         '<div class="cell"><div class="lab">현재 높이</div><div class="val" id="guH">0.0m</div></div>' +
         '<div class="cell"><div class="lab">최고 높이</div><div class="val" id="guB">0.0m</div></div>' +
         '<div class="cell"><div class="lab">추락 신선도</div><div class="val" id="guF">100%</div></div>' +
-        '<div class="hint">마우스로 <b>망치</b>를 움직인다. 망치 끝을 바위에 걸고 밀어서 올라가라.<br>' +
-        '조금씩 오르면 조금 번다. <b>크게 떨어지면 왕창 번다</b> — 그게 이 게임이 방송되는 이유다.</div>' +
+        '<div class="hint"><b>마우스를 움직이면 망치가 그쪽으로 뻗는다</b> — 커서까지만 뻗으니 가까운 턱에 살짝 걸칠 수도 있다.<br>' +
+        '바위에 걸고 <b>반대로 밀어내면</b> 몸이 딸려 올라간다. 크게 떨어질수록 시청자가 폭증한다.</div>' +
       '</div>';
 
     function renderPanel() {
@@ -121,76 +177,104 @@
       if ((e = document.getElementById('guFalls'))) e.textContent = st.falls;
     }
 
-    // ---------- 물리 스텝 ----------
+    function puff(x, y, n) {
+      for (var i = 0; i < n; i++) {
+        st.dust.push({ x: x, y: y, vx: (Math.random() - .5) * 60, vy: -Math.random() * 40,
+                       a: .5, r: 2 + Math.random() * 3 });
+      }
+      if (st.dust.length > 90) st.dust.splice(0, st.dust.length - 90);
+    }
+
+    // ---------- 물리 ----------
     function resolveBody() {
-      var hit = false;
+      var hit = null;
       for (var pass = 0; pass < 3; pass++) {
-        for (var i = 0; i < LEDGES.length; i++) {
-          var r = LEDGES[i];
-          var cx = clamp(st.px, r.x, r.x + r.w), cy = clamp(st.py, r.y, r.y + r.h);
-          var dx = st.px - cx, dy = st.py - cy, d2 = dx * dx + dy * dy;
-          if (d2 >= PR * PR) continue;
-          hit = true;
-          var d = Math.sqrt(d2), nx, ny;
-          if (d > .0001) { nx = dx / d; ny = dy / d; }
-          else { // 중심이 완전히 박힘 — 최소 관통축으로
-            var o = pushOut(st.px, st.py, r);
-            nx = Math.sign(o.x - st.px) || 0; ny = Math.sign(o.y - st.py) || -1;
-            d = 0;
-          }
-          st.px += nx * (PR - d); st.py += ny * (PR - d);
-          // 법선 성분 제거 + 접선 마찰 (튕기지 않는다 — 원작도 거의 안 튄다)
-          var vn = st.vx * nx + st.vy * ny;
-          if (vn < 0) { st.vx -= vn * nx; st.vy -= vn * ny; }
-          st.vx *= .86; st.vy *= .96;
+        for (var i = 0; i < TERRAIN.length; i++) {
+          var sep = separate(TERRAIN[i], st.px, st.py, PR);
+          if (!sep) continue;
+          hit = TERRAIN[i];
+          st.px += sep.nx * sep.push; st.py += sep.ny * sep.push;
+          var vn = st.vx * sep.nx + st.vy * sep.ny;
+          if (vn < 0) { st.vx -= vn * sep.nx; st.vy -= vn * sep.ny; }
+          // 곡면은 잘 미끄러지고 평면은 붙잡힌다 — 원작의 질감이 여기서 나온다
+          var fric = TERRAIN[i].t === 'c' ? .965 : .88;
+          st.vx *= fric; st.vy *= .975;
         }
       }
       return hit;
     }
 
     function physics(dt) {
-      var prevX = st.px, prevY = st.py;
+      var prevX = st.px, prevY = st.py, wasPlanted = st.planted;
 
-      // 마우스 방향으로 망치를 뻗는다 (길이 고정)
+      // 망치는 커서 방향으로, 커서까지의 거리만큼만 뻗는다 (사거리 상한 HAMMER_MAX)
       var dx = st.mx - st.px, dy = st.my - st.py;
-      var len = Math.hypot(dx, dy) || 1;
-      var dirX = dx / len, dirY = dy / len;
-      var wantX = st.px + dirX * HAMMER_LEN, wantY = st.py + dirY * HAMMER_LEN;
+      var dist = Math.hypot(dx, dy) || 1;
+      var dirX = dx / dist, dirY = dy / dist;
+      st.len = clamp(dist, HAMMER_MIN, HAMMER_MAX);
 
-      var rect = pointInSolid(wantX, wantY);
-      if (rect) {
-        // 망치 끝이 바위 안 → 끝은 표면에 머물고, 대신 몸이 밀린다 (장대높이뛰기)
-        var surf = pushOut(wantX, wantY, rect);
-        var tX = surf.x - dirX * HAMMER_LEN, tY = surf.y - dirY * HAMMER_LEN;
+      // 자루를 몸통 바깥으로 훑어 처음 닿는 지점을 접점으로 — 끝점만 보면 얇은 발판을 통과한다
+      var hitS = null, hitT = 0;
+      for (var k = 1; k <= SHAFT_STEPS; k++) {
+        var f = PR / st.len + (1 - PR / st.len) * (k / SHAFT_STEPS);
+        if (f > 1) break;
+        var s = shapeAt(st.px + dirX * st.len * f, st.py + dirY * st.len * f);
+        if (s) { hitS = s; hitT = f; break; }
+      }
+
+      if (hitS) {
+        // 접점은 표면에 머물고, 대신 몸이 밀린다 (장대높이뛰기)
+        var cxp = st.px + dirX * st.len * hitT, cyp = st.py + dirY * st.len * hitT;
+        var surf = surfaceOf(hitS, cxp, cyp);
+        var reach = st.len * hitT;
+        var tX = surf.x - dirX * reach, tY = surf.y - dirY * reach;
         var mdx = tX - st.px, mdy = tY - st.py, m = Math.hypot(mdx, mdy);
         if (m > MAX_STEP) { mdx = mdx / m * MAX_STEP; mdy = mdy / m * MAX_STEP; }
         st.px += mdx; st.py += mdy;
         st.tipX = surf.x; st.tipY = surf.y;
-        st.planted = true;
-        if (m > 3) sfxSlide();
+        st.planted = true; st.contact = hitS;
+        if (!wasPlanted) { sfxTick(); puff(surf.x, surf.y, 4); }
+        else if (m > 6) { sfxSlide(); if (Math.random() < .25) puff(surf.x, surf.y, 1); }
       } else {
-        st.tipX = wantX; st.tipY = wantY;
-        st.planted = false;
+        st.tipX = st.px + dirX * st.len; st.tipY = st.py + dirY * st.len;
+        st.planted = false; st.contact = null;
         st.vy += GRAV * dt;
         st.px += st.vx * dt; st.py += st.vy * dt;
       }
 
-      if (resolveBody() && !st.planted && Math.abs(st.vy) > 250) sfxHit();
+      var landed = resolveBody();
+      if (landed && !st.planted) {
+        if (st.airVy > 260) { sfxHit(); puff(st.px, st.py + PR, 5); }
+        st.touched = true; // 몸이 지형에 닿았다 = 자력으로 붙잡은 게 아니다 (clutch 판정용)
+      }
       st.px = clamp(st.px, PR, W - PR);
       st.py = Math.min(st.py, GROUND_Y - PR + 40);
 
       if (st.planted) {
         // 밀린 만큼이 곧 속도 — 손을 떼는 순간 이 속도로 날아간다 (플릭)
-        var k = .55;
-        st.vx = st.vx * (1 - k) + (st.px - prevX) / dt * k;
-        st.vy = st.vy * (1 - k) + (st.py - prevY) / dt * k;
+        var kk = .7;
+        st.vx = st.vx * (1 - kk) + (st.px - prevX) / dt * kk;
+        st.vy = st.vy * (1 - kk) + (st.py - prevY) / dt * kk;
       }
       st.vx = clamp(st.vx, -MAX_V, MAX_V); st.vy = clamp(st.vy, -MAX_V, MAX_V);
+
+      // clutch(살렸다) — "빠르게 떨어지던 중, 바닥에 처박히기 전에 망치로 붙잡았는가".
+      // 처음엔 "높이를 3m 미만으로만 잃었을 때"로 썼는데 이건 성립 불가능한 조건이었다:
+      // 낙하속도 700에 닿으려면 최소 8.2m를 떨어져야 하므로 두 조건이 서로를 배제한다.
+      // 실제로 관객이 환호하는 순간은 "덜 잃었을 때"가 아니라 "바닥까지 안 갔을 때"다.
+      if (!st.planted && st.vy > 0) st.airVy = Math.max(st.airVy, st.vy);
+      if (st.planted && Math.hypot(st.vx, st.vy) < 140) {
+        if (st.airVy > CLUTCH_V && !st.touched && heightM() > CLUTCH_MIN_H) {
+          st.saves++;
+          stage.gain(Math.round(st.airVy * .8), '살렸다!');
+          stage.emit('clutch'); sfxSave(); stage.flash(.12);
+        }
+        st.airVy = 0; st.touched = false;
+      }
     }
 
     // ---------- 시청자 경제 ----------
     function payClimb() {
-      // 신기록 높이는 1m 단위로 정산. 위로 갈수록 1m의 값이 오른다.
       while (st.best >= st.paidM + 1) {
         st.paidM++;
         stage.gain(Math.round(45 * (1 + st.paidM / 30)), null);
@@ -225,20 +309,23 @@
       stage.emit('idle');
     }
 
-    stage.ticker('방송 시작! 망치로 절벽을 올라라', false);
+    stage.ticker('방송 시작! 마우스로 망치를 걸어 올라가라', false);
     renderPanel();
 
     return {
+      st: st, // 검증용 노출 — 물리는 눈으로만 봐서는 확인이 안 되는 경로(고공 낙하 후 clutch 등)가 있다
+
       step: function (dt) {
         var e = document.getElementById('guTime');
         if (e) e.textContent = U.fmtTime(stage.timeLeft);
 
         physics(dt);
         var h = heightM();
-        st.camY = clamp(st.py - 250, 0, WORLD_H - VH);
+        // 카메라는 감속 추종 — 즉시 따라붙으면 추락이 안 무섭다
+        var want = clamp(st.py - 250, 0, WORLD_H - VH);
+        st.camY += (want - st.camY) * Math.min(1, dt * 7);
 
-        // 정상
-        if (!st.cleared && st.py < SUMMIT_Y + 6 && st.px > 350 && st.px < 550) {
+        if (!st.cleared && st.py < SUMMIT_Y + 4 && st.px > 340 && st.px < 550) {
           st.cleared = true;
           var g = stage.gain(60000, '정상 등반!!!');
           stage.stamp('정상 등반'); stage.flash(.5); sfxTop();
@@ -247,7 +334,6 @@
           return;
         }
 
-        // 신기록 높이
         if (h > st.best) {
           var was = Math.floor(st.best);
           st.best = h;
@@ -260,13 +346,10 @@
         }
         if (h > st.peak) st.peak = h;
 
-        // 추락 판정 — "떨어지는 중"이 아니라 "떨어져서 멈췄을 때" 한 번만 친다
+        // 추락 판정 — "떨어지는 중"이 아니라 "떨어져서 멈췄을 때" 한 번만
         var speed = Math.hypot(st.vx, st.vy);
         st.restT = speed < 45 ? st.restT + dt : 0;
-        if (st.restT > .18 && st.peak - h >= 2) {
-          onFall(st.peak - h);
-          st.peak = h;
-        }
+        if (st.restT > .18 && st.peak - h >= 2) { onFall(st.peak - h); st.peak = h; }
 
         // 정체 — 조용히 샌다 (규약 2). 화력쇼의 빈 화구와 같은 원리
         if (Math.abs(h - st.lastH) > .4) { st.lastH = h; st.stillT = 0; }
@@ -279,7 +362,6 @@
           }
         }
 
-        // 양념 (규약 5)
         st.donT -= dt;
         if (st.donT <= 0) {
           st.donT = 9 + Math.random() * 7;
@@ -295,6 +377,11 @@
           st.chatT = clamp(4.2 - Math.log10(stage.viewers + 10) * .55, 1.4, 4.2) + Math.random() * 1.6;
           ambient();
         }
+
+        st.dust = st.dust.filter(function (p) {
+          p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 90 * dt; p.a -= 1.1 * dt;
+          return p.a > 0;
+        });
       },
 
       pointer: function (p) { st.mx = p.x; st.my = p.y + st.camY; },
@@ -302,19 +389,19 @@
       summary: function () {
         return [
           ['최고 높이', st.best.toFixed(1) + 'm' + (st.cleared ? ' (정상!)' : '')],
-          ['추락 횟수', st.falls + '회'],
-          ['최대 낙차', st.maxDrop.toFixed(1) + 'm'],
+          ['추락 / 최대 낙차', st.falls + '회 / ' + st.maxDrop.toFixed(1) + 'm'],
+          ['위기 모면', st.saves + '회'],
         ];
       },
 
       dispose: function () {},
 
       draw: function (ctx, dt) {
-        var cam = st.camY;
         ctx.save();
-        ctx.translate(0, -cam);
-        drawCliff(ctx, cam);
-        drawLedges(ctx, cam);
+        ctx.translate(0, -st.camY);
+        drawCliff(ctx, st.camY);
+        drawTerrain(ctx, st.camY);
+        drawDust(ctx);
         drawClimber(ctx);
         ctx.restore();
         drawRuler(ctx);
@@ -326,15 +413,12 @@
       var g = ctx.createLinearGradient(0, cam, 0, cam + VH);
       g.addColorStop(0, '#1a2230'); g.addColorStop(1, '#0e1219');
       ctx.fillStyle = g; ctx.fillRect(0, cam, W, VH);
-      // 배경 암벽 결 — 고정 패턴이라 스크롤이 눈에 보인다
       ctx.strokeStyle = 'rgba(120,140,170,.07)'; ctx.lineWidth = 2;
       for (var y = Math.floor(cam / 70) * 70; y < cam + VH + 70; y += 70) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
+        ctx.beginPath(); ctx.moveTo(0, y);
         for (var x = 0; x <= W; x += 120) ctx.lineTo(x, y + Math.sin(x * .013 + y * .05) * 16);
         ctx.stroke();
       }
-      // 정상 근처는 하늘빛이 든다
       if (cam < 420) {
         var s = ctx.createLinearGradient(0, 120, 0, 520);
         s.addColorStop(0, 'rgba(120,170,220,.20)'); s.addColorStop(1, 'rgba(120,170,220,0)');
@@ -342,44 +426,65 @@
       }
     }
 
-    function drawLedges(ctx, cam) {
-      LEDGES.forEach(function (r) {
-        if (r.hidden) return;
-        if (r.y > cam + VH || r.y + r.h < cam) return;
-        var g = ctx.createLinearGradient(0, r.y, 0, r.y + r.h);
-        g.addColorStop(0, '#6b6155'); g.addColorStop(.3, '#4a423a'); g.addColorStop(1, '#2b2621');
-        ctx.fillStyle = g; ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = 'rgba(220,210,190,.22)'; ctx.fillRect(r.x, r.y, r.w, 3);
-        ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3);
+    function drawTerrain(ctx, cam) {
+      TERRAIN.forEach(function (s) {
+        if (s.hidden) return;
+        var top = s.t === 'c' ? s.y - s.r : s.y;
+        var bot = s.t === 'c' ? s.y + s.r : s.y + s.h;
+        if (top > cam + VH || bot < cam) return;
+        var lit = s === st.contact;
+        if (s.t === 'c') {
+          var rg = ctx.createRadialGradient(s.x - s.r * .35, s.y - s.r * .4, s.r * .15, s.x, s.y, s.r);
+          rg.addColorStop(0, lit ? '#8b7f6d' : '#6b6155'); rg.addColorStop(1, '#2b2621');
+          ctx.fillStyle = rg;
+          ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+          ctx.strokeStyle = lit ? 'rgba(255,180,71,.75)' : 'rgba(0,0,0,.45)';
+          ctx.lineWidth = lit ? 2.5 : 2; ctx.stroke();
+        } else {
+          var g = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
+          g.addColorStop(0, lit ? '#8b7f6d' : '#6b6155'); g.addColorStop(.3, '#4a423a'); g.addColorStop(1, '#2b2621');
+          ctx.fillStyle = g; ctx.fillRect(s.x, s.y, s.w, s.h);
+          ctx.fillStyle = lit ? 'rgba(255,200,120,.5)' : 'rgba(220,210,190,.22)';
+          ctx.fillRect(s.x, s.y, s.w, 3);
+          ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(s.x, s.y + s.h - 3, s.w, 3);
+        }
       });
-      // 정상 깃발
       ctx.strokeStyle = '#cfc7b8'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(450, SUMMIT_Y); ctx.lineTo(450, SUMMIT_Y - 46); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(445, SUMMIT_Y); ctx.lineTo(445, SUMMIT_Y - 46); ctx.stroke();
       ctx.fillStyle = '#ffb447';
-      ctx.beginPath(); ctx.moveTo(450, SUMMIT_Y - 46); ctx.lineTo(492, SUMMIT_Y - 36); ctx.lineTo(450, SUMMIT_Y - 26); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(445, SUMMIT_Y - 46); ctx.lineTo(487, SUMMIT_Y - 36); ctx.lineTo(445, SUMMIT_Y - 26); ctx.closePath(); ctx.fill();
+    }
+
+    function drawDust(ctx) {
+      st.dust.forEach(function (p) {
+        ctx.fillStyle = 'rgba(190,178,158,' + Math.max(0, p.a) + ')';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+      });
     }
 
     function drawClimber(ctx) {
       var x = st.px, y = st.py;
-      // 망치 자루
+      // 사거리 링 — 망치가 어디까지 닿는지 안 보이면 조작이 추측이 된다
+      if (!st.planted) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,180,71,.13)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 7]);
+        ctx.beginPath(); ctx.arc(x, y - 16, HAMMER_MAX, 0, TAU); ctx.stroke();
+        ctx.restore();
+      }
       ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 6; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(x, y - 16); ctx.lineTo(st.tipX, st.tipY); ctx.stroke();
-      // 망치 머리
       var a = Math.atan2(st.tipY - (y - 16), st.tipX - x);
       ctx.save(); ctx.translate(st.tipX, st.tipY); ctx.rotate(a);
       ctx.fillStyle = st.planted ? '#ffd27a' : '#9aa0a8';
       ctx.fillRect(-6, -9, 18, 18);
       ctx.strokeStyle = '#14161a'; ctx.lineWidth = 2; ctx.strokeRect(-6, -9, 18, 18);
       ctx.restore();
-      // 상체
       ctx.fillStyle = '#d8c6a8';
       ctx.beginPath(); ctx.arc(x, y - 26, 8, 0, TAU); ctx.fill();
       ctx.strokeStyle = '#d8c6a8'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 8); ctx.stroke();
-      // 팔 — 망치를 향해
       ctx.beginPath(); ctx.moveTo(x, y - 16);
       ctx.lineTo(x + Math.cos(a) * 26, y - 16 + Math.sin(a) * 26); ctx.stroke();
-      // 항아리
       var pg = ctx.createLinearGradient(x - PR, y - PR, x + PR, y + PR);
       pg.addColorStop(0, '#8a5a3a'); pg.addColorStop(1, '#4a2e1c');
       ctx.fillStyle = pg;
@@ -395,7 +500,6 @@
     }
 
     function drawRuler(ctx) {
-      // 높이 눈금 — 스크롤 중 지금 어디인지 알 수 있게 (화면 고정)
       ctx.save();
       ctx.fillStyle = 'rgba(11,9,8,.62)'; ctx.fillRect(0, 24, 52, VH - 24);
       ctx.textAlign = 'right'; ctx.font = '10px system-ui, sans-serif';
@@ -406,7 +510,6 @@
         ctx.beginPath(); ctx.moveTo(36, wy); ctx.lineTo(50, wy); ctx.stroke();
         ctx.fillStyle = '#8a8478'; ctx.fillText(m + 'm', 33, wy + 3.5);
       }
-      // 최고 기록선
       var by = GROUND_Y - PR - st.best * PX_PER_M - st.camY;
       if (by > 26 && by < VH) {
         ctx.strokeStyle = 'rgba(255,180,71,.65)'; ctx.lineWidth = 1.5;
@@ -428,8 +531,14 @@
     startViewers: START_VIEWERS,
     usesChain: false,
     chat: window.GIVINGUP_CHAT,
-    foot: '<b>마우스</b>로 망치를 움직인다 — 망치 끝을 바위에 걸고 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
-          '큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다 · 멈춰 있으면 조용히 시청자를 잃는다',
+    // selftest가 물리 상수끼리 모순되지 않는지 검사한다 (games/shell/selftest.html)
+    tuning: {
+      GRAV: GRAV, PX_PER_M: PX_PER_M, GROUND_Y: GROUND_Y, SUMMIT_Y: SUMMIT_Y,
+      CLUTCH_V: CLUTCH_V, CLUTCH_MIN_H: CLUTCH_MIN_H,
+      HAMMER_MAX: HAMMER_MAX, HAMMER_MIN: HAMMER_MIN, FALL_FRESH: FALL_FRESH,
+    },
+    foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
+          '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
     start: start,
   });
 })();
