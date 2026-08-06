@@ -574,6 +574,25 @@
     chat: window.HWARYEOK_CHAT,
     foot: '<kbd>1</kbd>~<kbd>4</kbd> 또는 버튼으로 수습 — <b>빨리 반응하라.</b> 배율은 사고 유형이 정한다(창이 짧을수록 높다, 최대 ×2.5)<br>' +
           '같은 사고만 반복 수습하면 시청자가 물린다(신선도 감쇠) · 기름 화재를 놓치면 대참사(+시청자 폭등, 화구 12초 파손) · 빈 화구는 조용히 시청자를 잃는다',
+    thumb: function (c, w, h) {
+      var g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#1e1a14'); g.addColorStop(1, '#0b0908');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#6a7078'; c.fillRect(0, h * .72, w, h * .28);
+      [w * .3, w * .7].forEach(function (x) {
+        c.fillStyle = '#1a1d22';
+        c.beginPath(); c.ellipse(x, h * .72, 30, 9, 0, 0, Math.PI * 2); c.fill();
+        c.save(); c.globalCompositeOperation = 'lighter';
+        for (var k = 0; k < 5; k++) {
+          c.fillStyle = k % 2 ? '#ffb447' : '#ff4a2d';
+          c.beginPath();
+          c.moveTo(x - 12 + k * 6, h * .7);
+          c.quadraticCurveTo(x - 9 + k * 6, h * .7 - 20 - (k % 3) * 7, x - 6 + k * 6, h * .7);
+          c.closePath(); c.fill();
+        }
+        c.restore();
+      });
+    },
     start: start,
   });
 })();
