@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>종겜스 시뮬레이터</title>
+<meta name="description" content="종합게임 스트리머가 되어 AI 시청자를 만족시키는 시뮬레이터">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>📺</text></svg>">
+<link rel="stylesheet" href="games/shell/shell.css">
+</head>
+<body>
+
+<div id="header">
+  <h1>종겜스</h1>
+  <div class="sub">종합게임 스트리머 시뮬레이터 — 게임을 고르고, 방송하고, AI 시청자를 만족시켜라
+    <span class="badge">AI 시청자 · 로컬 시뮬레이션</span></div>
+</div>
+
+<div id="stagewrap">
+  <div id="showRow">
+  <div id="viewport">
+    <canvas id="scene" width="960" height="430"></canvas>
+    <div id="tally"><span>● ON AIR</span><span id="tallyR">—</span></div>
+    <div id="liveBar">👁 시청자 <b id="viewerCount">0</b>명</div>
+    <div id="plaque"></div>
+    <div id="chainMeter"><div class="lab">연쇄 배수</div><div class="val" id="chainVal">×1.0</div></div>
+    <div class="vpopup" id="vpopup"></div>
+    <div id="ticker"></div>
+    <div id="bigStamp"><div id="bigStampText"></div></div>
+    <div id="overlay" class="hidden"></div>
+  </div>
+  <div id="chatCol">
+    <div id="chatHead"><span>💬 실시간 채팅</span><span class="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
+    <div id="chatFeed"></div>
+  </div>
+  </div>
+  <div id="panel"></div>
+  <div id="foot"></div>
+</div>
+
+<!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 -->
+<script src="games/shell/chat.js"></script>
+<script src="games/shell/shell.js"></script>
+<!-- 게임 — 각자 자기 이벤트 어휘(chat-data)와 룰(game)을 가지고 셸에 등록한다 -->
+<script src="games/hwaryeok/chat-data.js"></script>
+<script src="games/hwaryeok/game.js"></script>
+<script src="games/giving-up/chat-data.js"></script>
+<script src="games/giving-up/game.js"></script>
+<script>Shell.boot();</script>
+
+</body>
+</html>
