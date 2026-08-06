@@ -42,28 +42,30 @@
   // 바위가 섞이면 실수가 "미끄러져 떨어짐"이 된다. 이 게임의 수익원은 후자다.
   function R(x, y, w, h) { return { t: 'r', x: x, y: y, w: w, h: h }; }
   function C(x, y, r) { return { t: 'c', x: x, y: y, r: r }; }
-  var TERRAIN = [
-    R(0, GROUND_Y, 960, 80),
-    C(180, 1492, 46), R(100, 1430, 190, 22), C(392, 1440, 40),
-    R(420, 1362, 170, 22), C(662, 1392, 46), R(680, 1300, 190, 22),
-    C(520, 1302, 34), R(350, 1240, 150, 22), C(180, 1252, 42),
-    R(90, 1176, 175, 22), C(332, 1160, 36), R(470, 1114, 140, 22),
-    C(700, 1130, 44), R(750, 1054, 165, 22), C(600, 1040, 32),
-    R(400, 994, 145, 22), C(250, 1000, 38), R(130, 934, 160, 22),
-    C(360, 920, 34), R(580, 884, 150, 22), C(790, 880, 40),
-    R(300, 824, 140, 22), C(140, 830, 36), R(20, 764, 150, 22),
-    C(260, 750, 34), R(490, 714, 145, 22), C(680, 700, 38),
-    R(760, 654, 160, 22), C(600, 640, 32), R(380, 600, 130, 22),
-    C(230, 590, 36), R(100, 544, 150, 22), C(330, 530, 34),
-    R(560, 490, 140, 22), C(760, 480, 38), R(310, 434, 130, 22),
-    C(150, 424, 34), R(670, 380, 145, 22), C(500, 370, 36),
-    R(120, 324, 145, 22), C(330, 310, 34), R(450, 274, 135, 22),
-    C(700, 264, 38), R(740, 224, 150, 22),
-    R(340, SUMMIT_Y, 210, 28),
+  // 3차 개편 (2026-08-07, 플레이 피드백): 1차 배치는 발판·바위가 뒤섞여 "다음 홀드가
+  // 어디인가"를 읽을 수 없었고 바위가 주 루트를 막았다. 등반 게임의 지형은 문제이지
+  // 미로가 아니다 — 주 루트는 좌우 지그재그 사다리(수직 40~70px, 망치 사거리 118의
+  // 절반 수준)로 항상 읽히게 하고, 바위는 루트 밖 가장자리로 빼서 "미끄러지면 만나는
+  // 위험"으로만 쓴다. ROUTE는 selftest가 기하로 등반 가능성을 검증한다.
+  var ROUTE = [
+    R(360, 1450, 240, 22), R(150, 1385, 190, 22), R(420, 1322, 200, 22), R(660, 1262, 190, 22),
+    R(430, 1205, 170, 22), R(180, 1150, 180, 22), R(420, 1096, 170, 22), R(670, 1042, 180, 22),
+    R(430, 990, 160, 22),  R(170, 938, 180, 22),  R(420, 886, 160, 22),  R(650, 836, 170, 22),
+    R(400, 786, 160, 22),  R(150, 736, 170, 22),  R(400, 688, 150, 22),  R(640, 640, 160, 22),
+    R(380, 592, 150, 22),  R(130, 546, 160, 22),  R(380, 500, 150, 22),  R(560, 456, 170, 22),
+    R(360, 412, 140, 22),  R(120, 368, 150, 22),  R(370, 326, 140, 22),  R(610, 284, 150, 22),
+    R(360, 244, 140, 22),
+  ];
+  var TERRAIN = [R(0, GROUND_Y, 960, 80)].concat(ROUTE, [
+    R(340, SUMMIT_Y, 220, 28),
+    // 바위 — 루트 밖 가장자리. 주 루트를 막지 않고, 미끄러진 몸이 굴러떨어지는 경로에 있다
+    C(120, 1470, 40), C(700, 1390, 44), C(80, 1240, 40), C(885, 1150, 38),
+    C(90, 1000, 38),  C(860, 900, 42),  C(80, 700, 36),  C(870, 560, 40),
+    C(80, 420, 34),   C(870, 300, 38),
     // 보이지 않는 양옆 벽 — 화면 밖으로 빠지지 않게
     { t: 'r', x: -60, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
     { t: 'r', x: 960, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
-  ];
+  ]);
 
   // ---------- 물리 ----------
   var PR = 16;              // 항아리 반지름
@@ -144,7 +146,7 @@
       best: 0, paidM: 0, peak: 0,
       fallFresh: 0, recoverAcc: 0,
       falls: 0, maxDrop: 0, saves: 0, cleared: false,
-      restT: 0, stillT: 0, lastH: 0, nagT: 0, airVy: 0, touched: false,
+      restT: 0, stillT: 0, lastH: 0, nagT: 0, airVy: 0, touched: false, wasContact: false, unplantT: 1,
       donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
       dust: [],
     };
@@ -233,21 +235,30 @@
         st.px += mdx; st.py += mdy;
         st.tipX = surf.x; st.tipY = surf.y;
         st.planted = true; st.contact = hitS;
-        if (!wasPlanted) { sfxTick(); puff(surf.x, surf.y, 4); }
-        else if (m > 6) { sfxSlide(); if (Math.random() < .25) puff(surf.x, surf.y, 1); }
+        // 경계에서 접점이 프레임마다 붙었다 떨어졌다 하면 틱음이 연발된다 —
+        // 0.15초 이상 떨어져 있다 다시 박혔을 때만 "박힘" 소리를 낸다
+        if (!wasPlanted && st.unplantT > 0.15) { sfxTick(); puff(surf.x, surf.y, 4); }
+        st.unplantT = 0;
+        if (wasPlanted && m > 6) { sfxSlide(); if (Math.random() < .25) puff(surf.x, surf.y, 1); }
       } else {
         st.tipX = st.px + dirX * st.len; st.tipY = st.py + dirY * st.len;
         st.planted = false; st.contact = null;
+        st.unplantT += dt;
         st.vy += GRAV * dt;
         st.px += st.vx * dt; st.py += st.vy * dt;
       }
 
       var contactDist = st.planted ? Math.hypot(st.tipX - st.px, st.tipY - st.py) : st.len;
-      var landed = resolveBody();
-      if (landed && !st.planted) {
-        if (st.airVy > 260) { sfxHit(); puff(st.px, st.py + PR, 5); }
+      var touching = resolveBody();
+      // 착지음은 "공중 → 접촉" 전이에서 한 번만. 서 있는 동안 매 프레임 접촉이 일어나는데
+      // airVy가 리셋되지 않아 착지음이 100ms 게이트 주기로 계속 재발화했다 (플레이 피드백:
+      // "서 있을 때 계속 부딪히는 소리"). 접촉 중에는 airVy를 0으로 유지한다.
+      if (touching && !st.wasContact && !st.planted && st.airVy > 260) { sfxHit(); puff(st.px, st.py + PR, 5); }
+      if (touching) {
         st.touched = true; // 몸이 지형에 닿았다 = 자력으로 붙잡은 게 아니다 (clutch 판정용)
+        st.airVy = 0;
       }
+      st.wasContact = !!touching;
       st.px = clamp(st.px, PR, W - PR);
       st.py = Math.min(st.py, GROUND_Y - PR + 40);
 
@@ -543,9 +554,28 @@
       GRAV: GRAV, PX_PER_M: PX_PER_M, GROUND_Y: GROUND_Y, SUMMIT_Y: SUMMIT_Y,
       CLUTCH_V: CLUTCH_V, CLUTCH_MIN_H: CLUTCH_MIN_H,
       HAMMER_MAX: HAMMER_MAX, HAMMER_MIN: HAMMER_MIN, FALL_FRESH: FALL_FRESH,
+      ROUTE: ROUTE, TERRAIN: TERRAIN,
     },
     foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
           '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
+    thumb: function (c, w, h) {
+      var g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#1a2230'); g.addColorStop(1, '#0e1219');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#4a423a';
+      [[10, h * .82, 70], [90, h * .58, 60], [30, h * .34, 55], [130, h * .16, 60]].forEach(function (p) {
+        c.fillRect(p[0], p[1], p[2], 8);
+      });
+      c.fillStyle = '#6b6155';
+      c.beginPath(); c.arc(w * .78, h * .62, 24, 0, Math.PI * 2); c.fill();
+      // 항아리 + 망치
+      c.fillStyle = '#6a3f26';
+      c.beginPath(); c.ellipse(w * .5, h * .5, 11, 13, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#d8c6a8'; c.beginPath(); c.arc(w * .5, h * .5 - 17, 6, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = '#8a6a3a'; c.lineWidth = 4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(w * .5, h * .5 - 10); c.lineTo(w * .5 + 34, h * .5 - 34); c.stroke();
+      c.fillStyle = '#9aa0a8'; c.fillRect(w * .5 + 28, h * .5 - 42, 13, 13);
+    },
     start: start,
   });
 })();
