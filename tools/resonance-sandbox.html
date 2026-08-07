@@ -53,10 +53,13 @@ td:first-child, th:first-child { text-align: left; }
       <div class="slab">산식 상수 (무대 소유 — ADR-002 결정 4)</div>
       <div class="sl"><b>유입 총량 n</b><input type="range" id="pN" min="40" max="4000" step="20" value="520"><output id="oN">520</output></div>
       <div class="sl"><b>현재 시청자 V</b><input type="range" id="pV" min="300" max="300000" step="300" value="300"><output id="oV">300</output></div>
-      <div class="sl"><b>f(V) 상한 K</b><input type="range" id="pK" min="1" max="20" step="0.5" value="8"><output id="oK">8</output></div>
       <div class="sl"><b>경제 임계 T_econ</b><input type="range" id="pT" min="0" max="1" step="0.05" value="0.35"><output id="oT">.35</output></div>
       <div class="sl"><b>혼합 바닥 β</b><input type="range" id="pB" min="0" max="0.5" step="0.05" value="0.15"><output id="oB">.15</output></div>
+      <div class="sl" style="opacity:.6"><b>f(V) 상한 K — v1 제외</b><input type="range" id="pK" min="1" max="20" step="0.5" value="1"><output id="oK">1</output></div>
       <div class="kv" id="fv"></div>
+      <div class="note">f(V)(규모 배율)는 <b>v1에서 제외</b>됐다 — K=1이 확정 상태(배율 없음)다.
+        언락이 시청자 수 기반이라 배율을 건드리면 페이싱이 반드시 움직이기 때문 (ADR-002 결정 2).
+        슬라이더는 본선 백로그 실험용으로 남겨둔다.</div>
     </div>
     <div class="card">
       <div class="slab">원형 흥미도 벡터 (소윤 저작 — [danger, chaos, skill, fun])</div>
