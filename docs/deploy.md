@@ -19,15 +19,21 @@ main 브랜치 push  →  GitHub Pages(branch: main, path: /)  →  https://bjh7
 - 전 경로가 **상대 경로**다. Pages는 `/JonggemsSim/` 서브경로로 서빙하므로 절대 경로(`/games/...`)를
   쓰면 즉시 깨진다. 서브경로 서빙은 실측으로 확인했다 (8개 요청 전부 200).
 
-## 최초 1회 설정 (레포 owner만 가능)
+## 상태: **활성화 완료 (2026-08-07)**
 
-에이전트·협업자 계정은 `admin` 권한이 없어 Pages API가 404다. **owner(BJH7536)가** 해야 한다.
+> **https://bjh7536.github.io/JonggemsSim/** — 라이브. main에 push하면 1~2분 내 자동 갱신된다.
+> 실접속 확인: 진입점·shell.js·캠 얼굴·selftest 전부 200, 허브 렌더·방송 시작·콘솔 에러 0건.
+> **심사 종료 시점까지 이 상태를 유지해야 한다** (제출 유의사항 — 끄지 말 것).
 
-> Settings → Pages → Build and deployment → Source: **Deploy from a branch**
-> → Branch: **main** / **/ (root)** → Save
+### 왜 owner만 켤 수 있나 (협업자 참고)
 
-1~2분 뒤 `https://bjh7536.github.io/JonggemsSim/` 가 뜬다.
-심사 종료 시점까지 접근 가능한 상태로 유지해야 한다 (제출 유의사항).
+Pages 설정은 `admin` 권한을 요구하는데, **개인 계정 레포에는 admin 협업자를 둘 수 없다.**
+세부 역할(read/triage/write/maintain/admin)은 Organization 소유 레포 전용이고, 개인 레포의
+협업자는 전원 `write`로 고정된다 — `permission=admin`으로 API를 호출하면 204를 반환하지만
+실제로는 반영되지 않는다(2026-08-07 실측). 그래서 admin이 필요한 작업은 owner(BJH7536)가
+대행한다. Organization 이전은 URL·프록시 CORS 오리진까지 바뀌므로 제출 후에 검토한다.
+
+재설정이 필요하면: Settings → Pages → Source **Deploy from a branch** → **main** / **/ (root)**.
 
 ## 로드 예산
 
