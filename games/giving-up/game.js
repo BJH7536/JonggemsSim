@@ -345,10 +345,16 @@
 
         if (!st.cleared && st.py < SUMMIT_Y + 4 && st.px > 340 && st.px < 550) {
           st.cleared = true;
+          st.clearT = 1.4; // step 구동 — setTimeout은 인스턴스보다 오래 살아, 정상 직후 Escape→재시작하면
+                           // 다음 방송을 'clear'로 끝내버린다 (리뷰 발견). pocket의 step 타이머와 같은 원리
           var g = stage.gain(60000, '정상 등반!!!');
           stage.stamp('정상 등반'); stage.flash(.5); sfxTop();
           stage.emit('summit', { gain: g.toLocaleString() });
-          setTimeout(function () { stage.end('clear'); }, 1400);
+          return;
+        }
+        if (st.cleared) {
+          st.clearT -= dt;
+          if (st.clearT <= 0) stage.end('clear');
           return;
         }
 

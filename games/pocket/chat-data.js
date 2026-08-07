@@ -12,24 +12,24 @@ window.POCKET_CHAT = {
       ['hype', '괴수 배틀 왔다!!'], ['cheer', '오늘 연승 가즈아'], ['question', '스타팅 뭐예요?'],
       ['info', '타입 상성이 절반이다 이 게임'], ['mock', '오늘도 안정타만 누르겠지 ㅋㅋ'],
       ['cheer', '출첵!!'], ['worry', '전멸만 하지 말자…'], ['hype', '드디어 켰다 ㅋㅋ'] ] },
-    risky_hit: { facts: ['{mv} 적중 +{gain}!!', '도박수 꽂혔다 +{gain}', '{dmg} 딜 ㄷㄷ'], flavor: [
+    risky_hit: { facts: ['{mv} 적중 {dmg}딜 +{gain}!!', '도박수 {mv} 꽂혔다 — {dmg}뎀 +{gain}', '{dmg} 딜 ㄷㄷ {mv} +{gain}'], flavor: [
       ['hype', '들어갔다!!!'], ['cheer', '이거지 이거!!'], ['info', '명중 55%를 지르는 게 방송이지'],
       ['mock', '운빨 ㅋㅋㅋ 인정은 한다'], ['question', '저 기술 명중률 몇이에요?'], ['hype', 'ㄷㄷㄷㄷ'],
       ['worry', '심장 떨려서 못 보겠네'] ] },
-    ultra_hit: { facts: ['필살기 {mv} +{gain}!!!', '{mv} 적중 ㅋㅋㅋ +{gain}', '{dmg} 뎀지 미쳤다'], flavor: [
+    ultra_hit: { facts: ['필살기 {mv} {dmg}뎀 +{gain}!!!', '{mv} 적중 ㅋㅋㅋ {dmg}딜 +{gain}', '{dmg} 뎀지 미쳤다 {mv} +{gain}'], flavor: [
       ['hype', '?????? 저게 맞네'], ['cheer', '캬아아아아!!'], ['mock', '저걸 지르는 미친놈 ㅋㅋ'],
       ['info', '명중 38%짜리입니다 여러분'], ['hype', '클립 각!!!'], ['question', '이거 도박 중독 아님??'],
       ['cheer', '박수 갈겨!!!'] ] },
-    crit: { facts: ['급소!! +{gain}', '크리티컬 +{gain}!!'], flavor: [
+    crit: { facts: ['급소!! {mv} {dmg}뎀 +{gain}', '{mv} 크리티컬 {dmg}딜 +{gain}!!'], flavor: [
       ['hype', '급소다!!!'], ['cheer', '오늘 손 미쳤다'], ['mock', '운을 실력이라고 우기는 중'],
       ['info', '급소는 12%, 오늘 벌써 몇 번째냐'], ['hype', 'ㅋㅋㅋㅋ 개터졌다'], ['question', '급소 확률 몇%예요?'] ] },
     miss: { facts: ['{mv} 빗나감…'], flavor: [
       ['mock', 'ㅋㅋㅋㅋㅋㅋ'], ['mock', '그럴 줄 알았다'], ['worry', '아 아깝다…'],
       ['info', '기대값 계산은 하고 지른 거겠지'], ['mock', '도박 중독 말로가 이렇다'], ['cheer', '괜찮아 다음 턴!!'] ] },
-    enemy_ko: { facts: ['{name} KO!! +{gain}', '연승 {streak}연째 +{gain}!!'], flavor: [
+    enemy_ko: { facts: ['{name} KO!! {streak}연승 +{gain}', '연승 {streak}연째 — {name} 잡고 +{gain}!!'], flavor: [
       ['hype', 'KO!!!'], ['cheer', '연승 가즈아!!'], ['info', '연쇄 배수 오르는 중 — 지금이 벌 때다'],
       ['mock', '상대가 약한 거 아니냐 ㅋㅋ'], ['question', '몇 연승째예요?'], ['hype', '폼 미쳤다!!'] ] },
-    comeback: { facts: ['빈사 역전 KO +{gain}!!!', '체력 {hp}에서 역전 ㅋㅋㅋ +{gain}'], flavor: [
+    comeback: { facts: ['체력 {hp} 남기고 역전 KO +{gain}!!!', '체력 {hp}에서 역전 ㅋㅋㅋ +{gain}'], flavor: [
       ['hype', '레전드다 레전드!!!'], ['cheer', '이거 보려고 방송 본다!!!'], ['hype', 'ㅋㅋㅋㅋㅋㅋㅋ 살았어'],
       ['info', '빈사에서 지르는 게 제일 큰 수익이다'], ['mock', '각본 아니냐 이거'], ['question', '심장 괜찮으세요??'],
       ['cheer', '박수!!! 박수!!!'], ['worry', '수명 깎이는 방송이다 진짜'] ] },

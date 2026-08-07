@@ -194,7 +194,10 @@
       b.acc = { ti: ti, at: ACC[ti].win, win: ACC[ti].win };
       sfxAlarm();
       stage.ticker('화구 ' + (b.i + 1) + ' — ' + ACC[ti].n + ' 발생!', false);
-      stage.emit(ACC[ti].catastrophic ? 'oilfire' : 'accident', { b: b.i + 1, acc: ACC[ti].n });
+      // oilfire는 acc가 항상 '기름 화재'라 슬롯에서 뺀다 — 어휘의 oilfire 템플릿은 {b}만 쓰므로
+      // acc까지 넘기면 검증 게이트(모든 슬롯 포함)가 사실 줄을 확률적으로 폐기한다 (관객 리뷰)
+      stage.emit(ACC[ti].catastrophic ? 'oilfire' : 'accident',
+        ACC[ti].catastrophic ? { b: b.i + 1 } : { b: b.i + 1, acc: ACC[ti].n });
       buildCol(b.i);
     }
     function fix(i) {

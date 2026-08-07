@@ -17,7 +17,7 @@ window.GIVINGUP_CHAT = {
       ['cheer', '오 잘 올라가는데?'], ['info', '지금 폼 좋습니다'], ['hype', '가자 가자!!'],
       ['mock', '지금 떨어지면 개웃긴데'], ['worry', '조심조심…'], ['cheer', '이대로만 가요'],
       ['question', '최고 기록이 몇이에요?'] ] },
-    fall: { facts: ['{d}m 추락 +{gain}', '{d}m 미끄러졌다 ㅋㅋ', '아 {d}m…'], flavor: [
+    fall: { facts: ['{d}m 추락 +{gain}', '{d}m 미끄러짐 ㅋㅋ +{gain}명', '아 {d}m… +{gain}은 벌었다'], flavor: [
       ['mock', 'ㅋㅋㅋㅋ'], ['worry', '아이고…'], ['hype', '떨어지는 맛에 본다'],
       ['cheer', '괜찮아요 다시!!'], ['info', '저기는 원래 다 미끄러짐'], ['mock', '예상했다'],
       ['question', '방금 왜 미끄러진 거예요?'] ] },

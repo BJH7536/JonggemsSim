@@ -103,6 +103,22 @@ Shell.games.forEach(function (g) {
     g.chat.T[k].flavor.forEach(function (f) { if (tones.indexOf(f[0]) < 0) bad.push(k + ':' + f[0]); });
   });
   eq(g.title + ': 톤이 전부 공인 6종 안에 있다', bad, []);
+  // 사실 템플릿 슬롯 정합 — 한 이벤트의 사실 템플릿들은 같은 슬롯 집합을 써야 한다.
+  // 다르면 게임이 어떤 facts를 넘겨도 일부 템플릿이 "모든 슬롯 포함" 게이트에서 반드시
+  // 떨어져 사실 줄이 확률적으로(최악엔 상시) 폐기된다 — pocket 4종에서 실제 발생 (관객 리뷰)
+  var slotBad = [];
+  Object.keys(g.chat.T).forEach(function (k) {
+    var fs = g.chat.T[k].facts || [];
+    if (fs.length < 2) return;
+    var sets = fs.map(function (t) {
+      return (t.match(/\{(\w+)\}/g) || []).map(function (s) { return s.slice(1, -1); })
+        .sort().filter(function (v, i, a) { return a.indexOf(v) === i; }).join(',');
+    });
+    for (var si = 1; si < sets.length; si++) {
+      if (sets[si] !== sets[0]) { slotBad.push(k + '(' + sets.join(' vs ') + ')'); break; }
+    }
+  });
+  eq(g.title + ': 사실 템플릿들이 같은 슬롯 집합을 쓴다', slotBad, []);
 });
 
 // ---- Giving Up On It: 물리 상수끼리 모순되지 않는가 ----
