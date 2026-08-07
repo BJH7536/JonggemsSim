@@ -204,6 +204,36 @@ Shell.games.forEach(function (g) {
   Shell.comp = saveComp;
 })();
 
+// ---- 채널 계층 — 이월과 구독자 ----
+// 이월이 없으면 10번째 방송이 1번째와 똑같아진다. 반대로 이월이 고착되면 초반 선택 실수가
+// 회복 불능이 된다 — 둘 다 게임을 망치므로 "물든다 + 되돌릴 수 있다"를 함께 못박는다.
+(function () {
+  var saveCh = Shell.ch, saveComp = Shell.comp;
+  Shell.ch = { subs: 0, shows: 0, fresh: {}, best: {}, log: [], mix: Shell.ARCH_START.slice() };
+
+  eq('구독자 0명 → 시작 보너스 0', Shell.subBonus(), 0);
+  Shell.ch.subs = 500;
+  eq('구독자 500명 → 시작 관객 +200', Shell.subBonus(), 200);
+  Shell.ch.subs = 99999;
+  ok('구독자 보너스에 상한이 있다 (언락 페이싱 보호) — ' + Shell.subBonus(), Shell.subBonus() === 700);
+  Shell.ch.subs = 0;
+
+  Shell.comp = [900, 50, 25, 25]; // 불구경파가 지배한 방송
+  var before = Shell.ch.mix.slice();
+  Shell.absorbMix();
+  ok('이월 후에도 채널 구성비 합이 1',
+     Math.abs(Shell.ch.mix.reduce(function (a, b) { return a + b; }, 0) - 1) < 1e-9);
+  ok('불구경파 방송 뒤 채널이 그쪽으로 물든다 (' + before[0].toFixed(2) + ' → ' +
+     Shell.ch.mix[0].toFixed(2) + ')', Shell.ch.mix[0] > before[0]);
+  ok('한 방송으로 채널 색이 통째로 갈아엎이지는 않는다', Shell.ch.mix[0] < 0.9);
+  eq('채널 색 최다는 불구경파', Shell.mixTop().id, 'thrill');
+
+  for (var k = 0; k < 3; k++) { Shell.comp = [25, 25, 900, 50]; Shell.absorbMix(); }
+  eq('분석가 방송을 3회 하면 채널 색이 돌아온다 (고착 없음)', Shell.mixTop().id, 'expert');
+
+  Shell.ch = saveCh; Shell.comp = saveComp;
+})();
+
 // ---- Giving Up On It: 물리 상수끼리 모순되지 않는가 ----
 // 초판 버그: "낙하속도 700 이상"과 "높이 손실 3m 미만"을 동시에 요구해 clutch가 영원히 안 터졌다.
 // 값만 봐서는 안 보이고 v²=2gh를 넣어야 드러나는 종류라 여기서 계산으로 잡는다.

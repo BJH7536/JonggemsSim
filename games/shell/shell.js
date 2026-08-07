@@ -35,9 +35,18 @@
     { id: 'expert', n: '분석가',   c: '#ffd27a', v: [.3, .2, 1, .2] },
     { id: 'casual', n: '뜨내기',   c: '#a8c8f0', v: [.5, .5, .4, .8] },
   ];
-  var ARCH_START = [.20, .25, .15, .40]; // 시작 구성 — 아직 색이 없는 채널이라 뜨내기가 최다
+  var ARCH_START = [.20, .25, .15, .40]; // 새 채널의 구성 — 아직 색이 없어서 뜨내기가 최다
   var T_ECON = 0.35;  // 경제 기여 임계 — 이만큼 공명해야 유입에 기여한다 (무대 상수)
   var BETA = 0.15;    // 혼합 바닥 — 어떤 원형도 배분 0이 되지 않는다 (단일문화 방지)
+
+  // ---------- 채널 계층 ----------
+  // 방송 1회가 끝나도 채널은 남는다. 관객 구성이 이월되지 않으면 10번째 방송이 1번째와
+  // 똑같아지고, "채널을 키운다"는 이 게임의 판타지가 성립하지 않는다.
+  var MIX_INHERIT = 0.45; // 방송 결과가 채널 색에 반영되는 비율. 1이면 마지막 방송이 색을
+                          // 통째로 갈아엎어 "정체성"이 아니라 "최신 방송 표시"가 된다.
+                          // 0.45면 같은 장르 2~3회에 확실히 물들고, 한 번으로는 안 뒤집힌다.
+  var SUB_BONUS = 0.4;    // 구독자 1명당 시작 시청자 기여
+  var SUB_BONUS_CAP = 700; // 상한 — 시작 시청자가 무한정 오르면 언락 페이싱이 무너진다
 
   var Shell = {
     games: [],
@@ -69,7 +78,37 @@
         fresh: d.fresh || {},       // gameId -> 0..4 (감쇠 단계)
         best: d.best || {},         // gameId -> 최고 시청자
         log: d.log || [],           // 최근 방송 기록 [{g, v, r}] 최신순 4개
+        // 채널의 색 — 원형별 구성 비율(합 1). 방송이 끝날 때마다 물든다.
+        // 구 저장분에는 없으므로 기본값으로 이월 (스키마 마이그레이션)
+        mix: (d.mix && d.mix.length === ARCH.length) ? d.mix.slice() : ARCH_START.slice(),
       };
+    },
+    // 구독자가 데려오는 시작 시청자. 채널이 커질수록 출발선이 높아진다 —
+    // 상한이 있는 이유는 이것이 총량에 닿는 유일한 조각이기 때문 (언락 페이싱 보호)
+    subBonus: function () {
+      return clamp(Math.round(this.ch.subs * SUB_BONUS), 0, SUB_BONUS_CAP);
+    },
+    // 방송 결과를 채널 색에 반영. 합 1 불변식을 유지한다
+    absorbMix: function () {
+      var t = this.compTotal(), i, s = 0;
+      if (!(t > 0)) return;
+      for (i = 0; i < ARCH.length; i++) {
+        this.ch.mix[i] = this.ch.mix[i] * (1 - MIX_INHERIT) + (this.comp[i] / t) * MIX_INHERIT;
+        s += this.ch.mix[i];
+      }
+      for (i = 0; i < ARCH.length; i++) this.ch.mix[i] /= s; // 부동소수 드리프트 보정
+    },
+    mixTop: function () {
+      var best = 0;
+      for (var i = 1; i < ARCH.length; i++) if (this.ch.mix[i] > this.ch.mix[best]) best = i;
+      return ARCH[best];
+    },
+    // 4색 비율 막대 — 라이브 게이지와 같은 시각 언어로 채널의 색을 보여준다
+    mixBar: function (mix) {
+      return '<i class="mixbar">' + ARCH.map(function (a, i) {
+        return '<i style="flex-grow:' + Math.max(0.01, mix[i]) + ';background:' + a.c +
+          '" title="' + a.n + ' ' + Math.round(mix[i] * 100) + '%"></i>';
+      }).join('') + '</i>';
     },
     updateTopbar: function () {
       $('tbSubs').textContent = this.ch.subs.toLocaleString();
@@ -286,6 +325,9 @@
           }).join('') + '</div>'
         : '';
 
+      // 채널이 지금 어떤 색이고 출발선이 어디인가 — 게임을 고르기 전에 보여야 선택이 전략이 된다
+      var hubTop = this.mixTop(), hubBonus = this.subBonus();
+
       $('overlay').classList.remove('hidden');
       $('overlay').innerHTML = '<div class="panel hub">' +
         '<div class="hubTop">' +
@@ -294,7 +336,10 @@
           '<p>당신은 종합게임 스트리머다. 카테고리를 고르면 송출이 시작되고, <b>AI 시청자</b>가 ' +
           '플레이를 실시간으로 관측하며 떠든다 — 칭찬, 야유, 훈수.</p>' +
           '<div class="chanline">📺 <b>종겜러</b> 채널 · 구독자 <b>' + this.ch.subs.toLocaleString() + '</b>명 · ' +
-            '방송 <b>' + this.ch.shows + '</b>회</div></div>' +
+            '방송 <b>' + this.ch.shows + '</b>회' +
+            (hubBonus > 0 ? ' · 구독자가 데려오는 시작 관객 <b>+' + hubBonus.toLocaleString() + '</b>명' : '') + '</div>' +
+          '<div class="chanmix"><span>채널 색깔</span>' + this.mixBar(this.ch.mix) +
+            '<b style="color:' + hubTop.c + '">' + hubTop.n + ' 채널</b></div></div>' +
         '</div>' +
         '<div id="hubGrid">' + cards + '</div>' +
         '<p class="fine">시청자 수가 곧 체력이자 점수다 — 0명이 되면 송출이 끊긴다. ' +
@@ -327,8 +372,11 @@
 
       this.game = g;
       this.phase = 'live';
-      this.viewers = g.startViewers;
-      this.comp = ARCH_START.map(function (r) { return g.startViewers * r; });
+      // 시작 시청자 = 게임 기본값 + 구독자 기여분, 관객 구성은 채널의 색을 물려받는다.
+      // 이월이 없으면 10번째 방송이 1번째와 똑같아진다 — 채널이 성장하지 않는다
+      var start0 = g.startViewers + this.subBonus();
+      this.viewers = start0;
+      this.comp = this.ch.mix.map(function (r) { return start0 * r; });
       this.compStart = this.comp.slice();
       this.timeLeft = g.duration;
       this._fxQueue.length = 0;
@@ -345,7 +393,7 @@
       $('panel').innerHTML = '';
       $('camBox').classList.remove('hidden');
       this._camMood = 'silence'; $('camImg').src = 'games/shell/faces/adventurer_silence.png';
-      this._graph = [{ t: 0, v: g.startViewers }]; this._graphT = 0; this._upT = 0;
+      this._graph = [{ t: 0, v: start0 }]; this._graphT = 0; this._upT = 0;
       this.updateTopbar();
 
       Chat.reset();
@@ -465,6 +513,10 @@
       var self = this;
       this.ch.fresh = Shell.rotateFresh(this.ch.fresh, g.id, this.games.map(function (o) { return o.id; }));
 
+      // 방송이 채널의 색을 물들인다 — 이월의 핵심. 저장 전에 반영한다
+      var mixBefore = this.ch.mix.slice();
+      this.absorbMix();
+
       var newSubs = Math.floor(final / 100); // 최종 시청자의 1%가 채널에 남는다
       this.ch.subs += newSubs;
       this.ch.shows++;
@@ -479,6 +531,14 @@
         return '<span style="color:' + a.c + '">' + a.n + '</span> <b>' +
           (d >= 0 ? '+' : '') + d.toLocaleString() + '</b>';
       }).join(' · ');
+
+      // 채널이 어느 쪽으로 물들었나 + 다음 출발선 — "방송이 채널에 남는다"를 보여주는 두 줄
+      var mixTop = this.mixTop();
+      var movedI = 0, mixD = this.ch.mix.map(function (v, i) { return v - mixBefore[i]; });
+      for (var mi = 1; mi < ARCH.length; mi++) if (mixD[mi] > mixD[movedI]) movedI = mi;
+      var moved = ARCH[movedI], movedD = mixD[movedI];
+      var bonus = this.subBonus();
+      var nextStart = g.startViewers + bonus;
 
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
@@ -501,6 +561,12 @@
           '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명</b>' +
         '</div>' +
         '<div class="archline">오늘 모인 사람들 — ' + archRows + '</div>' +
+        '<div class="chanmix"><span>채널 색깔</span>' + this.mixBar(this.ch.mix) +
+          '<b style="color:' + mixTop.c + '">' + mixTop.n + ' 채널</b></div>' +
+        '<p class="fine">이번 방송으로 <b style="color:' + moved.c + '">' + moved.n + '</b> 비중이 ' +
+          (movedD >= 0.005 ? '늘었다' : '거의 그대로다') + ' · 다음 방송은 <b>' +
+          nextStart.toLocaleString() + '명</b>에서 시작한다' +
+          (bonus > 0 ? ' (구독자 기여 +' + bonus.toLocaleString() + ')' : '') + '</p>' +
         '<p class="fine">다음 <b>' + g.title + '</b> 방송의 신선도는 <b>' + nextPct + '%</b>' +
           (nextPct < 100 && other ? ' — <b>' + other.title + '</b>을(를) 한 번 방송하면 회복된다. 이게 종겜을 하는 이유다.' : '.') +
         '</p>' +

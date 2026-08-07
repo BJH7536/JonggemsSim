@@ -28,7 +28,7 @@ proxy/                    LLM 프록시 (Vercel) — 설계·배포 절차는 pr
 `python -m http.server 8770` 후 `http://127.0.0.1:8770/`.
 `PROXY_URL`이 비어 있으면 AI 시청자는 오프라인 규칙 기반 — 이것도 완전한 모드다.
 
-자체 점검: `games/shell/selftest.html` — 전부 `ok`여야 한다 (2026-08-08 현재 56개).
+자체 점검: `games/shell/selftest.html` — 전부 `ok`여야 한다 (2026-08-08 현재 64개).
 탭이 백그라운드로 가면 rAF 정지로 방송이 자동 일시정지된다(의도된 동작).
 
 ## 게임 3종의 리듬 설계
