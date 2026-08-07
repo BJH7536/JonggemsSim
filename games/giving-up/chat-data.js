@@ -56,4 +56,10 @@ window.GIVINGUP_CHAT = {
       ['cheer', '잘 봤습니다'], ['hype', '오늘 레전드였다'], ['info', '클립 정리하러 갑니다'] ] },
   },
   BURST: { fall_legend: 4, fall_big: 3, summit: 4, clutch: 2, fall: 2, climb: 2, start: 2, end: 2 },
+  // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)
+  STIM: {
+    climb: [.2, 0, .7, .1], fall: [.3, .6, 0, .7], fall_big: [.5, .9, 0, .8],
+    fall_legend: [.6, 1, 0, 1], clutch: [.9, .2, .8, .2], stuck: [0, 0, 0, .2],
+    summit: [.3, 0, 1, .3], donation: [0, 0, 0, .5], milestone: [0, 0, .2, .4],
+  },
 };

@@ -77,4 +77,13 @@ window.POCKET_CHAT = {
   },
   BURST: { comeback: 4, ultra_hit: 3, crit: 3, wipe: 3, enemy_ko: 2, risky_hit: 2, faint: 2,
            advantage: 2, near_death: 2, start: 2, end: 2 },
+  // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)
+  STIM: {
+    risky_hit: [.6, 0, .6, .3], ultra_hit: [.8, .2, .7, .4], crit: [.5, .2, .5, .5],
+    miss: [.3, .1, 0, .6], enemy_ko: [.2, 0, .7, .2], comeback: [1, .2, .8, .3],
+    player_hit: [.5, .2, 0, .1], near_death: [.9, .1, .2, .1], faint: [.3, .4, 0, .4],
+    wipe: [.4, .7, 0, .5], revive: [0, 0, .2, .3], advantage: [0, 0, .8, .1],
+    disadvantage: [.2, 0, .4, .4], safe_spam: [0, 0, 0, .4], new_foe: [.2, 0, .3, .2],
+    donation: [0, 0, 0, .5], milestone: [0, 0, .2, .4],
+  },
 };

@@ -62,4 +62,11 @@ window.HWARYEOK_CHAT = {
       ['mock', '마지막에 아쉬웠다 ㅋㅋ'], ['hype', '오늘 레전드였다'], ['info', '클립 정리하러 갑니다'] ] },
   },
   BURST: { disaster: 4, rescue_big: 3, oilfire: 3, rescue: 2, accident: 2, unlock: 2, chain3: 2, start: 2, end: 2 },
+  // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)
+  STIM: {
+    accident: [.7, .4, 0, .2], oilfire: [.9, .7, 0, .2], rescue: [.4, 0, .7, .1],
+    rescue_big: [.6, 0, 1, .2], fail: [.2, .3, 0, .3], disaster: [.6, 1, 0, .6],
+    done: [0, 0, .4, .1], unlock: [.1, 0, .5, .3], chain3: [.3, 0, .8, .2],
+    donation: [0, 0, 0, .5], milestone: [0, 0, .2, .4], nag: [0, 0, 0, .3],
+  },
 };
