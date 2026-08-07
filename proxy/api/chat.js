@@ -53,7 +53,15 @@ function limited(ip) {
   return ++b.n > 30; // 10초에 30회
 }
 
-const client = new Anthropic({ maxRetries: 0, timeout: 5_000 });
+// 지연 생성 — 키가 없으면 SDK 생성자가 던질 수 있어, 모듈 스코프 생성은 키 없는 배포에서
+// 헬스체크(live:false 경로)까지 500으로 만들 위험이 있다 (리뷰 발견 — 방어적 수정).
+// 업스트림 타임아웃은 클라이언트 폐기선(1.1s)보다 약간 위로 — 아무도 읽지 않을 생성에
+// 5초어치 토큰을 계속 내지 않는다 (같은 리뷰의 비용 발견).
+let client = null;
+function getClient() {
+  if (!client) client = new Anthropic({ maxRetries: 0, timeout: 2_000 });
+  return client;
+}
 
 // 클라이언트 입력은 필드 화이트리스트 + 길이 상한으로만 받는다
 function sanitize(body) {
@@ -113,7 +121,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const msg = await client.messages.create({
+    const msg = await getClient().messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: SYSTEM,
