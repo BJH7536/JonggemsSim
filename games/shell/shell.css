@@ -332,8 +332,11 @@ body {
 }
 .screen {
   position: relative; min-height: 340px; padding: 18px 18px 46px; border-radius: 4px; overflow: hidden;
-  /* 배경화면이 없어도(생성 전) 그라디언트가 그대로 보이도록 아래에 깔아 둔다 */
+  /* 3단으로 쌓는다 — 위에서부터 있는 것이 보이고, 없으면 조용히 아래가 드러난다.
+     .jpg = optimize-images.ps1 를 거친 배포용, .png = 생성 직후 원본(1MB대라 배포 부적합),
+     맨 아래 그라디언트 = 이미지가 아직 없을 때. 어느 상태에서도 화면이 깨지지 않는다. */
   background:
+    url('img/desktop-wallpaper.jpg') center/cover no-repeat,
     url('img/desktop-wallpaper.png') center/cover no-repeat,
     radial-gradient(760px 340px at 22% 8%, #241a33, #0d0a14 70%);
 }

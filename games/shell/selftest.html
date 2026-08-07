@@ -176,6 +176,11 @@ var SHIPPED = [
 // 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
 var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']
   .map(function (m) { return 'faces/adventurer_' + m + '.png'; });
+// 데스크탑 허브 이미지 (AetherAI 생성 — tools/aether-assets.json).
+// 생성 원본은 합계 2.9MB였다. tools/optimize-images.ps1 를 거치지 않고 커밋하면
+// 여기서 예산이 터진다 — 그게 이 목록에 넣는 이유다.
+FACES = FACES.concat(['img/desktop-wallpaper.jpg', 'img/icon-hwaryeok.png',
+  'img/icon-giving-up.png', 'img/icon-pocket.png']);
 var BUDGET_KB = 450; // 코드 ~140KB + 얼굴 ~100KB + 여유. "링크 클릭 즉시 플레이" 가드
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {

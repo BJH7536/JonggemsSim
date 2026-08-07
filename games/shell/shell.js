@@ -226,6 +226,20 @@
         b.classList.toggle('on', b.getAttribute('data-game') === gameId);
       });
 
+      // 관객 프로필 — 공명 모델(PR #4)이 머지되면 자동으로 붙는다. 아직 없으면 조용히 빈칸이다.
+      // 두 브랜치가 같은 파일을 건드리지 않도록 존재 여부만 보고 분기한다.
+      var profHtml = '';
+      if (typeof this.archProfile === 'function' && this.ARCH) {
+        var prof = this.archProfile(g);
+        if (prof) {
+          profHtml = '<div class="gaud"><span>관객 프로필</span><i class="gaudbar">' +
+            this.ARCH.map(function (a, i) {
+              return '<i style="flex-grow:' + Math.max(0.01, prof.rel[i]) + ';background:' + a.c +
+                '" title="' + a.n + ' ×' + prof.rel[i].toFixed(2) + '"></i>';
+            }).join('') + '</i><b style="color:' + prof.top.c + '">' + prof.top.n + '</b></div>';
+        }
+      }
+
       $('deskWin').innerHTML =
         '<div class="dwBar"><span class="dwDots"><i></i><i></i><i></i></span>' +
           '<span class="dwTitle">' + g.title + '</span></div>' +
@@ -237,6 +251,7 @@
             '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
             '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
               (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
+            profHtml +
           '</div>' +
         '</div>' +
         '<button class="dwGo" data-go="' + g.id + '">● 방송 시작</button>';
