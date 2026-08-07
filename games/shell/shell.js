@@ -24,6 +24,21 @@
   // 감쇠가 편도가 되어 종겜 플레이를 오히려 벌준다. 번갈아 방송하면 100%가 유지되는 게 의도다.
   var FRESH_MULT = [1, .7, .45, .25, .1];
 
+  // ---------- 공명 판정층 (ADR-002) ----------
+  // 시청자 수는 단일 숫자가 아니라 "누가 보고 있는가"의 분포다. 총량은 게임이 정한 상수
+  // 그대로이고(무변경 — critic 4차 승인 보존), 이 층은 그 유입이 어느 원형으로 갈지 배분만
+  // 정한다. 결정론 데이터 + 상한이라 C3b(비결정 생성물의 경제 유입 금지) 밖이다.
+  // 자극 축: [danger 위험, chaos 파괴, skill 숙련, fun 유머] — resonance-model.md §7.1
+  var ARCH = [
+    { id: 'thrill', n: '불구경파', c: '#ff8d5a', v: [.9, 1, .2, .6] },
+    { id: 'fan',    n: '팬덤',     c: '#ffb0c8', v: [.6, .4, .5, .5] },
+    { id: 'expert', n: '분석가',   c: '#ffd27a', v: [.3, .2, 1, .2] },
+    { id: 'casual', n: '뜨내기',   c: '#a8c8f0', v: [.5, .5, .4, .8] },
+  ];
+  var ARCH_START = [.20, .25, .15, .40]; // 시작 구성 — 아직 색이 없는 채널이라 뜨내기가 최다
+  var T_ECON = 0.35;  // 경제 기여 임계 — 이만큼 공명해야 유입에 기여한다 (무대 상수)
+  var BETA = 0.15;    // 혼합 바닥 — 어떤 원형도 배분 0이 되지 않는다 (단일문화 방지)
+
   var Shell = {
     games: [],
     game: null,     // 현재 방송 중인 게임 정의
@@ -31,6 +46,8 @@
     stage: null,
     phase: 'hub',   // hub | live | result
     viewers: 0,
+    comp: [0, 0, 0, 0],       // 원형별 시청자 — 합이 viewers와 같아야 한다 (불변식)
+    compStart: [0, 0, 0, 0],  // 방송 시작 스냅샷 — 리포트의 원형별 순증감용
     timeLeft: 0,
     ch: null,       // 채널 영속 상태 (localStorage)
     ctx: null,
@@ -66,6 +83,80 @@
     },
     freshStep: function (id) { return this.ch.fresh[id] || 0; },
     freshMult: function (id) { return FRESH_MULT[this.freshStep(id)]; },
+
+    // ---------- 공명 배분 (ADR-002 결정 2) ----------
+    compTotal: function () { return this.comp[0] + this.comp[1] + this.comp[2] + this.comp[3]; },
+    // 채팅 캐스팅이 읽는 유일한 창구. 단방향이다 — 채팅이 되돌려 쓰는 경로는 없다 (C3)
+    archShare: function (id) {
+      var t = this.compTotal();
+      if (!(t > 0)) return 1 / ARCH.length;
+      for (var i = 0; i < ARCH.length; i++) if (ARCH[i].id === id) return this.comp[i] / t;
+      return 0;
+    },
+    // 배분 가중치 = 공명이 경제 임계를 넘은 만큼 + 혼합 바닥.
+    // 현재 구성비를 곱하지 않는다 — 곱하면 복제자 동역학이 되어 몇 방송 만에 한 원형이
+    // 전체를 먹고 되돌릴 수 없게 된다 (검증 실증: 8방송 95%). resonance-model.md §3
+    stimWeights: function (stim) {
+      var w = [];
+      for (var i = 0; i < ARCH.length; i++) {
+        var a = ARCH[i].v;
+        var res = stim[0] * a[0] + stim[1] * a[1] + stim[2] * a[2] + stim[3] * a[3];
+        w[i] = Math.max(0, res - T_ECON) + BETA;
+      }
+      return w;
+    },
+    archWeights: function (ev) {
+      var stim = (this.game && this.game.chat && this.game.chat.STIM) ? this.game.chat.STIM[ev] : null;
+      if (stim) return this.stimWeights(stim);
+      // 중립(도네·미태깅) — 현재 구성비대로. 채널의 색을 바꾸지 않는 유입이다
+      var w = [], t = this.compTotal();
+      for (var i = 0; i < ARCH.length; i++) w[i] = t > 0 ? this.comp[i] / t : 1;
+      return w;
+    },
+    // 유입을 원형별로 나눠 담는다. Σ배분 = total 불변식 (반올림 오차는 최대 가중 원형이 흡수)
+    compAdd: function (total, ev) {
+      var w = this.archWeights(ev), sw = 0, maxI = 0, i;
+      for (i = 0; i < w.length; i++) { sw += w[i]; if (w[i] > w[maxI]) maxI = i; }
+      if (!(sw > 0)) { for (i = 0; i < w.length; i++) w[i] = 1; sw = w.length; maxI = 0; }
+      var part = [], used = 0;
+      for (i = 0; i < w.length; i++) { part[i] = Math.round(total * w[i] / sw); used += part[i]; }
+      part[maxI] = Math.max(0, part[maxI] + (total - used));
+      for (i = 0; i < w.length; i++) this.comp[i] += part[i];
+    },
+    // 이탈은 중립 — 구성비대로 비례 차감. 손실이 채널의 색까지 바꾸지는 않는다 (규약 2)
+    compSub: function (n) {
+      var t = this.compTotal();
+      if (!(t > 0)) return;
+      for (var i = 0; i < ARCH.length; i++) {
+        this.comp[i] = Math.max(0, this.comp[i] - n * (this.comp[i] / t));
+      }
+    },
+    // 허브 카드의 관객 프로필 — 이 게임을 방송하면 누가 특히 모이는가.
+    // 자극 평균의 내적으로 구하면 벡터 크기가 큰 원형(불구경파)이 모든 게임에서 이겨
+    // 변별이 사라진다(실측). 그래서 ① 실제 배분 산식을 이벤트마다 돌려 버스트 무게로
+    // 가중하고 ② 시작 구성비 대비 상대 강세로 본다 — "평소보다 더 오는 사람"이 답이다.
+    // 반환: { rel: 원형별 상대 강세(1 = 평범), top: 최다 원형 }
+    // ⚠ 현재 3게임은 프로필이 서로 비슷하다(전부 "위험→큰 보상" 구조). 그래서 라벨 하나로
+    //   단정하지 않고 막대로 그대로 보여준다 — 갈라지면 갈라진 대로 보이는 게 정직하다.
+    //   STIM 태깅으로 게임 색을 더 벌리는 것은 기획(소윤) 튜닝 과제다.
+    archProfile: function (g) {
+      var S = (g.chat && g.chat.STIM) || {}, B = (g.chat && g.chat.BURST) || {};
+      var keys = Object.keys(S), acc = [0, 0, 0, 0], i, k;
+      if (!keys.length) return null;
+      for (k = 0; k < keys.length; k++) {
+        var w = this.stimWeights(S[keys[k]]), sw = 0;
+        for (i = 0; i < ARCH.length; i++) sw += w[i];
+        var mult = B[keys[k]] || 1; // 큰 사건일수록 방송의 색을 더 많이 정한다
+        for (i = 0; i < ARCH.length; i++) acc[i] += mult * w[i] / sw;
+      }
+      var tot = 0, rel = [], best = null;
+      for (i = 0; i < ARCH.length; i++) tot += acc[i];
+      for (i = 0; i < ARCH.length; i++) {
+        rel[i] = (acc[i] / tot) / ARCH_START[i];
+        if (!best || rel[i] > best.s) best = { a: ARCH[i], s: rel[i] };
+      }
+      return { rel: rel, top: best.a };
+    },
 
     // ---------- 부팅 ----------
     boot: function () {
@@ -154,6 +245,8 @@
       $('tallyR').textContent = '오프라인';
       $('chainMeter').classList.add('hidden');
       $('viewerCount').textContent = '0';
+      this.comp = [0, 0, 0, 0];
+      this.renderComp();
       Chat.reset();
       Chat.sys('— 방송 대기 중 —');
 
@@ -165,11 +258,20 @@
       var cards = this.games.map(function (g) {
         var step = self.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
         var best = self.ch.best[g.id] || 0;
+        // 이 게임이 어떤 관객을 부르는가 — 고르기 전에 알 수 있어야 포트폴리오가 전략이 된다
+        var prof = self.archProfile(g);
+        var profHtml = prof ? '<div class="gaud"><span>관객 프로필</span>' +
+          '<i class="gaudbar">' + ARCH.map(function (a, i) {
+            return '<i style="flex-grow:' + Math.max(0.01, prof.rel[i]) + ';background:' + a.c +
+              '" title="' + a.n + ' ×' + prof.rel[i].toFixed(2) + '"></i>';
+          }).join('') + '</i>' +
+          '<b style="color:' + prof.top.c + '">' + prof.top.n + '</b></div>' : '';
         return '<button class="gcard" data-game="' + g.id + '">' +
           '<div class="gthumbWrap"><canvas class="gthumb" data-thumb="' + g.id + '" width="228" height="104"></canvas>' +
             '<span class="golive">● 방송 시작</span></div>' +
           '<div class="gt">' + g.title + '</div>' +
           '<div class="gd">' + g.tagline + '</div>' +
+          profHtml +
           '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
           '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
           '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
@@ -226,6 +328,8 @@
       this.game = g;
       this.phase = 'live';
       this.viewers = g.startViewers;
+      this.comp = ARCH_START.map(function (r) { return g.startViewers * r; });
+      this.compStart = this.comp.slice();
       this.timeLeft = g.duration;
       this._fxQueue.length = 0;
       this._shake = 0; this._flash = 0;
@@ -267,10 +371,13 @@
         // 신선도가 적용된 뒤의 실제 반영량. 게임은 "얼마를 벌 만한 플레이였나"만 말하고,
         // 시청자 수를 실제로 얼마나 움직일지는 셸이 정한다 (규약 1·4는 무대 소유).
         // label이 없으면 FX 팝업을 띄우지 않는다 — 소액 획득까지 큐를 먹으면 큰 자극이 밀린다.
-        gain: function (n, label) {
+        // ev는 총량이 아니라 배분에만 쓰인다 (ADR-002 결정 2 — 총량 산식 무변경).
+        // 생략하면 중립 배분이라 기존 호출은 그대로 동작한다 (contract 4.2)
+        gain: function (n, label, ev) {
           if (!(n > 0) || self.phase !== 'live') return 0;
           var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id)));
           self.viewers += actual;
+          self.compAdd(actual, ev);
           self.renderViewers();
           if (label) self._fxQueue.push('+' + actual.toLocaleString() + ' · ' + label); // 획득은 과하게 (규약 2)
           if (self.viewers >= 30000) Chat.big = true;
@@ -296,10 +403,26 @@
     renderViewers: function () {
       // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
       $('viewerCount').textContent = Math.ceil(this.viewers).toLocaleString();
+      this.renderComp();
+    },
+    // 관객 구성 게이지 — "지금 누가 보고 있는가"를 색으로. 콘텐츠 선택이 관객을 바꾼다는 게
+    // 숫자가 아니라 눈으로 읽혀야 포트폴리오 관리가 전략이 된다
+    renderComp: function () {
+      var el = $('compBar');
+      if (!el) return;
+      var t = this.compTotal();
+      if (!(t > 0)) { el.innerHTML = ''; return; }
+      var html = '';
+      for (var i = 0; i < ARCH.length; i++) {
+        html += '<i style="flex-grow:' + Math.max(0.0001, this.comp[i]) + ';background:' + ARCH[i].c +
+          '" title="' + ARCH[i].n + ' ' + Math.round(this.comp[i] / t * 100) + '%"></i>';
+      }
+      el.innerHTML = html;
     },
     loseViewers: function (n) {
       if (this.phase !== 'live' || !(n > 0)) return;
       this.viewers = Math.max(0, this.viewers - n);
+      this.compSub(n);
       this.renderViewers();
       if (this.viewers <= 0) this.endShow('dead');
     },
@@ -350,6 +473,13 @@
       this.saveChannel();
       this.updateTopbar();
 
+      // 원형별 순증감 — "오늘 방송이 어떤 사람들을 데려왔나"가 리포트의 새 축이다
+      var archRows = ARCH.map(function (a, i) {
+        var d = Math.round(self.comp[i] - self.compStart[i]);
+        return '<span style="color:' + a.c + '">' + a.n + '</span> <b>' +
+          (d >= 0 ? '+' : '') + d.toLocaleString() + '</b>';
+      }).join(' · ');
+
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
       var stats = (this.inst && this.inst.summary) ? this.inst.summary() : [];
@@ -370,6 +500,7 @@
           rows +
           '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명</b>' +
         '</div>' +
+        '<div class="archline">오늘 모인 사람들 — ' + archRows + '</div>' +
         '<p class="fine">다음 <b>' + g.title + '</b> 방송의 신선도는 <b>' + nextPct + '%</b>' +
           (nextPct < 100 && other ? ' — <b>' + other.title + '</b>을(를) 한 번 방송하면 회복된다. 이게 종겜을 하는 이유다.' : '.') +
         '</p>' +
@@ -536,5 +667,7 @@
   };
 
   Shell.FRESH_MULT = FRESH_MULT;
+  Shell.ARCH = ARCH;               // 채팅 캐스팅·selftest·샌드박스가 읽는다 (읽기 전용)
+  Shell.ARCH_START = ARCH_START;
   global.Shell = Shell;
 })(window);

@@ -87,6 +87,11 @@ body {
 }
 #liveBar b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 #sparkCv { display: block; opacity: .9; }
+/* 관객 구성 게이지 (ADR-002 공명 판정층) — "지금 누가 보고 있는가"를 색으로 상시 노출.
+   콘텐츠 선택이 관객을 바꾼다는 사실이 숫자가 아니라 눈으로 읽혀야 포트폴리오가 전략이 된다 */
+#compBar { display: flex; width: 66px; height: 9px; border-radius: 5px; overflow: hidden; border: 1px solid #4a4232; }
+#compBar:empty { display: none; }
+#compBar i { display: block; min-width: 0; transition: flex-grow .45s ease-out; }
 #tallyUp { font-weight: 400; opacity: .85; margin-left: 6px; font-variant-numeric: tabular-nums; }
 
 /* ---------- 스트리머 캠 — 게임 이벤트에 반응하는 얼굴 (연출 전용) ---------- */
@@ -212,6 +217,12 @@ body {
 }
 .gcard .gt { font-size: 16px; font-weight: 700; color: var(--ink); margin: 10px 14px 0; }
 .gcard .gd { font-size: 11.5px; color: var(--dim); margin: 5px 14px 0; line-height: 1.55; min-height: 3.1em; }
+/* 관객 프로필 — 이 게임이 특히 불러 모으는 원형. 라벨 하나로 단정하지 않고 막대를 함께
+   두는 이유는 게임 간 프로필이 실제로 비슷할 수 있기 때문이다 (그때는 비슷하게 보여야 한다) */
+.gcard .gaud { font-size: 11px; color: var(--dim); margin: 7px 14px 0; display: flex; align-items: center; gap: 7px; }
+.gcard .gaud b { font-weight: 700; white-space: nowrap; }
+.gaudbar { flex: 1; display: flex; height: 7px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
+.gaudbar i { display: block; min-width: 0; }
 .gcard .gf { font-size: 11px; margin: 8px 14px 0; color: #cfc7b8; display: flex; justify-content: space-between; }
 .gcard .gf b { font-variant-numeric: tabular-nums; }
 .gcard .gf.warn b { color: #ff8d7a; }
@@ -228,6 +239,9 @@ body {
 
 /* ---------- 방송 리포트 그래프 ---------- */
 #repGraph { display: block; width: 100%; height: auto; background: #0e0b14; border: 1px solid #2a2437; border-radius: 6px; margin: 8px 0 4px; }
+/* 원형별 순증감 — 오늘 방송이 어떤 사람들을 데려왔나 */
+.archline { font-size: 12.5px; color: #cfc7b8; margin: 4px 0 2px; line-height: 1.7; }
+.archline b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }

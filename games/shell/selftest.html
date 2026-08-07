@@ -121,6 +121,89 @@ Shell.games.forEach(function (g) {
   eq(g.title + ': 사실 템플릿들이 같은 슬롯 집합을 쓴다', slotBad, []);
 });
 
+// ---- 공명 판정층 (ADR-002) ----
+// 배분이 조용히 틀리면 "관객 구성"이라는 코어가 통째로 거짓말이 된다 — 총량 보존과
+// 공명 방향(어떤 자극이 어떤 원형을 부르는가) 두 가지를 계산으로 못박는다.
+eq('경제 원형 4종', Shell.ARCH.map(function (a) { return a.id; }), ['thrill', 'fan', 'expert', 'casual']);
+ok('시작 구성비 합이 1', Math.abs(Shell.ARCH_START.reduce(function (a, b) { return a + b; }, 0) - 1) < 1e-9);
+var ARCH_IDS = Shell.ARCH.map(function (a) { return a.id; });
+eq('페르소나 8종이 전부 유효한 원형에 매핑된다',
+   Chat.personas.filter(function (p) { return ARCH_IDS.indexOf(p.arch) < 0; })
+     .map(function (p) { return p.nick; }), []);
+
+Shell.games.forEach(function (g) {
+  var S = (g.chat && g.chat.STIM) || {};
+  var badVec = Object.keys(S).filter(function (ev) {
+    var v = S[ev];
+    return !(v instanceof Array) || v.length !== 4 ||
+      v.filter(function (x) { return !(x >= 0 && x <= 1); }).length > 0;
+  });
+  eq(g.title + ': STIM이 4축 0~1 범위다', badVec, []);
+  var unknown = Object.keys(S).filter(function (ev) { return !g.chat.T[ev]; });
+  eq(g.title + ': STIM 키가 전부 실제 이벤트다', unknown, []);
+});
+
+(function () {
+  var saveGame = Shell.game, saveComp = Shell.comp;
+  Shell.game = Shell.games[0]; // 화력쇼 어휘로 검사
+  var BASE = [60, 75, 45, 120];
+  var delta = function (total, ev) {
+    Shell.comp = BASE.slice();
+    Shell.compAdd(total, ev);
+    return Shell.comp.map(function (v, i) { return v - BASE[i]; });
+  };
+  var top = function (d) { return Shell.ARCH[d.indexOf(Math.max.apply(null, d))].id; };
+
+  // 총량 보존 — 반올림 오차가 새거나 늘면 시청자 수와 구성 합이 어긋난다
+  var bad = [];
+  [1, 7, 40, 520, 1401, 33333].forEach(function (total) {
+    ['rescue_big', 'disaster', 'done', '__untagged__'].forEach(function (ev) {
+      var sum = delta(total, ev).reduce(function (a, b) { return a + b; }, 0);
+      if (sum !== total) bad.push(ev + '@' + total + '→' + sum);
+    });
+  });
+  eq('배분 총합이 항상 총량과 같다 (Σ배분 = total)', bad, []);
+
+  // 공명 방향 — 자극 축이 원형을 실제로 갈라야 모델이 의미를 가진다
+  eq('rescue_big(숙련 자극) → 분석가에게 최다 배분', top(delta(1000, 'rescue_big')), 'expert');
+  eq('disaster(파괴 자극) → 불구경파에게 최다 배분', top(delta(1000, 'disaster')), 'thrill');
+
+  // 미태깅·중립 유입은 채널의 색을 바꾸지 않는다
+  Shell.comp = [100, 100, 100, 100];
+  Shell.compAdd(400, '__untagged__');
+  ok('미태깅 이벤트는 구성비를 바꾸지 않는다',
+     Shell.comp.join() === '200,200,200,200');
+
+  // 이탈도 중립 (규약 2 — 손실은 색까지 바꾸지 않는다)
+  Shell.comp = [100, 200, 300, 400];
+  Shell.compSub(500);
+  var t = Shell.compTotal();
+  ok('이탈은 비례 차감 — 구성비가 유지된다',
+     Math.abs(t - 500) < 1e-6 && Math.abs(Shell.comp[3] / t - 0.4) < 1e-6);
+
+  Shell.game = saveGame; Shell.comp = saveComp;
+})();
+
+// 캐스팅이 관객 구성을 반영하는가 — "구성이 바뀌면 채팅이 바뀐다"는 이 게임의 코어 주장이라
+// 조용히 평탄해지면 공명 모델이 화면에서 사라진다. 확률 검사지만 기대 격차가 30배라 안전하다.
+(function () {
+  var saveComp = Shell.comp;
+  var draw = function (comp) {
+    Shell.comp = comp.slice();
+    var tally = { thrill: 0, fan: 0, expert: 0, casual: 0 };
+    for (var i = 0; i < 2000; i++) tally[Chat.pickPersona({}).arch]++;
+    return tally;
+  };
+  var t1 = draw([100, 100, 800, 100]);
+  ok('분석가가 지배하면 그쪽 페르소나가 압도한다 (expert ' + t1.expert + ' vs casual ' + t1.casual + ')',
+     t1.expert > t1.casual * 1.8);
+  var t2 = draw([800, 100, 100, 100]);
+  ok('불구경파가 지배하면 그쪽 페르소나가 압도한다 (thrill ' + t2.thrill + ' vs expert ' + t2.expert + ')',
+     t2.thrill > t2.expert * 1.8);
+  ok('소수 원형도 완전히 침묵하지는 않는다 (바닥 가중치)', t2.expert > 0);
+  Shell.comp = saveComp;
+})();
+
 // ---- Giving Up On It: 물리 상수끼리 모순되지 않는가 ----
 // 초판 버그: "낙하속도 700 이상"과 "높이 손실 3m 미만"을 동시에 요구해 clutch가 영원히 안 터졌다.
 // 값만 봐서는 안 보이고 v²=2gh를 넣어야 드러나는 종류라 여기서 계산으로 잡는다.

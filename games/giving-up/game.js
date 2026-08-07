@@ -284,7 +284,7 @@
       if (st.planted && Math.hypot(st.vx, st.vy) < 140) {
         if (st.airVy > CLUTCH_V && !st.touched && heightM() > CLUTCH_MIN_H) {
           st.saves++;
-          stage.gain(Math.round(st.airVy * .8), '살렸다!');
+          stage.gain(Math.round(st.airVy * .8), '살렸다!', 'clutch');
           stage.emit('clutch'); sfxSave(); stage.flash(.12);
         }
         st.airVy = 0; st.touched = false;
@@ -295,7 +295,7 @@
     function payClimb() {
       while (st.best >= st.paidM + 1) {
         st.paidM++;
-        stage.gain(Math.round(45 * (1 + st.paidM / 30)), null);
+        stage.gain(Math.round(45 * (1 + st.paidM / 30)), null, 'climb');
         st.recoverAcc++;
         if (st.recoverAcc >= 3 && st.fallFresh > 0) { // 규약 4 회복 — 새 높이를 뚫어야 풀린다
           st.recoverAcc = 0; st.fallFresh--;
@@ -311,7 +311,7 @@
       st.recoverAcc = 0;
       var raw = Math.round(90 * Math.pow(drop, 1.6) * fm);
       var ev = drop >= 25 ? 'fall_legend' : (drop >= 9 ? 'fall_big' : 'fall');
-      var actual = stage.gain(raw, drop >= 9 ? '대추락 ' + drop.toFixed(0) + 'm!!' : '추락 ' + drop.toFixed(0) + 'm');
+      var actual = stage.gain(raw, drop >= 9 ? '대추락 ' + drop.toFixed(0) + 'm!!' : '추락 ' + drop.toFixed(0) + 'm', ev);
       if (drop >= 9) { stage.shake(Math.min(18, drop * .5)); stage.flash(.18); sfxFall(); }
       if (drop >= 25) stage.stamp(drop.toFixed(0) + 'm 대추락');
       stage.ticker('추락 ' + drop.toFixed(1) + 'm — 시청자 +' + actual.toLocaleString(), false);
@@ -347,7 +347,7 @@
           st.cleared = true;
           st.clearT = 1.4; // step 구동 — setTimeout은 인스턴스보다 오래 살아, 정상 직후 Escape→재시작하면
                            // 다음 방송을 'clear'로 끝내버린다 (리뷰 발견). pocket의 step 타이머와 같은 원리
-          var g = stage.gain(60000, '정상 등반!!!');
+          var g = stage.gain(60000, '정상 등반!!!', 'summit');
           stage.stamp('정상 등반'); stage.flash(.5); sfxTop();
           stage.emit('summit', { gain: g.toLocaleString() });
           return;
@@ -391,7 +391,7 @@
           st.donT = 9 + Math.random() * 7;
           if (Math.random() < .45) {
             var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var a = stage.gain(d, '익명의 도네');
+            var a = stage.gain(d, '익명의 도네', 'donation');
             stage.emit('donation', { d: a.toLocaleString() });
           }
         }

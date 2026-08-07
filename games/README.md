@@ -7,7 +7,7 @@
 
 ```
 /index.html               GitHub Pages 진입점 — 링크 클릭 즉시 플레이 (NAN 2026 제출물 1번)
-games/shell/shell.js      셸: 허브(방송 준비)·시청자 경제·신선도·방송 루프·리포트  ← 계약 구현
+games/shell/shell.js      셸: 허브(방송 준비)·시청자 경제·신선도·공명 판정층·방송 루프·리포트  ← 계약 구현
 games/shell/chat.js       AI 시청자 채팅 엔진 — 검증 게이트 (임시 거처, engine/ 이관 예정)
 games/shell/llm.js        LLM 어댑터 — proxy/ 경유 실제 LLM 발화 (임시 거처, 위와 동일)
 games/shell/config.js     배포 설정 — PROXY_URL 한 칸 (proxy/README.md 절차로 채움)
@@ -28,7 +28,7 @@ proxy/                    LLM 프록시 (Vercel) — 설계·배포 절차는 pr
 `python -m http.server 8770` 후 `http://127.0.0.1:8770/`.
 `PROXY_URL`이 비어 있으면 AI 시청자는 오프라인 규칙 기반 — 이것도 완전한 모드다.
 
-자체 점검: `games/shell/selftest.html` — 전부 `ok`여야 한다 (2026-08-07 현재 36개).
+자체 점검: `games/shell/selftest.html` — 전부 `ok`여야 한다 (2026-08-08 현재 56개).
 탭이 백그라운드로 가면 rAF 정지로 방송이 자동 일시정지된다(의도된 동작).
 
 ## 게임 3종의 리듬 설계

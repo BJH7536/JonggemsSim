@@ -21,16 +21,19 @@
   };
 
   // 페르소나 8종 — prototypes/05-hwaryeok-personas.md 시트 기반. 게임과 무관한 공용 캐스트.
+  // arch = 소속 경제 원형 (ADR-002 §7.2 다대일 매핑). 발화 캐스팅 가중치에만 쓰인다 —
+  // 페르소나가 경제를 움직이는 게 아니라, 경제(관객 구성)가 누가 말할지를 정하는 단방향이다.
   var PERSONAS = [
-    { nick: '불멍장인',     color: '#ff8d5a', tones: ['hype', 'mock'] },
-    { nick: '안전제일',     color: '#7fd4ff', tones: ['worry', 'question'] },
-    { nick: '10년차주방장', color: '#ffd27a', tones: ['info', 'mock'] },
-    { nick: '오늘첫방문',   color: '#b8f5c4', tones: ['question', 'cheer'] },
-    { nick: 'ㅋㅋ자판기',   color: '#f0a8ff', tones: ['hype', 'mock'] },
-    { nick: '냉정한미식가', color: '#c9c4ba', tones: ['mock', 'info'] },
-    { nick: '응원봉',       color: '#ffb0c8', tones: ['cheer', 'hype'] },
-    { nick: '길가던행인',   color: '#a8c8f0', tones: ['question', 'worry', 'cheer'] },
+    { nick: '불멍장인',     color: '#ff8d5a', tones: ['hype', 'mock'], arch: 'thrill' },
+    { nick: '안전제일',     color: '#7fd4ff', tones: ['worry', 'question'], arch: 'fan' },
+    { nick: '10년차주방장', color: '#ffd27a', tones: ['info', 'mock'], arch: 'expert' },
+    { nick: '오늘첫방문',   color: '#b8f5c4', tones: ['question', 'cheer'], arch: 'casual' },
+    { nick: 'ㅋㅋ자판기',   color: '#f0a8ff', tones: ['hype', 'mock'], arch: 'thrill' },
+    { nick: '냉정한미식가', color: '#c9c4ba', tones: ['mock', 'info'], arch: 'expert' },
+    { nick: '응원봉',       color: '#ffb0c8', tones: ['cheer', 'hype'], arch: 'fan' },
+    { nick: '길가던행인',   color: '#a8c8f0', tones: ['question', 'worry', 'cheer'], arch: 'casual' },
   ];
+  var CAST_FLOOR = 0.12; // 바닥 가중치 — 구성이 쏠려도 소수 원형이 완전히 침묵하지는 않는다
 
   var Chat = {
     T: {}, BURST: {}, personas: PERSONAS,
@@ -112,6 +115,30 @@
       return this.history.slice(-this.N).every(function (h) { return sim(text, h) < this.SIM_MAX; }, this);
     },
 
+    // 캐스팅 — 누가 말할지는 현재 관객 구성이 정한다 (ADR-002). 분석가가 몰린 방송에서는
+    // 10년차주방장·냉정한미식가가 자주 뜨고, 불구경파 방송이면 불멍장인·ㅋㅋ자판기가 도배한다.
+    // Shell을 읽기만 하는 단방향이라 C3 위반이 아니다 — 채팅은 여전히 관측하고 말만 한다.
+    pickPersona: function (used) {
+      var pool = [], i;
+      for (i = 0; i < PERSONAS.length; i++) if (!used[PERSONAS[i].nick]) pool.push(PERSONAS[i]);
+      if (!pool.length) pool = PERSONAS; // 버스트가 캐스트보다 크면 재등장 허용
+      var archN = (global.Shell && global.Shell.ARCH) ? global.Shell.ARCH.length : 4;
+      var share = (global.Shell && global.Shell.archShare)
+        ? function (id) { return global.Shell.archShare(id); }
+        : function () { return 1 / archN; }; // 셸 없이 도구(부스)에서 단독 구동할 때
+      // 점유율을 그대로 쓰면(21% vs 33%) 등장 빈도 차가 1.36배에 그쳐 체감되지 않는다(실측).
+      // 평균 대비 상대 존재감을 제곱해 대비를 벌린다 — 캐스팅은 연출층이라 밸런스와 무관하다.
+      var w = [], sw = 0;
+      for (i = 0; i < pool.length; i++) {
+        var rel = share(pool[i].arch) * archN; // 1.0 = 평균적인 존재감
+        w[i] = CAST_FLOOR + rel * rel;
+        sw += w[i];
+      }
+      var r = Math.random() * sw;
+      for (i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) return pool[i]; }
+      return pool[pool.length - 1];
+    },
+
     react: function (ev, facts, opts) {
       opts = opts || {};
       // 사실 슬롯은 여기서 한 번만 이스케이프한다 — 이후 치환·검증이 전부 같은 문자열을 보므로
@@ -124,14 +151,11 @@
       var self = this, token = this.epoch;
       var n = this.BURST[ev] || 1;
       if (n > 1 && this.big) n = Math.min(4, n + 1); // 대형 방송은 채팅도 두껍다
-      var used = {}, usedCount = 0;
+      var used = {};
       var delay = 120 + Math.random() * 180; // 첫 반응은 빠르게 (실시간 게임 — 스펙 기본보다 짧다)
       for (var i = 0; i < n; i++) {
-        var p;
-        do {
-          p = PERSONAS[rnd(0, PERSONAS.length - 1)];
-        } while (used[p.nick] && usedCount < PERSONAS.length);
-        if (!used[p.nick]) { used[p.nick] = 1; usedCount++; }
+        var p = this.pickPersona(used);
+        used[p.nick] = 1;
         var wantFact = i === 0 && T.facts.length > 0;
         (function (p, wantFact) {
           setTimeout(function () {
