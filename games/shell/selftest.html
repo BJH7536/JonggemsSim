@@ -161,6 +161,30 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
     });
   });
   eq('바위가 주 루트의 발 디딜 공간을 막지 않는다', blocked, []);
+
+  // 출발 지점이 천장 밑에 깔려 있지 않은가.
+  // 위 두 검사는 ROUTE 발판끼리의 관계만 보므로 "스폰 → 첫 발판" 구간이 사각지대였고,
+  // 실제로 스폰(480)이 첫 발판(x 360~600) 바로 밑 16px 틈에 갇혀 있었다(플레이 피드백).
+  // 항아리 윗면에서 수직으로 올려다봤을 때 가장 낮은 천장까지의 거리를 잰다.
+  var topY = T.GROUND_Y - T.PR * 2;   // 스폰 시 항아리 윗면
+  var ceil = Infinity, ceilAt = null;
+  T.TERRAIN.forEach(function (s) {
+    if (s.hidden) return;
+    var lowest;                        // 이 지형의 아랫면 (스폰 x 기준)
+    if (s.t === 'r') {
+      if (T.START_X < s.x || T.START_X > s.x + s.w) return;
+      lowest = s.y + s.h;
+    } else {
+      var dx = Math.abs(s.x - T.START_X);
+      if (dx >= s.r) return;
+      lowest = s.y + Math.sqrt(s.r * s.r - dx * dx);
+    }
+    if (lowest > topY) return;         // 항아리보다 아래에 있는 것은 천장이 아니다
+    if (topY - lowest < ceil) { ceil = topY - lowest; ceilAt = s; }
+  });
+  ok('출발 지점 머리 위가 ' + T.HEAD_ROOM_MIN + 'px 이상 비어 있다 (실측 ' +
+     (ceil === Infinity ? '천장 없음' : Math.round(ceil) + 'px') + ')',
+     ceil >= T.HEAD_ROOM_MIN);
 })();
 
 // ---- 배포 payload 예산 ----
