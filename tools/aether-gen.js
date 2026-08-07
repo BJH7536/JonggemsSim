@@ -34,14 +34,22 @@ const MAX_WAIT = 90000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function headers(key) {
-  return { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  return { Authorization: `Bearer ${key}` };
 }
 
+/* 본문은 multipart/form-data 다 — JSON이 아니다.
+ * generate/image 는 ref_images(file[])를 받는 엔드포인트라 스칼라 필드도 폼으로 온다.
+ * JSON을 보내면 422 {"loc":["body","prompt"],"msg":"Field required","input":null} 가 뜬다.
+ * (Getting Started의 cURL 예시는 JSON으로 적혀 있지만 실제와 다르다 — Endpoints 표가 규범.)
+ * Content-Type은 직접 넣지 않는다. fetch가 boundary까지 붙여 만들어야 한다. */
 async function createJob(key, item) {
+  const form = new FormData();
+  form.append('prompt', item.prompt);
+  form.append('ai_model', item.ai_model);
   const res = await fetch(`${BASE}/generate/image`, {
     method: 'POST',
     headers: headers(key),
-    body: JSON.stringify({ prompt: item.prompt, ai_model: item.ai_model }),
+    body: form,
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`생성 요청 실패 ${res.status}: ${text.slice(0, 200)}`);
