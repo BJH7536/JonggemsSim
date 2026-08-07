@@ -380,6 +380,10 @@
         if (n >= 1 && n <= 4 && st.phase === 'player') playerMove(n - 1);
       },
 
+      // 튜닝 계측용 상태 노출 — ?guoidebug 를 붙였을 때만 (GUOI와 같은 규약).
+      debug: (typeof location !== 'undefined' && /guoidebug/.test(location.search))
+        ? function () { return st; } : null,
+
       summary: function () {
         return [
           ['연승 / KO', st.wins + '연승 / ' + st.kos + '회'],
@@ -412,10 +416,15 @@
           var n = VFX_GRID * VFX_GRID, idx = Math.min(n - 1, (p * n) | 0);
           var fw = im.naturalWidth / VFX_GRID, fh = im.naturalHeight / VFX_GRID;
           var size = 170 * f.s;
+          // 생성 시트에 셀 경계 격자선이 그려져 온다(실측). 소스 사각형을 4% 안쪽으로
+          // 파서 선을 잘라낸다 — 이펙트는 셀 중앙에 있어 4% 손실은 보이지 않는다.
+          var inx = fw * .04, iny = fh * .04;
           ctx.save();
           ctx.globalCompositeOperation = 'screen';
           ctx.globalAlpha = p > .8 ? (1 - p) * 5 : 1;   // 마지막 20%는 페이드아웃
-          ctx.drawImage(im, (idx % VFX_GRID) * fw, ((idx / VFX_GRID) | 0) * fh, fw, fh,
+          ctx.drawImage(im,
+                        (idx % VFX_GRID) * fw + inx, ((idx / VFX_GRID) | 0) * fh + iny,
+                        fw - inx * 2, fh - iny * 2,
                         f.x - size / 2, f.y - size / 2, size, size);
           ctx.restore();
           return true;

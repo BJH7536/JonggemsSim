@@ -1,4 +1,4 @@
-# AetherAI 생성 이미지를 배포 크기로 줄인다. aether-gen.js 다음에 한 번 돌린다.
+﻿# AetherAI 생성 이미지를 배포 크기로 줄인다. aether-gen.js 다음에 한 번 돌린다.
 #
 # 왜 필요한가: 생성물은 1024~1536px 원본이라 바탕화면 하나가 1.1MB다. 배포 payload에는
 # 예산 가드(selftest.html)가 있고, 제출 요건이 "링크 클릭만으로 바로 플레이"다.
@@ -45,13 +45,34 @@ public static class Chroma {
     Marshal.Copy(px, 0, d.Scan0, n);
     bmp.UnlockBits(d);
   }
+  // VFX 시트용 — 생성 모델이 "검은 배경" 지시를 무시하고 흰 배경으로 준다(실측).
+  // 흰색일수록 투명(a = 1 − min(R,G,B)/255)으로 보고 검정 위에 눕힌다: out = C × a.
+  // 게임이 'screen' 블렌드로 얹으므로 검정은 0 기여 — 결과적으로 이펙트 선만 떠오른다.
+  public static void WhiteToBlack(Bitmap bmp) {
+    var r = new Rectangle(0, 0, bmp.Width, bmp.Height);
+    var d = bmp.LockBits(r, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+    int n = Math.Abs(d.Stride) * bmp.Height;
+    byte[] px = new byte[n];
+    Marshal.Copy(d.Scan0, px, 0, n);
+    for (int i = 0; i < n; i += 4) {
+      int B = px[i], G = px[i + 1], R = px[i + 2];
+      double a = 1.0 - Math.Min(R, Math.Min(G, B)) / 255.0;
+      a = Math.Min(1.0, a * 1.25);              // 얇은 선이 죽지 않게 살짝 증폭
+      px[i]     = (byte)(B * a);
+      px[i + 1] = (byte)(G * a);
+      px[i + 2] = (byte)(R * a);
+      px[i + 3] = 255;
+    }
+    Marshal.Copy(px, 0, d.Scan0, n);
+    bmp.UnlockBits(d);
+  }
 }
 '@
 
 $root = Join-Path $PSScriptRoot ".."
 
 function Resize-Image {
-  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false)
+  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false)
 
   # 주의: 파라미터가 [string]$Src 이고 PowerShell은 변수명 대소문자를 구분하지 않는다.
   # $src 에 Image를 대입하면 선언 타입에 맞춰 문자열로 변환된다. 반드시 다른 이름을 쓸 것.
@@ -74,6 +95,7 @@ function Resize-Image {
   # 키잉은 축소 후에 한다 — 원본(1024²)보다 25배 적은 픽셀이고, 축소 보간이 만든
   # 마젠타 반투명 띠까지 같은 패스에서 디스필된다.
   if ($Key) { [Chroma]::KeyMagenta($bmp) }
+  if ($WhiteKey) { [Chroma]::WhiteToBlack($bmp) }
 
   if ($Fmt -eq 'jpg') {
     $codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
@@ -108,13 +130,13 @@ $jobs = @(
   @{ Dir = 'games\pocket\img'; In = 'foe-water.png'; Out = 'foe-water.png'; W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\pocket\img'; In = 'foe-grass.png'; Out = 'foe-grass.png'; W = 192; H = 192; Fmt = 'png'; Key = $true },
   # ── 주머니 괴수: VFX 4x4 시트 (검은 배경 → 'screen' 블렌드라 JPEG로 충분) ──
-  @{ Dir = 'games\pocket\img'; In = 'vfx-tackle.png';    Out = 'vfx-tackle.jpg';    W = 512; H = 512; Fmt = 'jpg'; Q = 80 },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-fire.png';      Out = 'vfx-fire.jpg';      W = 512; H = 512; Fmt = 'jpg'; Q = 80 },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-water.png';     Out = 'vfx-water.jpg';     W = 512; H = 512; Fmt = 'jpg'; Q = 80 },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-grass.png';     Out = 'vfx-grass.jpg';     W = 512; H = 512; Fmt = 'jpg'; Q = 80 },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-fire.png';  Out = 'vfx-ult-fire.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80 },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-water.png'; Out = 'vfx-ult-water.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80 },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-grass.png'; Out = 'vfx-ult-grass.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80 }
+  @{ Dir = 'games\pocket\img'; In = 'vfx-tackle.png';    Out = 'vfx-tackle.jpg';    W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  @{ Dir = 'games\pocket\img'; In = 'vfx-fire.png';      Out = 'vfx-fire.jpg';      W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  @{ Dir = 'games\pocket\img'; In = 'vfx-water.png';     Out = 'vfx-water.jpg';     W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  @{ Dir = 'games\pocket\img'; In = 'vfx-grass.png';     Out = 'vfx-grass.jpg';     W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-fire.png';  Out = 'vfx-ult-fire.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-water.png'; Out = 'vfx-ult-water.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-grass.png'; Out = 'vfx-ult-grass.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true }
 )
 
 $total = 0
@@ -124,8 +146,7 @@ foreach ($j in $jobs) {
   $dst = Join-Path $dir $j.Out
   if (-not (Test-Path $src)) {
     # 이미 최적화돼 원본이 다른 확장자로 남은 경우는 조용히 합계만 잡는다
-    if (Test-Path $dst) { $total += (Get-Item $dst).Length }
-    else { Write-Host ("건너뜀  {0} (없음)" -f $j.In) }
+    if (Test-Path $dst) { $total += (Get-Item $dst).Length } else { Write-Host ("건너뜀  {0} (없음)" -f $j.In) }
     continue
   }
   $before = (Get-Item $src).Length
@@ -133,8 +154,9 @@ foreach ($j in $jobs) {
   # PowerShell 5.1에는 ?? 가 없다 — 파서 오류가 난다
   $q = if ($j.ContainsKey('Q')) { $j.Q } else { 80 }
   $key = if ($j.ContainsKey('Key')) { $j.Key } else { $false }
+  $wkey = if ($j.ContainsKey('WhiteKey')) { $j.WhiteKey } else { $false }
   # 변환이 실패했는데도 원본을 지우거나 "줄었다"고 출력하면 안 된다 (실제로 그런 적 있음)
-  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key }
+  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey }
   catch {
     Write-Host ("실패    {0} — {1}" -f $j.In, $_.Exception.Message)
     if (Test-Path $tmp) { Remove-Item $tmp -Force }
