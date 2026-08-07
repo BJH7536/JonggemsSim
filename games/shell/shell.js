@@ -162,18 +162,15 @@
       this.updateTopbar();
 
       var self = this;
-      var cards = this.games.map(function (g) {
-        var step = self.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
-        var best = self.ch.best[g.id] || 0;
-        return '<button class="gcard" data-game="' + g.id + '">' +
-          '<div class="gthumbWrap"><canvas class="gthumb" data-thumb="' + g.id + '" width="228" height="104"></canvas>' +
-            '<span class="golive">● 방송 시작</span></div>' +
-          '<div class="gt">' + g.title + '</div>' +
-          '<div class="gd">' + g.tagline + '</div>' +
-          '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
-          '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
-          '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
-            (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
+      // 바탕화면 아이콘 — 스트리머의 PC라는 은유. 카드 그리드보다 "방송 전"이라는 상태가 읽힌다.
+      // 아이콘 아트는 AetherAI 생성물(tools/aether-assets.json)이고, 파일이 없으면
+      // 아래 bindHub()가 .noimg 로 떨어뜨려 CSS 타일로 그린다 — 이미지 없이도 기능은 온전하다.
+      var icons = this.games.map(function (g) {
+        var pct = Math.round(FRESH_MULT[self.freshStep(g.id)] * 100);
+        return '<button class="dIcon" data-game="' + g.id + '">' +
+          '<span class="dIconArt"><img src="games/shell/img/icon-' + g.id + '.png" alt=""></span>' +
+          '<span class="dIconName">' + g.title + '</span>' +
+          '<span class="dIconFresh' + (pct < 100 ? ' warn' : '') + '">' + pct + '%</span>' +
           '</button>';
       }).join('');
 
@@ -185,36 +182,75 @@
         : '';
 
       $('overlay').classList.remove('hidden');
-      $('overlay').innerHTML = '<div class="panel hub">' +
-        '<div class="hubTop">' +
-          '<img class="hubCam" src="games/shell/faces/adventurer_silence.png" alt="스트리머">' +
-          '<div><h2>방송 준비</h2>' +
-          '<p>당신은 종합게임 스트리머다. 카테고리를 고르면 송출이 시작되고, <b>AI 시청자</b>가 ' +
-          '플레이를 실시간으로 관측하며 떠든다 — 칭찬, 야유, 훈수.</p>' +
-          '<div class="chanline">📺 <b>종겜러</b> 채널 · 구독자 <b>' + this.ch.subs.toLocaleString() + '</b>명 · ' +
-            '방송 <b>' + this.ch.shows + '</b>회</div></div>' +
-        '</div>' +
-        '<div id="hubGrid">' + cards + '</div>' +
-        '<p class="fine">시청자 수가 곧 체력이자 점수다 — 0명이 되면 송출이 끊긴다. ' +
-        '그리고 <b>같은 게임만 파면 물린다</b>. 그래서 종겜을 하는 것이다.</p>' +
+      $('overlay').innerHTML = '<div class="panel hub deskWrap">' +
+        '<div class="monitor"><div class="screen">' +
+          '<div class="deskIcons">' + icons + '</div>' +
+          '<div class="deskWin" id="deskWin"></div>' +
+          '<div class="deskBar">' +
+            '<span class="dStart"><img src="games/shell/faces/adventurer_silence.png" alt="">종겜러</span>' +
+            '<span class="dBarInfo">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
+              this.ch.shows + '</b>회</span>' +
+            '<span class="dBarHint">아이콘을 눌러 방송할 게임을 고른다</span>' +
+          '</div>' +
+        '</div><div class="mstand"></div></div>' +
         recent + '</div>';
 
-      // 카드 썸네일 — 게임이 자기 미리보기를 그린다 (thumb 없으면 타이틀 카드)
-      this.games.forEach(function (g) {
-        var cv = $('overlay').querySelector('[data-thumb="' + g.id + '"]');
-        if (!cv) return;
-        var c = cv.getContext('2d');
-        if (g.thumb) g.thumb(c, cv.width, cv.height);
-        else {
-          c.fillStyle = '#1d1728'; c.fillRect(0, 0, cv.width, cv.height);
-          c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
-          c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
-        }
+      this.bindHub();
+      // 첫 진입에도 창이 비어 보이지 않게 첫 게임을 열어 둔다
+      if (this.games.length) this.openLauncher(this.games[0].id);
+    },
+
+    // 아이콘 아트가 없으면(아직 생성 전) CSS 타일로 대체한다 — 이미지 유무가 기능을 막지 않는다
+    bindHub: function () {
+      var self = this, root = $('overlay');
+      root.querySelectorAll('.dIcon img').forEach(function (im) {
+        im.addEventListener('error', function () { im.closest('.dIcon').classList.add('noimg'); });
+        if (im.complete && im.naturalWidth === 0) im.closest('.dIcon').classList.add('noimg');
       });
-      $('overlay').querySelector('#hubGrid').addEventListener('click', function (e) {
+      root.querySelector('.deskIcons').addEventListener('click', function (e) {
         var btn = e.target.closest('[data-game]');
-        if (btn) self.start(btn.getAttribute('data-game'));
+        if (btn) self.openLauncher(btn.getAttribute('data-game'));
       });
+    },
+
+    // 런처 창 — 아이콘을 고르면 열린다. 방송 시작은 여기서만 누른다.
+    // 기존 카드가 보여주던 정보(썸네일·태그라인·신선도·최고 기록)를 그대로 옮겼다.
+    openLauncher: function (gameId) {
+      var self = this;
+      var g = this.games.filter(function (x) { return x.id === gameId; })[0];
+      if (!g) return;
+      var step = this.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
+      var best = this.ch.best[g.id] || 0;
+
+      $('overlay').querySelectorAll('.dIcon').forEach(function (b) {
+        b.classList.toggle('on', b.getAttribute('data-game') === gameId);
+      });
+
+      $('deskWin').innerHTML =
+        '<div class="dwBar"><span class="dwDots"><i></i><i></i><i></i></span>' +
+          '<span class="dwTitle">' + g.title + '</span></div>' +
+        '<div class="dwBody">' +
+          '<canvas class="gthumb" data-thumb="' + g.id + '" width="228" height="104"></canvas>' +
+          '<div class="dwInfo">' +
+            '<p class="gd">' + g.tagline + '</p>' +
+            '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
+            '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
+            '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
+              (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<button class="dwGo" data-go="' + g.id + '">● 방송 시작</button>';
+
+      // 썸네일은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
+      var cv = $('deskWin').querySelector('[data-thumb]');
+      var c = cv.getContext('2d');
+      if (g.thumb) g.thumb(c, cv.width, cv.height);
+      else {
+        c.fillStyle = '#1d1728'; c.fillRect(0, 0, cv.width, cv.height);
+        c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
+        c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
+      }
+      $('deskWin').querySelector('.dwGo').addEventListener('click', function () { self.start(gameId); });
     },
 
     // ---------- 방송 시작 ----------

@@ -8,6 +8,12 @@ submission.local/
 node_modules/
 dist/
 
+# 비밀 값 — AETHER_API_KEY 등. 커밋되면 공개 레포라 즉시 유출이다.
+# tools/aether-gen.js 는 환경변수로만 키를 받는다 (인자로 넘기면 셸 히스토리에 남는다).
+.env
+.env.*
+!.env.example
+
 # OS
 Thumbs.db
 .DS_Store

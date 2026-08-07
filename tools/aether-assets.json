@@ -1,0 +1,35 @@
+{
+  "_": [
+    "AetherAI로 생성할 이미지 목록. tools/aether-gen.js 가 읽는다.",
+    "셸 팔레트에 맞춘다 — 배경 #0b0908, 강조 #ffb447, 보조 #a89b8c. 어두운 톤이 기본이다.",
+    "배포 payload 예산(450KB)이 있으므로 생성 후 용량을 확인하고 필요하면 축소할 것.",
+    "라이선스: AetherForge 이용약관상 상업적 이용·재배포·오픈소스 포함 허용, 저작자 표시 불요 (2026-08-07 확인).",
+    "출처는 docs/submission/ai-tech-doc.md 에셋 표에 반드시 기재한다."
+  ],
+  "assets": [
+    {
+      "id": "desktop-wallpaper",
+      "out": "games/shell/img/desktop-wallpaper.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark moody desktop wallpaper for a game streamer's PC. Deep charcoal black background (#0b0908) with subtle warm amber (#ffb447) rim lighting. Abstract cozy streaming room silhouette at night: a desk, a monitor glow, a soft neon sign, faint smoke. Minimal, low contrast, no text, no logos, no characters. Wide 16:9 composition with the center kept empty and uncluttered so desktop icons placed on top stay readable."
+    },
+    {
+      "id": "icon-hwaryeok",
+      "out": "games/shell/img/icon-hwaryeok.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#141010) with warm amber and orange (#ffb447, #ff6b3d) accents. Subject: a cooking stove burner with a bright flame under a frying pan, seen head on. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "id": "icon-giving-up",
+      "out": "games/shell/img/icon-giving-up.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#101418) with cold slate blue and pale grey accents. Subject: a clay pot with a long sledgehammer leaning against a steep rocky cliff ledge, seen from the side. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "id": "icon-pocket",
+      "out": "games/shell/img/icon-pocket.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#12101a) with green and orange accents. Subject: two round cartoon monster creatures facing each other in a versus standoff, simple blob shapes with big eyes. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding. Original creature design, not resembling any existing franchise."
+    }
+  ]
+}
