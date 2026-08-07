@@ -185,6 +185,17 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
   ok('출발 지점 머리 위가 ' + T.HEAD_ROOM_MIN + 'px 이상 비어 있다 (실측 ' +
      (ceil === Infinity ? '천장 없음' : Math.round(ceil) + 'px') + ')',
      ceil >= T.HEAD_ROOM_MIN);
+
+  // 출발 지점에서 첫 발판이 "한 번에 걸리는" 거리인가.
+  // 머리 위가 트여 있어도(위 검사) 첫 발판이 사거리 밖이면 지상 장대높이뛰기부터 배워야
+  // 한다 — START_X 800 시절 자동 플레이 38초 동안 걸기 0회가 그 증거다(2026-08-08 실측).
+  // 도입부는 "걸고 오른다" 한 동작이어야 하고, 그 성립 조건을 여기 박아둔다.
+  var spawn = { x: T.START_X, y: T.GROUND_Y - T.PR };
+  var r0 = T.ROUTE[0];
+  var nx = Math.max(r0.x, Math.min(spawn.x, r0.x + r0.w));
+  var firstHook = Math.hypot(nx - spawn.x, r0.y - spawn.y);
+  ok('출발 지점에서 첫 발판까지 ' + Math.round(firstHook) + 'px — 한 번에 걸린다 (기준 ' +
+     T.FIRST_HOOK_MAX + 'px)', firstHook <= T.FIRST_HOOK_MAX);
 })();
 
 // ---- 배포 payload 예산 ----
