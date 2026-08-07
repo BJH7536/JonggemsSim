@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공명 샌드박스 — 판정층 v1</title>
+<style>
+:root { --amber: #ffb447; --amber2: #ffd27a; --ink: #ece7dd; --dim: #8a8478; --line: #3a332a; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 18px 16px 40px; font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif; background: #0b0908; color: var(--ink); }
+h1 { margin: 0 0 2px; font-size: 20px; color: var(--amber); letter-spacing: 3px; font-family: Georgia, serif; }
+.sub { color: var(--dim); font-size: 12px; margin-bottom: 14px; }
+#wrap { display: flex; gap: 14px; max-width: 1240px; align-items: flex-start; }
+.col { flex: 1 1 0; min-width: 0; }
+.card { background: #100d09; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.slab { font-size: 10.5px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px; }
+button { background: #241e14; border: 1px solid var(--line); color: var(--ink); font-size: 12px; padding: 6px 9px; border-radius: 6px; cursor: pointer; }
+button:hover { border-color: var(--amber); color: var(--amber2); }
+button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
+.row { display: flex; flex-wrap: wrap; gap: 5px; }
+input[type=range] { width: 90px; accent-color: var(--amber); vertical-align: middle; }
+table { border-collapse: collapse; font-size: 12px; width: 100%; }
+td, th { padding: 3px 7px; text-align: right; border-bottom: 1px solid #1e1912; font-variant-numeric: tabular-nums; }
+th { color: var(--dim); font-weight: 400; font-size: 10.5px; }
+td:first-child, th:first-child { text-align: left; }
+#compBar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+#compBar div { display: flex; align-items: center; justify-content: center; font-size: 10.5px; color: #14100a; font-weight: 700; min-width: 0; overflow: hidden; white-space: nowrap; transition: flex-grow .3s; }
+.kv { font-size: 12px; color: #cfc7b8; line-height: 1.8; }
+.kv b { color: var(--amber2); font-variant-numeric: tabular-nums; }
+.evb b { color: var(--amber2); }
+.evb .meta { font-size: 9.5px; color: var(--dim); margin-left: 4px; }
+.sl { font-size: 11px; color: #cfc7b8; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.sl b { width: 118px; font-weight: 400; color: var(--dim); }
+.sl output { width: 34px; color: var(--amber2); font-variant-numeric: tabular-nums; }
+.note { font-size: 11px; color: var(--dim); line-height: 1.6; margin-top: 10px; }
+@media (max-width: 980px) { #wrap { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<h1>공명 샌드박스</h1>
+<div class="sub">판정층 v1의 실행 가능한 사양 (resonance-model.md §7 · ADR-002) — 슬라이더를 만지면 산식이 그대로 반응한다</div>
+
+<div id="wrap">
+  <div class="col">
+    <div class="card">
+      <div class="slab">게임 · 이벤트 발사 (STIM은 chat-data 실데이터)</div>
+      <div class="row" id="gameRow" style="margin-bottom:8px"></div>
+      <div class="row" id="evRow"></div>
+      <div class="note">이벤트 클릭 = 그 이벤트의 자극 벡터로 유입 1회. 총량(n)은 아래 슬라이더 값 사용.</div>
+    </div>
+    <div class="card">
+      <div class="slab">산식 상수 (무대 소유 — ADR-002 결정 4)</div>
+      <div class="sl"><b>유입 총량 n</b><input type="range" id="pN" min="40" max="4000" step="20" value="520"><output id="oN">520</output></div>
+      <div class="sl"><b>현재 시청자 V</b><input type="range" id="pV" min="300" max="300000" step="300" value="300"><output id="oV">300</output></div>
+      <div class="sl"><b>f(V) 상한 K</b><input type="range" id="pK" min="1" max="20" step="0.5" value="8"><output id="oK">8</output></div>
+      <div class="sl"><b>경제 임계 T_econ</b><input type="range" id="pT" min="0" max="1" step="0.05" value="0.35"><output id="oT">.35</output></div>
+      <div class="sl"><b>혼합 바닥 β</b><input type="range" id="pB" min="0" max="0.5" step="0.05" value="0.15"><output id="oB">.15</output></div>
+      <div class="kv" id="fv"></div>
+    </div>
+    <div class="card">
+      <div class="slab">원형 흥미도 벡터 (소윤 저작 — [danger, chaos, skill, fun])</div>
+      <div id="vecs"></div>
+      <div class="note">기본값 = §7.2 초안. 여기서 찾은 값이 확정되면 코드 상수로 반영한다.</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="slab">시청자 구성 (시작: casual 40 / fan 25 / thrill 20 / expert 15 — 300명)</div>
+      <div id="compBar"></div>
+      <div class="kv" id="compKv" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnSim">📺 방송 시뮬 (이벤트 30발)</button>
+        <button id="btnReset">구성 초기화</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="slab">마지막 발사의 공명·배분 내역</div>
+      <table id="calc"></table>
+    </div>
+    <div class="card">
+      <div class="slab">게임별 "강한 관객" 미리보기 (허브 카드용 — 어휘 STIM 평균 × 흥미도)</div>
+      <table id="aff"></table>
+    </div>
+  </div>
+</div>
+
+<script src="../games/hwaryeok/chat-data.js"></script>
+<script src="../games/giving-up/chat-data.js"></script>
+<script src="../games/pocket/chat-data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var AXES = ['danger', 'chaos', 'skill', 'fun'];
+
+  // §7.2 — 경제 원형 4종 (기본값)
+  var ARCH = [
+    { id: 'thrill', n: '불구경파', c: '#ff8d5a', v: [.9, 1, .2, .6] },
+    { id: 'fan',    n: '팬덤',     c: '#ffb0c8', v: [.6, .4, .5, .5] },
+    { id: 'expert', n: '분석가',   c: '#ffd27a', v: [.3, .2, 1, .2] },
+    { id: 'casual', n: '뜨내기',   c: '#a8c8f0', v: [.5, .5, .4, .8] },
+  ];
+  var START = { thrill: 60, fan: 75, expert: 45, casual: 120 }; // 300명 × 20/25/15/40%
+  var comp = null;
+  function resetComp() { comp = { thrill: START.thrill, fan: START.fan, expert: START.expert, casual: START.casual }; }
+  resetComp();
+
+  var GAMES = {
+    hwaryeok: { n: '화력쇼', d: window.HWARYEOK_CHAT },
+    'giving-up': { n: 'Giving Up On It', d: window.GIVINGUP_CHAT },
+    pocket: { n: '주머니 괴수', d: window.POCKET_CHAT },
+  };
+  var cur = 'hwaryeok';
+
+  var P = function (id) { return parseFloat($(id).value); };
+  var dot = function (a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]; };
+  var fV = function (V, K) { return clamp(Math.sqrt(V / 300), 1, K); };
+
+  // §7.4 — 배분 산식 (이 함수가 곧 사양이다: 셸 구현은 이것과 동일해야 한다)
+  function distribute(n, stim, V, K, T, B) {
+    var total = Math.round(n * fV(V, K)); // freshMult는 셸 몫 — 샌드박스에선 1
+    var neutral = !stim || (stim[0] === 0 && stim[1] === 0 && stim[2] === 0 && stim[3] === 0);
+    var compTotal = comp.thrill + comp.fan + comp.expert + comp.casual;
+    var rows = ARCH.map(function (a) {
+      var res = neutral ? 0 : dot(stim, a.v);
+      var w = neutral ? comp[a.id] / compTotal : Math.max(0, res - T) + B;
+      return { a: a, res: res, w: w };
+    });
+    var sw = rows.reduce(function (s, r) { return s + r.w; }, 0);
+    if (sw <= 0) rows.forEach(function (r) { r.w = comp[r.a.id] / compTotal; }), sw = 1; // 중립 폴백
+    rows.forEach(function (r) {
+      r.share = r.w / sw;
+      r.gain = Math.round(total * r.share);
+      comp[r.a.id] += r.gain;
+    });
+    return { total: total, rows: rows, neutral: neutral };
+  }
+
+  // ---------- UI ----------
+  function buildVecs() {
+    $('vecs').innerHTML = ARCH.map(function (a, ai) {
+      return '<div style="margin-bottom:7px"><b style="color:' + a.c + ';font-size:12px">' + a.n + '</b> ' +
+        AXES.map(function (ax, i) {
+          return '<span class="sl" style="display:inline-flex;margin-right:6px"><b style="width:auto">' + ax + '</b>' +
+            '<input type="range" min="0" max="1" step="0.05" value="' + a.v[i] + '" data-a="' + ai + '" data-x="' + i + '" style="width:64px">' +
+            '<output>' + a.v[i] + '</output></span>';
+        }).join('') + '</div>';
+    }).join('');
+  }
+  $('vecs').addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset.a == null) return;
+    ARCH[+t.dataset.a].v[+t.dataset.x] = parseFloat(t.value);
+    t.nextElementSibling.textContent = t.value;
+    renderAff(); renderFv();
+  });
+
+  function buildGames() {
+    $('gameRow').innerHTML = Object.keys(GAMES).map(function (k) {
+      return '<button data-g="' + k + '"' + (k === cur ? ' class="on"' : '') + '>' + GAMES[k].n + '</button>';
+    }).join('');
+    var S = GAMES[cur].d.STIM || {};
+    $('evRow').innerHTML = Object.keys(GAMES[cur].d.T).map(function (ev) {
+      var st = S[ev];
+      return '<button class="evb" data-ev="' + ev + '"><b>' + ev + '</b><span class="meta">' +
+        (st ? '[' + st.join(',') + ']' : '중립') + '</span></button>';
+    }).join('');
+  }
+  $('gameRow').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-g]'); if (!b) return;
+    cur = b.getAttribute('data-g'); buildGames(); renderAff();
+  });
+  $('evRow').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ev]'); if (!b) return;
+    fire(b.getAttribute('data-ev'));
+  });
+
+  function fire(ev) {
+    var stim = (GAMES[cur].d.STIM || {})[ev] || null;
+    var r = distribute(P('pN'), stim, P('pV'), P('pK'), P('pT'), P('pB'));
+    renderCalc(ev, r); renderComp();
+  }
+
+  function renderComp() {
+    var total = comp.thrill + comp.fan + comp.expert + comp.casual;
+    $('compBar').innerHTML = ARCH.map(function (a) {
+      var pct = comp[a.id] / total * 100;
+      return '<div style="flex-grow:' + comp[a.id] + ';background:' + a.c + '">' + (pct >= 12 ? a.n + ' ' + Math.round(pct) + '%' : '') + '</div>';
+    }).join('');
+    $('compKv').innerHTML = '총 <b>' + Math.round(total).toLocaleString() + '명</b> — ' + ARCH.map(function (a) {
+      return '<span style="color:' + a.c + '">' + a.n + '</span> <b>' + Math.round(comp[a.id]).toLocaleString() + '</b>';
+    }).join(' · ');
+  }
+
+  function renderCalc(ev, r) {
+    $('calc').innerHTML = '<tr><th>' + ev + (r.neutral ? ' (중립 → 구성비 비례)' : '') +
+      '</th><th>공명</th><th>w</th><th>배분</th><th>유입</th></tr>' +
+      r.rows.map(function (x) {
+        return '<tr><td style="color:' + x.a.c + '">' + x.a.n + '</td><td>' + x.res.toFixed(2) +
+          '</td><td>' + x.w.toFixed(2) + '</td><td>' + Math.round(x.share * 100) + '%</td><td><b style="color:var(--amber2)">+' +
+          x.gain.toLocaleString() + '</b></td></tr>';
+      }).join('') +
+      '<tr><td colspan="4">총량 = n × f(V)</td><td><b>+' + r.total.toLocaleString() + '</b></td></tr>';
+  }
+
+  function renderFv() {
+    $('fv').innerHTML = 'f(V) = clamp(√(V/300), 1, K) = <b>×' + fV(P('pV'), P('pK')).toFixed(2) + '</b>';
+  }
+  ['pN', 'pV', 'pK', 'pT', 'pB'].forEach(function (id) {
+    $(id).addEventListener('input', function () {
+      $('o' + id.slice(1)).textContent = $(id).value;
+      renderFv();
+    });
+  });
+
+  function renderAff() { // 허브 카드용 "강한 관객" — 어휘 STIM 평균 × 원형 흥미도
+    $('aff').innerHTML = '<tr><th>게임</th>' + ARCH.map(function (a) {
+      return '<th style="color:' + a.c + '">' + a.n + '</th>';
+    }).join('') + '<th>강한 관객</th></tr>' +
+      Object.keys(GAMES).map(function (k) {
+        var S = GAMES[k].d.STIM || {}, keys = Object.keys(S);
+        var avg = [0, 0, 0, 0];
+        keys.forEach(function (ev) { for (var i = 0; i < 4; i++) avg[i] += S[ev][i]; });
+        for (var i = 0; i < 4; i++) avg[i] /= Math.max(1, keys.length);
+        var best = null, scores = ARCH.map(function (a) {
+          var s = dot(avg, a.v);
+          if (!best || s > best.s) best = { a: a, s: s };
+          return s;
+        });
+        return '<tr><td>' + GAMES[k].n + '</td>' + scores.map(function (s) {
+          return '<td>' + s.toFixed(2) + '</td>';
+        }).join('') + '<td style="color:' + best.a.c + '"><b>' + best.a.n + '</b></td></tr>';
+      }).join('');
+  }
+
+  $('btnSim').addEventListener('click', function () { // 버스트 무게 가중 무작위 30발 — 구성 드리프트 관찰
+    var T = GAMES[cur].d.T, B = GAMES[cur].d.BURST, pool = [];
+    Object.keys(T).forEach(function (ev) {
+      if (ev === 'start' || ev === 'end') return;
+      for (var i = 0; i < (B[ev] || 1); i++) pool.push(ev);
+    });
+    for (var k = 0; k < 30; k++) fire(pool[Math.floor(Math.random() * pool.length)]);
+  });
+  $('btnReset').addEventListener('click', function () { resetComp(); renderComp(); $('calc').innerHTML = ''; });
+
+  buildVecs(); buildGames(); renderComp(); renderAff(); renderFv();
+})();
+</script>
+
+<!-- 소유: 관객(정훈) + 판정층 산식은 무대 리뷰 대상. ADR-002 · resonance-model.md §7이 규범 -->
+</body>
+</html>
