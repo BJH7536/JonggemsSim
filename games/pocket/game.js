@@ -57,6 +57,25 @@
   var CRIT = 0.12;
   var MILES = [1000, 5000, 15000, 60000, 150000];
 
+  // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
+  // 몬스터 6종(타입별 아군 뒤태/적 정면)과 스킬 VFX 시트 7종. 파일이 없거나 아직
+  // 로드 전이면 기존 캔버스 벡터로 그대로 폴백한다 — 아트는 얹는 층이지 의존성이 아니다.
+  // VFX는 4x4 스프라이트 시트(generate/effect/v2, frame=16)를 'screen' 블렌드로 얹는다.
+  // 검은 배경 시트에서 검정이 사라지므로 알파 없는 JPEG로 배포해도 깨지지 않는다 (용량 절약).
+  var TKEY = ['fire', 'water', 'grass'];
+  var IMG = {};
+  [['me-fire', 'png'], ['me-water', 'png'], ['me-grass', 'png'],
+   ['foe-fire', 'png'], ['foe-water', 'png'], ['foe-grass', 'png'],
+   ['vfx-tackle', 'jpg'], ['vfx-fire', 'jpg'], ['vfx-water', 'jpg'], ['vfx-grass', 'jpg'],
+   ['vfx-ult-fire', 'jpg'], ['vfx-ult-water', 'jpg'], ['vfx-ult-grass', 'jpg'],
+  ].forEach(function (e) {
+    var im = new Image();
+    im.src = 'games/pocket/img/' + e[0] + '.' + e[1];
+    IMG[e[0]] = im;
+  });
+  function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
+  var VFX_DUR = 0.5, VFX_GRID = 4;
+
   var sfxHit   = function () { if (!sfx.gate('pk_h')) return; sfx.noise(.1, .09, 300); sfx.tone(160, .08, 'square', .05); };
   var sfxBig   = function () { if (!sfx.gate('pk_b')) return; sfx.noise(.2, .14, 220); sfx.tone(90, .2, 'sine', .12); };
   var sfxMiss  = function () { if (!sfx.gate('pk_m')) return; sfx.tone(300, .12, 'sine', .04, 0); sfx.tone(220, .14, 'sine', .04, .1); };
@@ -74,7 +93,7 @@
       phase: 'player',           // player | busy | heal
       timers: [], healT: 0, idleT: 0, warnedND: false,
       kos: 0, faints: 0, crits: 0, comebacks: 0,
-      anim: null, hitFlash: { me: 0, foe: 0 }, floaters: [],
+      anim: null, hitFlash: { me: 0, foe: 0 }, floaters: [], vfx: [],
       donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
     };
     var panel = stage.panel;
@@ -83,6 +102,11 @@
     function alive() { return st.bench.filter(function (m) { return m.hp > 0; }); }
     function after(sec, fn) { st.timers.push({ t: sec, fn: fn }); }
     function floater(x, y, txt, color) { st.floaters.push({ x: x, y: y, txt: txt, t: 0, c: color || '#ffd27a' }); }
+    // 스킬 VFX — 명중 지점에 시트 애니메이션. "모든 기술이 몸통박치기로 보인다" 피드백의 해법:
+    // 돌진(anim)은 그대로 두고, 무엇으로 때렸는지는 명중 프레임의 이펙트가 말한다.
+    function spawnVfx(key, x, y, scale) {
+      if (imgReady(key)) st.vfx.push({ k: key, x: x, y: y, s: scale || 1, born: stage.now });
+    }
 
     function newEnemy() {
       var t = Math.random() < .7 ? st.wins % 3 : rnd(0, 2); // 대체로 순환 — 교체 학습이 가능해야 상성이 메커닉이 된다
@@ -169,6 +193,9 @@
           var dmg = Math.round(mv.pow * adv * (crit ? 2 : 1) * (0.9 + Math.random() * 0.2));
           st.enemy.hp -= dmg;
           st.hitFlash.foe = .3;
+          // 기술 격에 맞는 이펙트 — 안정타는 타격 별, 강타·도박수는 속성, 필살기는 속성 대기술
+          spawnVfx(i === 0 ? 'vfx-tackle' : (i === 3 ? 'vfx-ult-' + TKEY[m.t] : 'vfx-' + TKEY[m.t]),
+                   660, 230, i === 3 ? 1.6 : (i >= 1 ? 1.15 : .9));
           floater(660, 170, '-' + dmg, crit ? '#ff5a4a' : '#fff');
           var gain = Math.round(mv.gain * adv * fm * (crit ? 2.2 : 1));
           if (i >= 2 || crit) {
@@ -225,6 +252,7 @@
           var m = me();
           m.hp = Math.max(0, m.hp - dmg);
           st.hitFlash.me = .3; stage.shake(4);
+          spawnVfx(ei === 0 ? 'vfx-tackle' : 'vfx-' + TKEY[st.enemy.t], 310, 330, ei === 2 ? 1.2 : 1);
           floater(310, 300, '-' + dmg, '#ff9a8a');
           sfxHit();
           if (Math.random() < .5) stage.emit('player_hit', { dmg: dmg });
@@ -374,6 +402,24 @@
           m.hp / m.max, m.n, st.hitFlash.me,
           st.anim && st.anim.who === 'me' ? st.anim.t : -1,
           st.anim && st.anim.who === 'meDown' ? st.anim.t : -1);
+        // 스킬 VFX — 4x4 시트를 'screen' 블렌드로 얹는다. 검은 배경 시트에서 검정은
+        // 화면에 아무것도 더하지 않으므로 알파 없이도 이펙트만 떠오른다.
+        st.vfx = st.vfx.filter(function (f) {
+          var p = (t - f.born) / VFX_DUR;
+          if (p >= 1) return false;
+          if (p < 0) return true;
+          var im = IMG[f.k];
+          var n = VFX_GRID * VFX_GRID, idx = Math.min(n - 1, (p * n) | 0);
+          var fw = im.naturalWidth / VFX_GRID, fh = im.naturalHeight / VFX_GRID;
+          var size = 170 * f.s;
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.globalAlpha = p > .8 ? (1 - p) * 5 : 1;   // 마지막 20%는 페이드아웃
+          ctx.drawImage(im, (idx % VFX_GRID) * fw, ((idx / VFX_GRID) | 0) * fh, fw, fh,
+                        f.x - size / 2, f.y - size / 2, size, size);
+          ctx.restore();
+          return true;
+        });
         // 데미지 플로터
         st.floaters.forEach(function (f) {
           ctx.globalAlpha = 1 - f.t;
@@ -432,6 +478,13 @@
       // 그림자
       ctx.fillStyle = 'rgba(0,0,0,.4)';
       ctx.beginPath(); ctx.ellipse(0, r * .78, r * .95, r * .26, 0, 0, TAU); ctx.fill();
+      // AetherAI 스프라이트가 있으면 그걸 그린다. 그림자·돌진·기절·플래시·HP바는
+      // 공통 경로라 그대로 탄다 — 아트만 갈아끼우는 층이다. 없으면 기존 벡터 폴백.
+      var skey = (isFoe ? 'foe-' : 'me-') + TKEY[type];
+      if (imgReady(skey)) {
+        var im = IMG[skey], iw = r * 2.3, ih = iw * im.naturalHeight / im.naturalWidth;
+        ctx.drawImage(im, -iw / 2, r * .8 - ih, iw, ih); // 발끝을 그림자 선에 맞춘다
+      } else {
       // 몸통
       var bg = ctx.createRadialGradient(-r * .3, -r * .4, r * .15, 0, 0, r * 1.1);
       bg.addColorStop(0, T.c2); bg.addColorStop(.55, T.c); bg.addColorStop(1, '#00000055');
@@ -466,6 +519,7 @@
       } else {
         ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(0, -r * .1, r * .5, -.4, .4); ctx.stroke();
+      }
       }
       if (flash > .02) {
         ctx.globalCompositeOperation = 'lighter';

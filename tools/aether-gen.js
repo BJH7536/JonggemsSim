@@ -26,10 +26,12 @@ const BASE = 'https://api.aetherforgeai.com/public/v1';
 const MANIFEST = path.join(__dirname, 'aether-assets.json');
 const ROOT = path.join(__dirname, '..');
 
-// 문서 권장값: 최초 1초, 이후 2~5초, 최대 1분
+// 폴링 간격은 문서 권장값(최초 1초, 이후 2~5초). 상한은 문서의 "최대 1분(작업별 상이)"을
+// 따라 90초였는데, GPT Image 잡이 실측 2분+ 걸려 타임아웃으로 URL만 버렸다 —
+// 서버에서는 완성돼 과금까지 끝난 잡이었다. 5분으로 올리고 job_id를 로그에 남긴다.
 const FIRST_DELAY = 1000;
 const POLL_DELAY = 3000;
-const MAX_WAIT = 90000;
+const MAX_WAIT = 300000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -142,6 +144,7 @@ async function main() {
     process.stdout.write(`생성중  ${item.id} … `);
     try {
       const jobId = await createJob(key, item);
+      process.stdout.write(`job ${jobId.slice(0, 8)} … `); // 타임아웃 시 수동 회수용
       const urls = await waitJob(key, jobId);
       // png를 우선한다 — 문서 예시가 png와 gif를 함께 돌려준다
       const url = urls.find((u) => /\.png($|\?)/i.test(u)) || urls[0];

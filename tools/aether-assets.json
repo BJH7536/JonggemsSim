@@ -37,37 +37,37 @@
       "id": "pocket-me-fire",
       "out": "games/pocket/img/me-fire.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on fully transparent background. Subject: a small fire hedgehog creature, round orange body (#ff6a3d) with amber (#ffb447) flame-shaped spikes along its back. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small fire hedgehog creature, round orange body (#ff6a3d) with amber (#ffb447) flame-shaped spikes along its back. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-me-water",
       "out": "games/pocket/img/me-water.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on fully transparent background. Subject: a small water droplet creature, round glossy blue body (#4aa0ff) with a pale (#b0d8ff) belly, a wave-shaped fin on its head and a small tail fin. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small water droplet creature, round glossy blue body (#4aa0ff) with a pale (#b0d8ff) belly, a wave-shaped fin on its head and a small tail fin. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-me-grass",
       "out": "games/pocket/img/me-grass.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on fully transparent background. Subject: a small grass kitten creature, round green body (#6fd98f) with two big leaf ears and a sprout on its head, pale leaf-green (#c8f0b8) belly. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small grass kitten creature, round green body (#6fd98f) with two big leaf ears and a sprout on its head, pale leaf-green (#c8f0b8) belly. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-foe-fire",
       "out": "games/pocket/img/foe-fire.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on fully transparent background. Subject: a small wild fire imp creature, round ember-orange body (#ff6a3d) with jagged amber (#ffb447) flame crest, mischievous glowing eyes and a grinning mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild fire imp creature, round ember-orange body (#ff6a3d) with jagged amber (#ffb447) flame crest, mischievous glowing eyes and a grinning mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-foe-water",
       "out": "games/pocket/img/foe-water.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on fully transparent background. Subject: a small wild puddle beast creature, round deep-blue body (#4aa0ff) with droplet horns and pale (#b0d8ff) fins, narrow determined eyes and a small fanged mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild puddle beast creature, round deep-blue body (#4aa0ff) with droplet horns and pale (#b0d8ff) fins, narrow determined eyes and a small fanged mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-foe-grass",
       "out": "games/pocket/img/foe-grass.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on fully transparent background. Subject: a small wild thorn cub creature, round mossy-green body (#6fd98f) with bramble tufts and two big leaf ears, sharp playful eyes and a smirking mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild thorn cub creature, round mossy-green body (#6fd98f) with bramble tufts and two big leaf ears, sharp playful eyes and a smirking mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
 
     { "_": "── 스킬 VFX 7종 — generate/effect/v2, frame=16(4x4 시트). 검은 배경으로 생성해 게임에서 'screen' 블렌드로 얹는다 (검정=투명 효과, JPEG 저장 가능해 용량도 준다)" },
