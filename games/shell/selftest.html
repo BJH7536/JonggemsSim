@@ -159,13 +159,26 @@ Shell.games.forEach(function (g) {
 
   // 총량 보존 — 새거나 늘면 시청자 수와 구성 합이 어긋난다 (변이 이후 소수점이 생기므로 오차 허용)
   var bad = [];
-  [1, 7, 40, 520, 1401, 33333].forEach(function (total) {
+  [1, 2, 3, 5, 7, 40, 520, 1401, 33333].forEach(function (total) {
     ['rescue_big', 'disaster', 'done', '__untagged__'].forEach(function (ev) {
       var sum = delta(total, ev).reduce(function (a, b) { return a + b; }, 0);
       if (Math.abs(sum - total) > 1e-6) bad.push(ev + '@' + total + '→' + sum);
     });
   });
   eq('배분 총합이 항상 총량과 같다 (Σ배분 = total)', bad, []);
+
+  // 균등 가중치 + 작은 총량 — 구 구현(잔차를 최대 원형에 몰아주고 clamp)이 여기서 깨졌다.
+  // total=2에서 네 칸이 각각 round(0.5)=1로 올라 합이 3이 됐다 (현재의 PR #4 리뷰 지적).
+  // 최대잔여법은 floor로 깔고 잔여 순으로 1씩 나눠주므로 구조적으로 어긋날 수 없다.
+  var badEq = [];
+  [1, 2, 3, 4, 5, 6, 7, 9, 13].forEach(function (total) {
+    reset([250, 250, 250, 250]); // 완전 균등 → 중립 가중치도 균등
+    var before = Shell.compTotal();
+    Shell.compAdd(total, '__untagged__');
+    var sum = Shell.compTotal() - before;
+    if (Math.abs(sum - total) > 1e-6) badEq.push(total + '→' + sum);
+  });
+  eq('균등 가중치·작은 총량에서도 Σ배분 = total (최대잔여법 회귀)', badEq, []);
 
   // 공명 방향 — 자극 축이 원형을 실제로 갈라야 모델이 의미를 가진다
   eq('rescue_big(숙련 자극) → 분석가에게 최다 배분', top(delta(1000, 'rescue_big')), 'expert');

@@ -208,14 +208,34 @@
       }
       return out;
     },
-    // 유입을 원형별로 나눠 담는다. Σ배분 = total 불변식 (반올림 오차는 최대 가중 원형이 흡수)
+    // 유입을 원형별로 나눠 담는다. Σ배분 = total 불변식 (최대잔여법으로 구조적으로 보장)
     compAdd: function (total, ev) {
-      var w = this.archWeights(ev), sw = 0, maxI = 0, i;
-      for (i = 0; i < w.length; i++) { sw += w[i]; if (w[i] > w[maxI]) maxI = i; }
-      if (!(sw > 0)) { for (i = 0; i < w.length; i++) w[i] = 1; sw = w.length; maxI = 0; }
-      var part = [], used = 0;
-      for (i = 0; i < w.length; i++) { part[i] = Math.round(total * w[i] / sw); used += part[i]; }
-      part[maxI] = Math.max(0, part[maxI] + (total - used));
+      var w = this.archWeights(ev), sw = 0, i;
+      for (i = 0; i < w.length; i++) sw += w[i];
+      if (!(sw > 0)) { for (i = 0; i < w.length; i++) w[i] = 1; sw = w.length; }
+      // 최대잔여법 — floor로 깔고 남은 몫을 잔여가 큰 순서로 1씩 나눠준다.
+      // Σ배분 = total이 구조적으로 보장되므로 clamp가 필요 없다.
+      // (이전 구현은 반올림 잔차를 최대 가중 원형에 몰아주고 max(0,…)로 잘랐는데, 잔차가
+      //  음수이고 그 몫이 더 작으면 clamp가 삼킨 만큼 합이 늘었다 — total=2·균등 가중치에서
+      //  합 3. 실제 게임에서는 도달 불가한 잠복 결함이었고 현재의 PR #4 리뷰가 잡았다.)
+      var part = [], rem = [], used = 0;
+      for (i = 0; i < w.length; i++) {
+        var exact = total * w[i] / sw;
+        part[i] = Math.floor(exact);
+        rem[i] = exact - part[i];
+        used += part[i];
+      }
+      var left = total - used, b;
+      while (left >= 1) {
+        b = 0;
+        for (i = 1; i < rem.length; i++) if (rem[i] > rem[b]) b = i;
+        part[b]++; rem[b] -= 1; left -= 1;
+      }
+      if (left > 1e-9) { // total이 정수가 아닐 때의 잔차 — 지금 호출부는 정수지만 방어
+        b = 0;
+        for (i = 1; i < rem.length; i++) if (rem[i] > rem[b]) b = i;
+        part[b] += left;
+      }
 
       // 변이는 "자극에 이끌려 새로 온 사람"에게만 적용한다. 중립 유입(도네·미태깅)은
       // 현재 구성을 그대로 비추는 것이므로 변이를 걸면 신호 없이 구성이 서서히 드리프트한다.
