@@ -1,0 +1,8 @@
+{
+  "name": "jonggems-proxy",
+  "private": true,
+  "description": "종겜스 AI 시청자 LLM 프록시 — API 키를 서버에 격리하고 브라우저에는 발화만 준다",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0"
+  }
+}

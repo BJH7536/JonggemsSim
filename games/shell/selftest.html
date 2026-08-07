@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>셸 자체 점검</title>
+<style>
+  body { background:#0b0908; color:#ece7dd; font:13px/1.7 ui-monospace, Consolas, monospace; padding:24px; }
+  .ok { color:#6fd98f; } .ng { color:#ff6b5a; font-weight:700; }
+  h1 { font-size:16px; color:#ffb447; letter-spacing:2px; }
+  p.note { color:#8a8478; }
+</style>
+</head>
+<body>
+<h1>JONGGEMS SHELL — SELF CHECK</h1>
+<p class="note">조용히 틀리면 게임이 뒤집히는 로직만 본다: 규약 4 신선도 회전과 채팅 검증 게이트.<br>
+그래픽·물리는 대상이 아니다 (눈으로 본다).</p>
+<pre id="out"></pre>
+
+<script src="config.js"></script>
+<script src="chat.js"></script>
+<script src="llm.js"></script>
+<script src="shell.js"></script>
+<script src="../hwaryeok/chat-data.js"></script>
+<script src="../hwaryeok/game.js"></script>
+<script src="../giving-up/chat-data.js"></script>
+<script src="../giving-up/game.js"></script>
+<script src="../pocket/chat-data.js"></script>
+<script src="../pocket/game.js"></script>
+<script>
+var pass = 0, fail = 0, log = [];
+function eq(label, got, want) {
+  var g = JSON.stringify(got), w = JSON.stringify(want);
+  var ok = g === w;
+  ok ? pass++ : fail++;
+  log.push((ok ? '  ok  ' : ' FAIL ') + label + (ok ? '' : '\n        got  ' + g + '\n        want ' + w));
+}
+function ok(label, cond) { eq(label, !!cond, true); }
+
+// ---- 규약 4: 신선도 감쇠표 ----
+eq('감쇠표는 100/70/45/25/10%', Shell.FRESH_MULT, [1, .7, .45, .25, .1]);
+
+// ---- 규약 4: 같은 게임만 반복하면 바닥까지 물린다 ----
+var ids = ['a', 'b'], f = {};
+var seq = [];
+for (var i = 0; i < 6; i++) { f = Shell.rotateFresh(f, 'a', ids); seq.push(f.a); }
+eq('a만 6회 방송 → 단계 1,2,3,4,4,4', seq, [1, 2, 3, 4, 4, 4]);
+eq('그동안 b는 0에서 더 내려가지 않는다', f.b, 0);
+
+// ---- 규약 4: 종겜을 벌주면 안 된다 ----
+// 중요한 건 저장된 단계가 아니라 "방송을 시작하는 순간 적용되는 배수"다.
+// 교대로 틀면 매 방송이 ×1.0이어야 하고, 한 게임만 파면 계단식으로 떨어져야 한다.
+function multsWhilePlaying(order) {
+  var m = {}, got = [];
+  order.forEach(function (id) {
+    got.push(Shell.FRESH_MULT[m[id] || 0]);
+    m = Shell.rotateFresh(m, id, ids);
+  });
+  return got;
+}
+eq('a,b 교대 8회 → 매 방송이 100%', multsWhilePlaying(['a','b','a','b','a','b','a','b']),
+   [1, 1, 1, 1, 1, 1, 1, 1]);
+eq('a만 6회 → 100/70/45/25/10/10%', multsWhilePlaying(['a','a','a','a','a','a']),
+   [1, .7, .45, .25, .1, .1]);
+
+// ---- 규약 4: 물린 뒤 다른 게임을 방송하면 회복된다 ----
+f = {};
+for (var k = 0; k < 3; k++) f = Shell.rotateFresh(f, 'a', ids); // a: 3단계
+eq('a 3회 → 3단계', f.a, 3);
+f = Shell.rotateFresh(f, 'b', ids);
+eq('b 한 판이 a를 한 단계 회복시킨다', f.a, 2);
+
+// ---- 채팅 검증 게이트 ----
+Chat.init(document.createElement('div'));
+Chat.load({
+  t: { facts: ['수습 +{gain}!!'], flavor: [['hype', '와 미쳤다'], ['mock', '운빨 ㅋㅋ']] },
+}, {});
+Chat.history.length = 0;
+ok('사실 슬롯이 빠진 발화는 폐기된다', Chat.verify('아무 말', { gain: '1,234' }) === false);
+ok('슬롯이 그대로 들어간 발화는 통과한다', Chat.verify('수습 +1,234!!', { gain: '1,234' }) === true);
+Chat.history = ['와 미쳤다'];
+ok('직전 발화와 같으면 폐기된다 (비반복 게이트)', Chat.verify('와 미쳤다', {}) === false);
+ok('다른 말은 통과한다', Chat.verify('운빨 ㅋㅋ', {}) === true);
+Chat.history.length = 0;
+ok('어휘에 없는 이벤트는 조용히 무시된다 (셸이 죽지 않는다)',
+   (function () { try { Chat.react('없는이벤트'); return true; } catch (e) { return false; } })());
+
+// ---- 사실 슬롯 이스케이프가 검증 계약을 깨지 않는지 ----
+Chat.history.length = 0;
+var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', { gain: '9,999' }, true);
+eq('슬롯 치환 결과', composed, '수습 +9,999!!');
+
+// ---- 등록된 게임이 계약을 지키는가 ----
+eq('게임 3종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket']);
+Shell.games.forEach(function (g) {
+  ok(g.title + ': 필수 필드가 있다',
+     g.title && g.tagline && g.duration > 0 && g.startViewers > 0 && typeof g.start === 'function');
+  ok(g.title + ': 채팅 어휘에 start/end가 있다', !!(g.chat.T.start && g.chat.T.end));
+  var thin = Object.keys(g.chat.T).filter(function (k) { return g.chat.T[k].flavor.length < 6; });
+  eq(g.title + ': 모든 이벤트가 flavor 6개 이상 (비반복 게이트 전제)', thin, []);
+  var tones = ['hype', 'worry', 'info', 'mock', 'cheer', 'question'];
+  var bad = [];
+  Object.keys(g.chat.T).forEach(function (k) {
+    g.chat.T[k].flavor.forEach(function (f) { if (tones.indexOf(f[0]) < 0) bad.push(k + ':' + f[0]); });
+  });
+  eq(g.title + ': 톤이 전부 공인 6종 안에 있다', bad, []);
+});
+
+// ---- Giving Up On It: 물리 상수끼리 모순되지 않는가 ----
+// 초판 버그: "낙하속도 700 이상"과 "높이 손실 3m 미만"을 동시에 요구해 clutch가 영원히 안 터졌다.
+// 값만 봐서는 안 보이고 v²=2gh를 넣어야 드러나는 종류라 여기서 계산으로 잡는다.
+var T = Shell.games.filter(function (g) { return g.id === 'giving-up'; })[0].tuning;
+var fallPxForClutch = T.CLUTCH_V * T.CLUTCH_V / (2 * T.GRAV);
+var fallMForClutch = fallPxForClutch / T.PX_PER_M;
+var mapM = (T.GROUND_Y - T.SUMMIT_Y) / T.PX_PER_M;
+ok('clutch 속도에 도달하려면 ' + fallMForClutch.toFixed(1) + 'm 낙하 — 맵 높이(' +
+   mapM.toFixed(0) + 'm) 안에서 가능하다', fallMForClutch < mapM * 0.5);
+ok('그 낙하 후에도 CLUTCH_MIN_H 위에 있을 수 있다 (조건이 서로를 배제하지 않는다)',
+   fallMForClutch + T.CLUTCH_MIN_H < mapM);
+ok('망치 최소 길이가 몸통 밖이다 (자루가 몸 안으로 말리지 않는다)', T.HAMMER_MIN > 16);
+ok('망치 사거리가 최소 길이보다 크다', T.HAMMER_MAX > T.HAMMER_MIN);
+eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, .1]);
+
+// ---- GUOI 지형: 주 루트가 기하적으로 등반 가능한가 ----
+// "발판 위치가 적절하지 않아 못 올라간다"는 피드백의 재발 방지. 연속 발판 사이의
+// 수직 간격이 망치 사거리의 3/4 이내, 수평 틈이 사거리 이내인지 계산으로 검사한다.
+(function () {
+  var bad = [];
+  for (var i = 1; i < T.ROUTE.length; i++) {
+    var a = T.ROUTE[i - 1], b = T.ROUTE[i];
+    var vGap = a.y - b.y; // 위로 갈수록 y가 작다
+    var hGap = Math.max(0, Math.max(a.x, b.x) - Math.min(a.x + a.w, b.x + b.w));
+    if (vGap <= 0 || vGap > T.HAMMER_MAX * 0.75 || hGap > T.HAMMER_MAX) {
+      bad.push(i + ':(v' + vGap + ',h' + hGap + ')');
+    }
+  }
+  eq('주 루트 ' + T.ROUTE.length + '개 발판이 전부 사거리 안에서 이어진다', bad, []);
+  // 바위가 주 루트 발판과 겹쳐 길을 막지 않는가
+  var blocked = [];
+  T.TERRAIN.forEach(function (s) {
+    if (s.t !== 'c') return;
+    T.ROUTE.forEach(function (r, ri) {
+      var cx = Math.max(r.x, Math.min(s.x, r.x + r.w));
+      var cy = Math.max(r.y - 40, Math.min(s.y, r.y)); // 발판 상단 40px = 서는 공간
+      if (Math.hypot(s.x - cx, s.y - cy) < s.r) blocked.push(ri);
+    });
+  });
+  eq('바위가 주 루트의 발 디딜 공간을 막지 않는다', blocked, []);
+})();
+
+// ---- 배포 payload 예산 ----
+// 심사 요건 1번이 "링크 클릭만으로 브라우저에서 바로 플레이"다. 지금은 8개 파일 105KB라
+// 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
+// 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
+var SHIPPED = [
+  '../../index.html', 'shell.css', 'config.js', 'chat.js', 'llm.js', 'shell.js',
+  '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
+  '../giving-up/chat-data.js', '../giving-up/game.js',
+  '../pocket/chat-data.js', '../pocket/game.js',
+];
+// 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
+var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']
+  .map(function (m) { return 'faces/adventurer_' + m + '.png'; });
+var BUDGET_KB = 450; // 코드 ~140KB + 얼굴 ~100KB + 여유. "링크 클릭 즉시 플레이" 가드
+Promise.all([
+  Promise.all(SHIPPED.map(function (u) {
+    return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
+  })),
+  Promise.all(FACES.map(function (u) {
+    return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.arrayBuffer() : null; }).catch(function () { return null; });
+  })),
+]).then(function (rs) {
+  var texts = rs[0], imgs = rs[1];
+  var missing = SHIPPED.filter(function (_, i) { return texts[i] === null; })
+    .concat(FACES.filter(function (_, i) { return imgs[i] === null; }));
+  eq('배포 파일이 전부 존재한다 (코드 ' + SHIPPED.length + ' + 얼굴 ' + FACES.length + ')', missing, []);
+  var kb = texts.reduce(function (a, t) { return a + (t ? new Blob([t]).size : 0); }, 0) / 1024
+         + imgs.reduce(function (a, b) { return a + (b ? b.byteLength : 0); }, 0) / 1024;
+  ok('배포 payload ' + kb.toFixed(0) + 'KB — 예산 ' + BUDGET_KB + 'KB 이내', kb < BUDGET_KB);
+  // Assets/는 라이선스 미확인 스테이징이라 배포물이 참조하면 안 된다 (Assets/README.md)
+  var leaks = SHIPPED.filter(function (_, i) { return texts[i] && /["'(\s]Assets\//.test(texts[i]); });
+  eq('배포물이 Assets/ 스테이징을 참조하지 않는다', leaks, []);
+  finish();
+});
+
+function finish() {
+  document.getElementById('out').textContent =
+    log.join('\n') + '\n\n' + (fail ? 'FAIL ' + fail + ' / ' : '') + 'PASS ' + pass;
+  document.getElementById('out').className = fail ? 'ng' : 'ok';
+  console.log(fail ? 'SELFTEST FAIL ' + fail : 'SELFTEST PASS ' + pass);
+}
+</script>
+</body>
+</html>

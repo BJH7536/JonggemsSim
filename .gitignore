@@ -11,3 +11,10 @@ dist/
 # OS
 Thumbs.db
 .DS_Store
+
+# 반입 에셋 스테이징 — 바이너리는 라이선스 확인 전까지 커밋하지 않는다.
+# 이유와 해제 절차는 Assets/README.md 참조 (public 레포 = 커밋이 곧 재배포).
+Assets/**
+!Assets/README.md
+!Assets/*/
+!Assets/*/SOURCES.md
