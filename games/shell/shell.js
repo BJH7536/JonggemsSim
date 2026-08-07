@@ -29,11 +29,15 @@
   // 그대로이고(무변경 — critic 4차 승인 보존), 이 층은 그 유입이 어느 원형으로 갈지 배분만
   // 정한다. 결정론 데이터 + 상한이라 C3b(비결정 생성물의 경제 유입 금지) 밖이다.
   // 자극 축: [danger 위험, chaos 파괴, skill 숙련, fun 유머] — resonance-model.md §7.1
+  // v = 흥미도(주목 강도, 0~1) / val = 호오(평가 방향, -1~1).
+  // 둘을 나누는 것이 이 모델의 뿌리다 — 안전제일은 위험에 "강하게 주목하며 부정적으로"
+  // 반응한다(비명도 트래픽이다). 하나로 뭉개면 이 사람은 위험 이벤트에 무반응이어야 한다.
+  // 프로레슬링의 heat(관심량) vs face/heel(정렬) 분리와 동형.
   var ARCH = [
-    { id: 'thrill', n: '불구경파', c: '#ff8d5a', v: [.9, 1, .2, .6] },
-    { id: 'fan',    n: '팬덤',     c: '#ffb0c8', v: [.6, .4, .5, .5] },
-    { id: 'expert', n: '분석가',   c: '#ffd27a', v: [.3, .2, 1, .2] },
-    { id: 'casual', n: '뜨내기',   c: '#a8c8f0', v: [.5, .5, .4, .8] },
+    { id: 'thrill', n: '불구경파', c: '#ff8d5a', v: [.9, 1, .2, .6], val: [ .8,  1,  .2,  .6] },
+    { id: 'fan',    n: '팬덤',     c: '#ffb0c8', v: [.6, .4, .5, .5], val: [-.5, -.7,  .8,  .5] },
+    { id: 'expert', n: '분석가',   c: '#ffd27a', v: [.3, .2, 1, .2],  val: [-.2, -.4,  1,   0 ] },
+    { id: 'casual', n: '뜨내기',   c: '#a8c8f0', v: [.5, .5, .4, .8], val: [ .2,  .3,  .2,  .8] },
   ];
   var ARCH_START = [.20, .25, .15, .40]; // 새 채널의 구성 — 아직 색이 없어서 뜨내기가 최다
   var T_ECON = 0.35;  // 경제 기여 임계 — 이만큼 공명해야 유입에 기여한다 (무대 상수)
@@ -48,6 +52,40 @@
   var SUB_BONUS = 0.4;    // 구독자 1명당 시작 시청자 기여
   var SUB_BONUS_CAP = 700; // 상한 — 시작 시청자가 무한정 오르면 언락 페이싱이 무너진다
 
+  // 호오가 정하는 것은 "유입의 질"이다. 부정 공명으로 온 관객은 미워하며 잠깐 보다 떠난다
+  // (프로레슬링의 heel heat) — 야유·논란이 트래픽을 부르되 남지는 않는 실제 방송 생리.
+  var FICKLE_DECAY = 0.015; // 뜨내기 유입의 초당 이탈률 (반감기 ≈ 46초)
+  var FICKLE_MAX = 0.55;    // 한 유입에서 뜨내기가 차지할 수 있는 최대 비율 — 안전판
+
+  // 변이 — 원형에서 태어난 시청자가 전부 똑같으면 단조롭다(소윤 원안). 집계 모델에서는
+  // "배분된 몫의 일부가 성향이 가까운 이웃 원형으로 태어난다"로 근사한다.
+  // 덤으로 구성비 0인 원형이 영구 사멸하는 흡수 상태도 사라진다.
+  var MUT_RATE = 0.12;
+
+  // 탐색 보너스 — 관객이 골고루 모인 방송일수록 구독자가 더 남는다. 방송 중 시청자 수에는
+  // 손대지 않고(밸런스 안전) 메타 통화에만 얹는다. 이게 있어야 "포트폴리오 관리"가
+  // 관찰이 아니라 전략이 된다 — 없으면 채널 색을 바꿀 이유가 없다.
+  var DIV_BONUS = 0.6;
+
+  // 원형 간 성향 근접도 (흥미도 벡터 코사인) — 변이가 아무 데로나 흩어지지 않고
+  // "가까운 이웃"으로 흐르게 한다. ARCH가 바뀌면 로드 시 함께 다시 계산된다.
+  function computeSim() {
+    var m = [], norm = ARCH.map(function (a) {
+      return Math.sqrt(a.v[0] * a.v[0] + a.v[1] * a.v[1] + a.v[2] * a.v[2] + a.v[3] * a.v[3]) || 1;
+    });
+    for (var i = 0; i < ARCH.length; i++) {
+      m[i] = [];
+      for (var j = 0; j < ARCH.length; j++) {
+        if (i === j) { m[i][j] = 0; continue; }
+        var d = 0;
+        for (var k = 0; k < 4; k++) d += ARCH[i].v[k] * ARCH[j].v[k];
+        m[i][j] = Math.max(0, d / (norm[i] * norm[j]));
+      }
+    }
+    return m;
+  }
+  var SIM = computeSim();
+
   var Shell = {
     games: [],
     game: null,     // 현재 방송 중인 게임 정의
@@ -57,6 +95,8 @@
     viewers: 0,
     comp: [0, 0, 0, 0],       // 원형별 시청자 — 합이 viewers와 같아야 한다 (불변식)
     compStart: [0, 0, 0, 0],  // 방송 시작 스냅샷 — 리포트의 원형별 순증감용
+    fickle: [0, 0, 0, 0],     // 그중 뜨내기 — 부정 공명으로 온 몫. comp[i] 이하가 불변식
+    _fickleBorn: 0,           // 이번 방송에 발생한 뜨내기 유입 누계 (리포트 표시용)
     timeLeft: 0,
     ch: null,       // 채널 영속 상태 (localStorage)
     ctx: null,
@@ -152,6 +192,22 @@
       for (var i = 0; i < ARCH.length; i++) w[i] = t > 0 ? this.comp[i] / t : 1;
       return w;
     },
+    // 변이 — 배분된 몫의 일부가 성향이 가까운 이웃 원형으로 태어난다. 총량은 보존된다.
+    // 소윤 원안("한 원형에서 나온 시청자가 전부 같으면 단조롭다")의 집계 근사이자,
+    // 구성비 0인 원형이 영원히 되살아나지 못하는 흡수 상태를 없애는 장치이기도 하다.
+    mutate: function (part) {
+      var out = part.slice(), i, j;
+      for (i = 0; i < ARCH.length; i++) {
+        var move = part[i] * MUT_RATE;
+        if (!(move > 0)) continue;
+        var sw = 0;
+        for (j = 0; j < ARCH.length; j++) sw += SIM[i][j];
+        if (!(sw > 0)) continue;
+        out[i] -= move;
+        for (j = 0; j < ARCH.length; j++) out[j] += move * SIM[i][j] / sw;
+      }
+      return out;
+    },
     // 유입을 원형별로 나눠 담는다. Σ배분 = total 불변식 (반올림 오차는 최대 가중 원형이 흡수)
     compAdd: function (total, ev) {
       var w = this.archWeights(ev), sw = 0, maxI = 0, i;
@@ -160,15 +216,66 @@
       var part = [], used = 0;
       for (i = 0; i < w.length; i++) { part[i] = Math.round(total * w[i] / sw); used += part[i]; }
       part[maxI] = Math.max(0, part[maxI] + (total - used));
-      for (i = 0; i < w.length; i++) this.comp[i] += part[i];
+
+      // 변이는 "자극에 이끌려 새로 온 사람"에게만 적용한다. 중립 유입(도네·미태깅)은
+      // 현재 구성을 그대로 비추는 것이므로 변이를 걸면 신호 없이 구성이 서서히 드리프트한다.
+      var stim = (this.game && this.game.chat && this.game.chat.STIM) ? this.game.chat.STIM[ev] : null;
+      if (stim) part = this.mutate(part);
+
+      // 호오 — 같은 사건이라도 원형마다 감정의 방향이 다르다. 부정 공명으로 온 몫은
+      // "미워하며 잠깐 보는" 뜨내기다 (heel heat). 대참사가 팬덤·분석가를 잠깐 불러 모으되
+      // 남기지는 못하는 이유가 여기서 나온다.
+      for (i = 0; i < ARCH.length; i++) {
+        this.comp[i] += part[i];
+        if (!(part[i] > 0) || !stim) continue;
+        var vv = ARCH[i].val;
+        var vres = stim[0] * vv[0] + stim[1] * vv[1] + stim[2] * vv[2] + stim[3] * vv[3];
+        if (vres < 0) {
+          var born = part[i] * Math.min(FICKLE_MAX, -vres / 2);
+          this.fickle[i] += born;
+          this._fickleBorn += born; // 리포트용 — 이번 방송에 "미워하며 본" 관객이 얼마였나
+        }
+      }
     },
-    // 이탈은 중립 — 구성비대로 비례 차감. 손실이 채널의 색까지 바꾸지는 않는다 (규약 2)
+    // 이탈은 중립 — 구성비대로 비례 차감. 손실이 채널의 색까지 바꾸지는 않는다 (규약 2).
+    // 뜨내기도 같은 비율로 줄어든다 (fickle ≤ comp 불변식)
     compSub: function (n) {
       var t = this.compTotal();
       if (!(t > 0)) return;
       for (var i = 0; i < ARCH.length; i++) {
-        this.comp[i] = Math.max(0, this.comp[i] - n * (this.comp[i] / t));
+        var before = this.comp[i];
+        if (!(before > 0)) { this.fickle[i] = 0; continue; }
+        var after = Math.max(0, before - n * (before / t));
+        this.comp[i] = after;
+        this.fickle[i] = Math.min(after, this.fickle[i] * (after / before));
       }
+    },
+    // 뜨내기는 스스로 빠져나간다 — 조용히 (규약 2). "버즈는 오지만 남지 않는다"
+    drainFickle: function (dt) {
+      if (this.phase !== 'live') return;
+      var out = 0, i;
+      for (i = 0; i < ARCH.length; i++) {
+        if (!(this.fickle[i] > 0)) continue;
+        var d = Math.min(this.fickle[i], this.comp[i], this.fickle[i] * FICKLE_DECAY * dt);
+        this.fickle[i] -= d;
+        this.comp[i] -= d;
+        out += d;
+      }
+      if (!(out > 0)) return;
+      this.viewers = Math.max(0, this.viewers - out);
+      this.renderViewers();
+      if (this.viewers <= 0) this.endShow('dead');
+    },
+    fickleTotal: function () { return this.fickle[0] + this.fickle[1] + this.fickle[2] + this.fickle[3]; },
+    // 관객이 얼마나 골고루 모였는가 — 정규화 엔트로피 (0 = 한 원형 쏠림, 1 = 완전 균등)
+    diversity: function () {
+      var t = this.compTotal(), h = 0;
+      if (!(t > 0)) return 0;
+      for (var i = 0; i < ARCH.length; i++) {
+        var p = this.comp[i] / t;
+        if (p > 0) h -= p * Math.log(p);
+      }
+      return h / Math.log(ARCH.length);
     },
     // 허브 카드의 관객 프로필 — 이 게임을 방송하면 누가 특히 모이는가.
     // 자극 평균의 내적으로 구하면 벡터 크기가 큰 원형(불구경파)이 모든 게임에서 이겨
@@ -285,6 +392,7 @@
       $('chainMeter').classList.add('hidden');
       $('viewerCount').textContent = '0';
       this.comp = [0, 0, 0, 0];
+      this.fickle = [0, 0, 0, 0];
       this.renderComp();
       Chat.reset();
       Chat.sys('— 방송 대기 중 —');
@@ -378,6 +486,8 @@
       this.viewers = start0;
       this.comp = this.ch.mix.map(function (r) { return start0 * r; });
       this.compStart = this.comp.slice();
+      this.fickle = [0, 0, 0, 0];
+      this._fickleBorn = 0;
       this.timeLeft = g.duration;
       this._fxQueue.length = 0;
       this._shake = 0; this._flash = 0;
@@ -450,7 +560,8 @@
     // ---------- 시청자 (규약 1·2) ----------
     renderViewers: function () {
       // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
-      $('viewerCount').textContent = Math.ceil(this.viewers).toLocaleString();
+      var el = $('viewerCount');
+      if (el) el.textContent = Math.ceil(this.viewers).toLocaleString(); // 검사 하네스에는 DOM이 없다
       this.renderComp();
     },
     // 관객 구성 게이지 — "지금 누가 보고 있는가"를 색으로. 콘텐츠 선택이 관객을 바꾼다는 게
@@ -517,7 +628,11 @@
       var mixBefore = this.ch.mix.slice();
       this.absorbMix();
 
-      var newSubs = Math.floor(final / 100); // 최종 시청자의 1%가 채널에 남는다
+      // 탐색 보너스 — 관객이 골고루 모인 방송일수록 구독자가 더 남는다.
+      // 방송 중 시청자 수에는 손대지 않고 메타 통화에만 얹으므로 승인 밸런스와 충돌하지
+      // 않으면서, "채널 색을 관리할 이유"가 처음으로 생긴다 (ADR-002 결정 7)
+      var div = this.diversity(), divMult = 1 + DIV_BONUS * div;
+      var newSubs = Math.floor(final / 100 * divMult); // 최종 시청자의 1% × 다양성
       this.ch.subs += newSubs;
       this.ch.shows++;
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord });
@@ -539,6 +654,7 @@
       var moved = ARCH[movedI], movedD = mixD[movedI];
       var bonus = this.subBonus();
       var nextStart = g.startViewers + bonus;
+      var fickleBorn = Math.round(this._fickleBorn);
 
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
@@ -558,9 +674,12 @@
           '<span>최종 시청자</span><b>' + final.toLocaleString() + '명 ' +
             (isRecord ? '<span class="rec">★ 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
           rows +
-          '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명</b>' +
+          '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명' +
+            ' <span class="' + (divMult >= 1.3 ? 'rec' : 'fine') + '">다양성 ×' + divMult.toFixed(2) + '</span></b>' +
         '</div>' +
-        '<div class="archline">오늘 모인 사람들 — ' + archRows + '</div>' +
+        '<div class="archline">오늘 모인 사람들 — ' + archRows +
+          (fickleBorn >= 10 ? '<br><span class="fine">이 중 <b>' + fickleBorn.toLocaleString() +
+            '명</b>은 야유하러 온 뜨내기였다 — 버즈는 오지만 남지 않는다</span>' : '') + '</div>' +
         '<div class="chanmix"><span>채널 색깔</span>' + this.mixBar(this.ch.mix) +
           '<b style="color:' + mixTop.c + '">' + mixTop.n + ' 채널</b></div>' +
         '<p class="fine">이번 방송으로 <b style="color:' + moved.c + '">' + moved.n + '</b> 비중이 ' +
@@ -592,6 +711,7 @@
         if (this.timeLeft <= 0) { this.timeLeft = 0; this.endShow('time'); }
       }
       if (this.phase === 'live' && this.inst) this.inst.step(dt);
+      if (this.phase === 'live') this.drainFickle(dt); // 뜨내기는 스스로 빠져나간다
       if (this.phase === 'live') {
         // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
         this._graphT += dt; this._upT += dt;
@@ -735,5 +855,14 @@
   Shell.FRESH_MULT = FRESH_MULT;
   Shell.ARCH = ARCH;               // 채팅 캐스팅·selftest·샌드박스가 읽는다 (읽기 전용)
   Shell.ARCH_START = ARCH_START;
+  Shell.SIM = SIM;
+  // 샌드박스에서 흥미도 벡터를 슬라이더로 만지면 근접도도 따라 바뀌어야 한다
+  Shell.recomputeSim = function () { SIM = computeSim(); Shell.SIM = SIM; };
+  // 판정층 상수 — 무대 소유(ADR-002 결정 4). 도구·검사가 읽는다
+  Shell.TUNE = {
+    T_ECON: T_ECON, BETA: BETA, MIX_INHERIT: MIX_INHERIT,
+    SUB_BONUS: SUB_BONUS, SUB_BONUS_CAP: SUB_BONUS_CAP,
+    FICKLE_DECAY: FICKLE_DECAY, FICKLE_MAX: FICKLE_MAX, MUT_RATE: MUT_RATE, DIV_BONUS: DIV_BONUS,
+  };
   global.Shell = Shell;
 })(window);

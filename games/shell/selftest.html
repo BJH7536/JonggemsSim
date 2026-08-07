@@ -144,22 +144,25 @@ Shell.games.forEach(function (g) {
 });
 
 (function () {
-  var saveGame = Shell.game, saveComp = Shell.comp;
+  var saveGame = Shell.game, saveComp = Shell.comp, saveFickle = Shell.fickle, savePhase = Shell.phase;
   Shell.game = Shell.games[0]; // 화력쇼 어휘로 검사
   var BASE = [60, 75, 45, 120];
+  var reset = function (comp) {
+    Shell.comp = comp.slice(); Shell.fickle = [0, 0, 0, 0]; Shell._fickleBorn = 0;
+  };
   var delta = function (total, ev) {
-    Shell.comp = BASE.slice();
+    reset(BASE);
     Shell.compAdd(total, ev);
     return Shell.comp.map(function (v, i) { return v - BASE[i]; });
   };
   var top = function (d) { return Shell.ARCH[d.indexOf(Math.max.apply(null, d))].id; };
 
-  // 총량 보존 — 반올림 오차가 새거나 늘면 시청자 수와 구성 합이 어긋난다
+  // 총량 보존 — 새거나 늘면 시청자 수와 구성 합이 어긋난다 (변이 이후 소수점이 생기므로 오차 허용)
   var bad = [];
   [1, 7, 40, 520, 1401, 33333].forEach(function (total) {
     ['rescue_big', 'disaster', 'done', '__untagged__'].forEach(function (ev) {
       var sum = delta(total, ev).reduce(function (a, b) { return a + b; }, 0);
-      if (sum !== total) bad.push(ev + '@' + total + '→' + sum);
+      if (Math.abs(sum - total) > 1e-6) bad.push(ev + '@' + total + '→' + sum);
     });
   });
   eq('배분 총합이 항상 총량과 같다 (Σ배분 = total)', bad, []);
@@ -168,20 +171,79 @@ Shell.games.forEach(function (g) {
   eq('rescue_big(숙련 자극) → 분석가에게 최다 배분', top(delta(1000, 'rescue_big')), 'expert');
   eq('disaster(파괴 자극) → 불구경파에게 최다 배분', top(delta(1000, 'disaster')), 'thrill');
 
-  // 미태깅·중립 유입은 채널의 색을 바꾸지 않는다
-  Shell.comp = [100, 100, 100, 100];
+  // 변이 — 자극에 이끌린 유입도 이웃 원형에 씨를 뿌린다. 없으면 구성비 0인 원형이 영원히
+  // 되살아나지 못하는 흡수 상태가 생긴다 (검증에서 지적된 치명 결함)
+  var dd = delta(1000, 'disaster');
+  ok('변이: 자극이 약한 원형도 몫을 받는다 (분석가 ' + dd[2].toFixed(1) + ')', dd[2] > 0);
+  reset([1000, 0, 0, 0]);
+  Shell.compAdd(1000, 'rescue_big');
+  ok('구성비 0인 원형도 되살아난다 (흡수 상태 없음)', Shell.comp[1] > 0 && Shell.comp[3] > 0);
+
+  // 호오 — 같은 사건이 원형마다 다른 감정을 부르고, 그것이 유입의 질을 정한다
+  reset(BASE);
+  Shell.compAdd(1000, 'disaster');
+  ok('대참사: 불구경파는 정착한다 (뜨내기 ' + Shell.fickle[0].toFixed(0) + '명)', Shell.fickle[0] === 0);
+  ok('대참사: 팬덤은 미워하며 잠깐 본다 (뜨내기 ' + Shell.fickle[1].toFixed(0) + '명)', Shell.fickle[1] > 0);
+  ok('대참사: 분석가도 뜨내기로 온다', Shell.fickle[2] > 0);
+  var badF = [];
+  for (var fi = 0; fi < Shell.ARCH.length; fi++) if (Shell.fickle[fi] > Shell.comp[fi] + 1e-9) badF.push(fi);
+  eq('뜨내기는 그 원형 시청자 수를 넘지 않는다 (fickle ≤ comp)', badF, []);
+
+  // 뜨내기 이탈 — 버즈는 오지만 남지 않는다
+  var beforeT = Shell.compTotal(), beforeF = Shell.fickleTotal();
+  Shell.viewers = beforeT; Shell.phase = 'live';
+  for (var s = 0; s < 60; s++) Shell.drainFickle(1);
+  ok('뜨내기는 시간이 지나면 빠져나간다 (' + beforeF.toFixed(0) + ' → ' +
+     Shell.fickleTotal().toFixed(0) + '명)', Shell.fickleTotal() < beforeF * 0.7);
+  ok('정착 관객은 남는다 (총 ' + beforeT.toFixed(0) + ' → ' + Shell.compTotal().toFixed(0) + '명)',
+     Shell.compTotal() > beforeT - beforeF - 1);
+  Shell.phase = savePhase;
+
+  // 미태깅·중립 유입은 채널의 색을 바꾸지 않는다 (변이도 걸지 않는다)
+  reset([100, 100, 100, 100]);
   Shell.compAdd(400, '__untagged__');
-  ok('미태깅 이벤트는 구성비를 바꾸지 않는다',
-     Shell.comp.join() === '200,200,200,200');
+  ok('미태깅 이벤트는 구성비를 바꾸지 않는다', Shell.comp.join() === '200,200,200,200');
 
   // 이탈도 중립 (규약 2 — 손실은 색까지 바꾸지 않는다)
-  Shell.comp = [100, 200, 300, 400];
+  reset([100, 200, 300, 400]);
   Shell.compSub(500);
   var t = Shell.compTotal();
   ok('이탈은 비례 차감 — 구성비가 유지된다',
      Math.abs(t - 500) < 1e-6 && Math.abs(Shell.comp[3] / t - 0.4) < 1e-6);
 
-  Shell.game = saveGame; Shell.comp = saveComp;
+  // 다양성 — 탐색 보너스의 입력. 이게 있어야 채널 색을 관리할 이유가 생긴다
+  reset([250, 250, 250, 250]);
+  ok('완전 균등 구성의 다양성은 1', Math.abs(Shell.diversity() - 1) < 1e-9);
+  reset([1000, 0, 0, 0]);
+  ok('완전 쏠림 구성의 다양성은 0', Shell.diversity() < 1e-9);
+
+  Shell.game = saveGame; Shell.comp = saveComp; Shell.fickle = saveFickle; Shell.phase = savePhase;
+})();
+
+// 게임 명제 유지 — 호오 도입으로 대참사 유입의 일부가 빠져나간다. 이건 의도된 것이지만
+// (야유는 트래픽을 부르되 남지 않는다) 순서까지 뒤집히면 critic 4차 승인이 깨진 것이다.
+// 화력쇼의 명제: 무사고 완성 ≪ 수습 ≪ 대참사.
+(function () {
+  var saveGame = Shell.game, saveComp = Shell.comp, saveFickle = Shell.fickle;
+  var savePhase = Shell.phase, saveV = Shell.viewers;
+  Shell.game = Shell.games[0];
+  var net = function (amount, ev, seconds) {
+    Shell.comp = [60, 75, 45, 120]; Shell.fickle = [0, 0, 0, 0]; Shell._fickleBorn = 0;
+    var before = Shell.compTotal();
+    Shell.compAdd(amount, ev);
+    Shell.viewers = Shell.compTotal(); Shell.phase = 'live';
+    for (var s = 0; s < seconds; s++) Shell.drainFickle(1);
+    Shell.phase = savePhase;
+    return Shell.compTotal() - before;
+  };
+  var done = net(40, 'done', 90), rescue = net(900, 'rescue_big', 90), dis = net(1400, 'disaster', 90);
+  ok('90초 뒤 실질 유입 순서 유지 — 완성 ' + done.toFixed(0) + ' ≪ 수습 ' + rescue.toFixed(0) +
+     ' ≪ 대참사 ' + dis.toFixed(0), done < rescue && rescue < dis);
+  ok('수습은 실력 유입이라 거의 그대로 남는다', rescue > 900 * 0.95);
+  ok('대참사는 야유 유입분이 빠져나간다 (' + Math.round((1 - dis / 1400) * 100) + '% 이탈)',
+     dis < 1400 && dis > 1400 * 0.75);
+  Shell.game = saveGame; Shell.comp = saveComp; Shell.fickle = saveFickle;
+  Shell.phase = savePhase; Shell.viewers = saveV;
 })();
 
 // 캐스팅이 관객 구성을 반영하는가 — "구성이 바뀌면 채팅이 바뀐다"는 이 게임의 코어 주장이라
