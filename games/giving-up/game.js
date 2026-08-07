@@ -67,6 +67,14 @@
     { t: 'r', x: 960, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
   ]);
 
+  // 출발 지점. 480(화면 중앙)에 두면 첫 발판 R(360,1450,240,22) 바로 밑에 깔린다 —
+  // 항아리 윗면 1488 vs 슬래브 아랫면 1472로 틈이 16px인데 좌우로 120px을 빠져나가야
+  // 탈출이라 시작하자마자 갇힌다(플레이 피드백). 슬래브(x 360~600) 오른쪽 바깥에 세워
+  // 머리 위를 비운다 — 여기서 가장 낮은 천장은 R(660,1262,190,22)로 204px 위다.
+  // 첫 발판 오른쪽 끝(600)까지 지상으로 접근한 뒤 오르는 것이 의도된 도입부다.
+  var START_X = 800;
+  var HEAD_ROOM_MIN = 120;  // 스폰 머리 위 최소 여유 — 망치 사거리 1회분. selftest가 검사한다
+
   // ---------- 물리 ----------
   var PR = 16;              // 항아리 반지름
   var HAMMER_MAX = 118;     // 사거리. 실제 길이는 커서까지의 거리로 정해진다
@@ -139,7 +147,7 @@
 
   function start(stage) {
     var st = {
-      px: 480, py: GROUND_Y - PR, vx: 0, vy: 0,
+      px: START_X, py: GROUND_Y - PR, vx: 0, vy: 0,
       len: HAMMER_MAX, tipX: 560, tipY: GROUND_Y - 90,
       mx: 590, my: GROUND_Y - 60,   // 월드 좌표
       planted: false, contact: null, camY: 0,
@@ -561,6 +569,7 @@
       CLUTCH_V: CLUTCH_V, CLUTCH_MIN_H: CLUTCH_MIN_H,
       HAMMER_MAX: HAMMER_MAX, HAMMER_MIN: HAMMER_MIN, FALL_FRESH: FALL_FRESH,
       ROUTE: ROUTE, TERRAIN: TERRAIN,
+      START_X: START_X, PR: PR, HEAD_ROOM_MIN: HEAD_ROOM_MIN,
     },
     foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
           '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
