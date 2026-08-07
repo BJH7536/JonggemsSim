@@ -38,15 +38,29 @@ function headers(key) {
 }
 
 /* 본문은 multipart/form-data 다 — JSON이 아니다.
- * generate/image 는 ref_images(file[])를 받는 엔드포인트라 스칼라 필드도 폼으로 온다.
+ * 이 API의 생성 엔드포인트들은 file 필드를 받으므로 스칼라 필드도 폼으로 온다.
  * JSON을 보내면 422 {"loc":["body","prompt"],"msg":"Field required","input":null} 가 뜬다.
  * (Getting Started의 cURL 예시는 JSON으로 적혀 있지만 실제와 다르다 — Endpoints 표가 규범.)
- * Content-Type은 직접 넣지 않는다. fetch가 boundary까지 붙여 만들어야 한다. */
+ * Content-Type은 직접 넣지 않는다. fetch가 boundary까지 붙여 만들어야 한다.
+ *
+ * 엔드포인트 2종을 지원한다 (manifest 의 endpoint 필드, 기본 'image'):
+ *   image   POST /generate/image     { prompt, ai_model }            → 정지 이미지 1장
+ *   effect2 POST /generate/effect/v2 { description, quality, frame } → frame(4|9|16)칸
+ *           스프라이트 시트. 스킬 VFX 용 — 프레임 격자는 4→2x2, 9→3x3, 16→4x4 */
 async function createJob(key, item) {
   const form = new FormData();
-  form.append('prompt', item.prompt);
-  form.append('ai_model', item.ai_model);
-  const res = await fetch(`${BASE}/generate/image`, {
+  let path;
+  if (item.endpoint === 'effect2') {
+    path = 'generate/effect/v2';
+    form.append('description', item.prompt);
+    form.append('quality', item.quality || 'standard');
+    form.append('frame', String(item.frame || 16));
+  } else {
+    path = 'generate/image';
+    form.append('prompt', item.prompt);
+    form.append('ai_model', item.ai_model);
+  }
+  const res = await fetch(`${BASE}/${path}`, {
     method: 'POST',
     headers: headers(key),
     body: form,
@@ -92,14 +106,21 @@ async function main() {
   const only = (args.find((a) => a.startsWith('--only=')) || '').slice(7);
 
   const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
-  let items = manifest.assets;
+  // "_" 만 있는 항목은 구분용 주석이다 — id/out 이 있는 실제 항목만 처리
+  let items = manifest.assets.filter((i) => i.id && i.out);
   if (only) items = items.filter((i) => i.id === only);
   if (!items.length) return console.error('대상 없음 — --only 값을 확인할 것');
 
+  // optimize-images.ps1 이 배포용으로 png→jpg 로 바꾸는 항목이 있다.
+  // jpg 가 있으면 "이미 생성됨"이다 — 아니면 재실행 때마다 지갑에서 다시 뽑는다.
+  const exists = (out) => {
+    const p = path.join(ROOT, out);
+    return fs.existsSync(p) || fs.existsSync(p.replace(/\.png$/i, '.jpg'));
+  };
+
   if (listOnly) {
     items.forEach((i) => {
-      const p = path.join(ROOT, i.out);
-      console.log(`${fs.existsSync(p) ? '있음' : '없음'}  ${i.id.padEnd(18)} → ${i.out}`);
+      console.log(`${exists(i.out) ? '있음' : '없음'}  ${i.id.padEnd(18)} → ${i.out}`);
     });
     return;
   }
@@ -113,7 +134,7 @@ async function main() {
   let made = 0, skipped = 0;
   for (const item of items) {
     const dest = path.join(ROOT, item.out);
-    if (!force && fs.existsSync(dest)) {
+    if (!force && exists(item.out)) {
       console.log(`건너뜀  ${item.id}  (이미 있음 — 다시 만들려면 --force)`);
       skipped++;
       continue;
