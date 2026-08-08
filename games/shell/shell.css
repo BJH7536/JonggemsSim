@@ -828,3 +828,20 @@ body {
 /* 다이아 오라 — 등급 한정 장식. 네온 간판과 둘 다 있으면 뒤(다이아)가 이긴다 */
 body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
 .rwCap .rwNote { color: var(--dim); font-size: 10px; }
+
+/* ---------- 인트로 4컷 만화 (AetherAI 컷 + HTML 캡션) ---------- */
+.isPanel { width: min(680px, 94%); }
+#introSplash .comic { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin: 16px 0 8px; }
+#introSplash .comic figure { margin: 0; }
+#introSplash .comic img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
+  border: 1px solid #2c3036; display: block; background: #101214;
+}
+#introSplash .comic figcaption { font-size: 11.5px; color: #c9cdd2; margin-top: 5px; line-height: 1.45; text-align: left; }
+#introSplash .comic figcaption b { color: var(--plat2); }
+#introSplash .comic figcaption .dia { color: #7de8ff; }
+
+/* 이모지 대체 미니 아이콘 (AetherAI) */
+.uiIco.star { width: 13px; height: 13px; vertical-align: -2px; }
+.uiIco.lock { width: 13px; height: 13px; vertical-align: -2px; }
+#bigStampText img { width: 26px; height: 26px; vertical-align: -4px; }

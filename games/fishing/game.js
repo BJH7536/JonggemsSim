@@ -67,6 +67,8 @@
       im.src = 'games/fishing/img/' + e[0] + '.' + e[1];
       IMG[e[0]] = im;
     });
+    // 이모지 대체 미니 아이콘 — 셸 공용 AetherAI 생성물 재사용
+    var wr = new Image(); wr.src = 'games/shell/img/ui-wrench.png'; IMG['ui-wrench'] = wr;
   }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
   var VFX_DUR = 0.6, VFX_GRID = 4;
@@ -135,7 +137,7 @@
         panel.innerHTML = '<div style="padding:10px 4px;color:#8a9aa8;font-size:12.5px">' +
           '<b style="color:#ff8d5a">화면을 누르고 있으면 당긴다</b> — 텐션 100%를 넘기면 줄이 끊긴다 · 90%대에서 버티면 제일 빨리 올라온다</div>';
       } else if (st.phase === 'repair') {
-        panel.innerHTML = '<div style="padding:10px 4px;color:#9a9184;font-size:12.5px">🔧 낚싯대 수리 중 — ' +
+        panel.innerHTML = '<div style="padding:10px 4px;color:#9a9184;font-size:12.5px"><img class="uiIco lock" src="games/shell/img/ui-wrench.png" alt=""> 낚싯대 수리 중 — ' +
           '<b><span id="fsRep">' + st.repairT.toFixed(1) + '</span>초</b> · 수리하는 동안 시청자가 조용히 빠져나간다</div>';
       }
       renderHUD();
@@ -520,7 +522,8 @@
         } else {
           // 수리 중 — 부러진 낚싯대
           ctx.fillStyle = '#2e4658'; ctx.font = 'bold 20px system-ui, sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText('🔧 낚싯대 수리 중… ' + Math.max(0, st.repairT).toFixed(1) + 's', 480, 220);
+          if (imgReady('ui-wrench')) ctx.drawImage(IMG['ui-wrench'], 388, 206, 17, 17);
+          ctx.fillText('낚싯대 수리 중… ' + Math.max(0, st.repairT).toFixed(1) + 's', 490, 220);
         }
         // 릴 감기 게이지 — 텐션(위험) + 끌어올림(진행)
         if (st.phase === 'reel' && st.fish) {

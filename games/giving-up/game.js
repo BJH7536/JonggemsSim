@@ -136,7 +136,7 @@
   function loadArt() {
     if (IMG.pot) return;
     [['pot', 'png'], ['hammer', 'png'], ['sky-bg', 'jpg'],
-     ['ledge', 'png'], ['boulder', 'png']].forEach(function (e) {
+     ['ledge', 'png'], ['boulder', 'png'], ['head', 'png']].forEach(function (e) {
       var im = new Image();
       im.src = 'games/giving-up/img/' + e[0] + '.' + e[1];
       IMG[e[0]] = im;
@@ -598,28 +598,43 @@
         ctx.beginPath(); ctx.arc(x, y - 16, HAMMER_MAX, 0, TAU); ctx.stroke();
         ctx.restore();
       }
-      ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x, y - 16); ctx.lineTo(st.tipX, st.tipY); ctx.stroke();
       var a = Math.atan2(st.tipY - (y - 16), st.tipX - x);
-      ctx.save(); ctx.translate(st.tipX, st.tipY); ctx.rotate(a);
       if (imgReady('hammer')) {
-        // 헤드가 팁 '뒤'에 오게 그린다. 팁은 물리 접점이라 그 앞으로 스프라이트가
-        // 길게 나가면 발판 속에 파묻힌 것처럼 보인다(플레이 피드백). 타격면만 8px 남긴다.
-        var hi = IMG['hammer'], hw = 30, hh = hw * hi.naturalHeight / hi.naturalWidth;
-        ctx.drawImage(hi, -hw * .72, -hh / 2, hw, hh);
+        // 사용자 제작 곡괭이 (자루 포함 통짜 픽셀아트, 가공: 수평 회전·크롭 — 커밋 로그 참고).
+        // 자루는 물리 길이(손~끝점)에 맞춰 늘리고, 헤드는 고정 크기로 끝점에 앵커한다 —
+        // 통짜로 늘리면 헤드가 길이에 따라 왜곡된다. 분할 좌표는 PIL 실측:
+        //   자루 src x 0~131 / y 101~130, 헤드 src x 131~256 / 전고, 끝점 y-비율 0.536
+        var hi = IMG['hammer'], iw = hi.naturalWidth, ih = hi.naturalHeight;
+        var len = Math.hypot(st.tipX - x, st.tipY - (y - 16));
+        var headH = 44, headW = Math.round(headH * (iw - 131) / ih); // ≈24
+        ctx.save(); ctx.translate(x, y - 16); ctx.rotate(a);
+        ctx.imageSmoothingEnabled = false; // 픽셀아트 — 보간하면 뭉개진다
+        if (len > headW) ctx.drawImage(hi, 0, 101, 131, 30, 0, -5, len - headW + 6, 10);
+        ctx.drawImage(hi, 131, 0, iw - 131, ih, len - headW, -headH * .536, headW, headH);
+        ctx.imageSmoothingEnabled = true;
         if (st.planted) { // 박힘 표시 — 벡터 시절의 색 변화를 글로우로 대체
           ctx.globalCompositeOperation = 'lighter';
           ctx.fillStyle = 'rgba(255,210,122,.4)';
-          ctx.beginPath(); ctx.arc(4, 0, 14, 0, TAU); ctx.fill();
+          ctx.beginPath(); ctx.arc(len - 4, 0, 14, 0, TAU); ctx.fill();
         }
+        ctx.restore();
       } else {
+      ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, y - 16); ctx.lineTo(st.tipX, st.tipY); ctx.stroke();
+      ctx.save(); ctx.translate(st.tipX, st.tipY); ctx.rotate(a);
       ctx.fillStyle = st.planted ? '#ffd27a' : '#6f7a84';
       ctx.fillRect(-6, -9, 18, 18);
       ctx.strokeStyle = '#14161a'; ctx.lineWidth = 2; ctx.strokeRect(-6, -9, 18, 18);
-      }
       ctx.restore();
+      }
+      if (imgReady('head')) {
+        // AetherAI 머리 스프라이트 — 캠 캐릭터와 동일 인물 (잔존 벡터 캐릭터 교체)
+        var hd = IMG['head'], hdw = 22, hdh = hdw * hd.naturalHeight / hd.naturalWidth;
+        ctx.drawImage(hd, x - hdw / 2, y - 26 - hdh / 2, hdw, hdh);
+      } else {
       ctx.fillStyle = '#d8c6a8';
       ctx.beginPath(); ctx.arc(x, y - 26, 8, 0, TAU); ctx.fill();
+      }
       ctx.strokeStyle = '#d8c6a8'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 8); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x, y - 16);
