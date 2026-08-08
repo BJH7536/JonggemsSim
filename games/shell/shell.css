@@ -405,3 +405,64 @@ body {
   .screen { padding-bottom: 18px; }
   .deskBar { position: static; margin: 12px -18px -18px; }
 }
+
+/* ---------- 스트리머 플로우 (방송 대기 → 스팅어 → 라이브) ---------- */
+/* "잠시 후 시작합니다" — 실제 방송의 Starting Soon 장면. 오버레이 위에 뜬다 */
+.startSoon {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; text-align: center;
+  background:
+    radial-gradient(520px 260px at 50% 30%, rgba(169,112,255,.16), transparent 70%),
+    linear-gradient(#141020, #0b0910);
+}
+.ssTop { font-size: 11px; letter-spacing: 6px; color: var(--plat2); opacity: .8; }
+.startSoon h2 { margin: 0; font-size: 26px; color: var(--ink); font-family: Georgia, serif; }
+.ssGame { font-size: 13px; color: #cfc7b8; }
+.ssGame .cat { margin-right: 8px; }
+.ssCount {
+  font: bold 64px Georgia, serif; color: var(--plat2); line-height: 1;
+  text-shadow: 0 0 30px rgba(169,112,255,.6); min-height: 68px;
+}
+.ssCount.pop { animation: sspop .65s ease-out; }
+@keyframes sspop { 0% { transform: scale(1.5); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 100% { opacity: 1; } }
+.ssHint { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
+
+/* OBS 장면 전환 스팅어 — 보라 와이프가 왼→오로 훑고 지나간다 */
+#stinger {
+  position: absolute; inset: 0; pointer-events: none; transform: translateX(-101%);
+  background: linear-gradient(105deg, transparent 0%, var(--plat) 18%, #6b3fd4 50%, var(--plat) 82%, transparent 100%);
+}
+#stinger.go { animation: swipe .34s ease-in forwards; }
+@keyframes swipe { from { transform: translateX(-101%); } to { transform: translateX(101%); } }
+
+/* ---------- 플랫폼 정보줄 — 방송 제목·카테고리·시청자·팔로우 ---------- */
+#infoRow {
+  display: flex; align-items: center; gap: 12px;
+  margin: 8px 0 2px; padding: 10px 14px;
+  background: linear-gradient(#171221, #110d1a); border: 1px solid #2a2437; border-radius: 8px;
+}
+#infoDot { font-size: 10px; }
+#infoDot.on { color: var(--tally); animation: tpulse 2.4s infinite; }
+#infoDot.off { color: #4a4456; }
+.infoMain { flex: 1; min-width: 0; }
+#infoTitle { display: block; font-size: 14.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.infoSub { display: flex; align-items: center; gap: 10px; margin-top: 3px; font-size: 11px; color: var(--dim); }
+.cat {
+  display: inline-block; padding: 1px 8px; border-radius: 9px;
+  border: 1px solid var(--plat); color: var(--plat2); font-size: 10.5px;
+}
+.infoR { display: flex; align-items: center; gap: 12px; }
+.infoViewers { font-size: 12.5px; color: #cfc7b8; font-variant-numeric: tabular-nums; }
+#followBtn {
+  padding: 6px 14px; border: 0; border-radius: 7px; cursor: pointer;
+  background: var(--plat); color: #fff; font: 700 12px inherit;
+}
+#followBtn:hover { filter: brightness(1.15); }
+
+/* ---------- 작업표시줄 트레이 (시계·아이콘) ---------- */
+.dTray { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 11px; color: #cfc7b8; }
+.dTray i { font-style: normal; opacity: .85; }
+#dRec { color: var(--tally); font-size: 10px; letter-spacing: 1px; animation: tpulse 2.4s infinite; }
+#dClock { font-variant-numeric: tabular-nums; color: var(--ink); }
+/* 트레이가 들어오면 힌트는 자리를 양보한다 */
+.dBarHint { margin-left: 12px; }

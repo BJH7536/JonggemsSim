@@ -24,6 +24,14 @@
   // 감쇠가 편도가 되어 종겜 플레이를 오히려 벌준다. 번갈아 방송하면 100%가 유지되는 게 의도다.
   var FRESH_MULT = [1, .7, .45, .25, .1];
 
+  // 방송 제목 풀 — 순수 연출. 실제 종겜 스트리머의 "오늘의 각오" 제목 감성.
+  // 게임 id 로 찾고, 없으면 태그라인을 쓴다 (새 게임이 등록돼도 깨지지 않는다).
+  var SHOW_TITLES = {
+    hwaryeok: ['불 좀 끄고 올게요', '오늘 대참사 0회 도전', '4구 풀가동 각입니다'],
+    'giving-up': ['오늘 정상 못 가면 삭발', '항아리 유산소 하는 날', '떨어질수록 커집니다'],
+    pocket: ['빈사 역전만 노립니다', '연승 끊기면 바로 자야죠', '명중 38%를 믿습니다'],
+  };
+
   var Shell = {
     games: [],
     game: null,     // 현재 방송 중인 게임 정의
@@ -84,6 +92,10 @@
       this._camMood = 'silence'; this._camAt = 0;
       this._graph = []; this._graphT = 0; this._upT = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
+      var self2 = this;
+      $('followBtn').addEventListener('click', function () {
+        self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
+      });
       this.showHub();
       requestAnimationFrame(this.loop.bind(this));
     },
@@ -159,6 +171,12 @@
 
       $('camBox').classList.add('hidden');
       $('tallyUp').textContent = '';
+      $('infoTitle').textContent = '방송 준비 중…';
+      $('infoCat').textContent = '대기 화면';
+      $('infoDot').className = 'off';
+      $('infoUptime').textContent = '';
+      $('infoViewers').textContent = '0';
+      clearTimeout(this._startTimer);
       this.updateTopbar();
 
       var self = this;
@@ -190,7 +208,8 @@
             '<span class="dStart"><img src="games/shell/faces/adventurer_silence.png" alt="">종겜러</span>' +
             '<span class="dBarInfo">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
               this.ch.shows + '</b>회</span>' +
-            '<span class="dBarHint">아이콘을 눌러 방송할 게임을 고른다</span>' +
+            '<span class="dTray"><i id="dRec">● REC</i><i>🔊</i><i>📶</i><i id="dClock"></i></span>' +
+            '<span class="dBarHint">더블클릭 = 바로 방송 · 클릭 = 게임 정보</span>' +
           '</div>' +
         '</div><div class="mstand"></div></div>' +
         recent + '</div>';
@@ -210,6 +229,11 @@
       root.querySelector('.deskIcons').addEventListener('click', function (e) {
         var btn = e.target.closest('[data-game]');
         if (btn) self.openLauncher(btn.getAttribute('data-game'));
+      });
+      // 실제 데스크탑처럼 더블클릭은 곧장 실행이다 — 카운트다운을 거쳐 방송이 켜진다
+      root.querySelector('.deskIcons').addEventListener('dblclick', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (btn) self.start(btn.getAttribute('data-game'));
       });
     },
 
@@ -269,7 +293,48 @@
     },
 
     // ---------- 방송 시작 ----------
+    // 실제 스트리머의 진입 흐름: 게임을 켠다고 바로 화면이 바뀌지 않는다 —
+    // "잠시 후 시작합니다" 대기 화면 → 카운트다운 → 장면 전환(스팅어) → 게임.
+    // 경제·게임 로직은 _launch 그대로다. 이 함수는 연출만 얹는다.
     start: function (gameId) {
+      var g = this.games.filter(function (x) { return x.id === gameId; })[0];
+      if (!g) return;
+      if (this.phase === 'starting') return; // 카운트다운 중 재진입 방지
+      var self = this;
+      this.phase = 'starting';
+      var pool = SHOW_TITLES[g.id];
+      this._showTitle = pool ? pool[Math.floor(Math.random() * pool.length)] : g.tagline;
+
+      $('overlay').classList.remove('hidden');
+      $('overlay').innerHTML = '<div class="startSoon">' +
+        '<div class="ssTop">STARTING SOON</div>' +
+        '<h2>잠시 후 방송이 시작됩니다</h2>' +
+        '<div class="ssGame"><span class="cat">' + g.title + '</span> ' + this._showTitle + '</div>' +
+        '<div class="ssCount" id="ssCount">3</div>' +
+        '<div class="ssHint">방송 준비 중 — 마이크·송출 확인</div>' +
+        '</div><div id="stinger"></div>';
+      Chat.reset();
+      Chat.sys('— 방송 대기 화면 —');
+      $('tallyR').textContent = '준비 중';
+
+      var n = 3;
+      var tick = function () {
+        if (n <= 0) {
+          // OBS 장면 전환 — 보라 와이프가 화면을 훑고 지나가며 게임이 드러난다
+          var st = $('stinger');
+          if (st) { st.classList.add('go'); }
+          setTimeout(function () { self._launch(gameId); }, 340);
+          return;
+        }
+        var el = $('ssCount');
+        if (el) { el.textContent = n; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+        n--;
+        self._startTimer = setTimeout(tick, 700);
+      };
+      tick();
+    },
+
+    _launch: function (gameId) {
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
       if (!g) return;
       if (this.inst && this.inst.dispose) this.inst.dispose();
@@ -299,6 +364,11 @@
       Chat.load(g.chat.T, g.chat.BURST);
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
+
+      // 플랫폼 정보줄 — 제목·카테고리·라이브 점등
+      $('infoTitle').textContent = this._showTitle || g.tagline;
+      $('infoCat').textContent = g.title;
+      $('infoDot').className = 'on';
 
       this.stage = this.makeStage();
       this.inst = g.start(this.stage);
@@ -346,7 +416,9 @@
     // ---------- 시청자 (규약 1·2) ----------
     renderViewers: function () {
       // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
-      $('viewerCount').textContent = Math.ceil(this.viewers).toLocaleString();
+      var v = Math.ceil(this.viewers).toLocaleString();
+      $('viewerCount').textContent = v;
+      $('infoViewers').textContent = v;
     },
     loseViewers: function (n) {
       if (this.phase !== 'live' || !(n > 0)) return;
@@ -426,7 +498,7 @@
         '</p>' +
         '<div class="btnrow">' +
           '<button class="slab primary" id="btnAgain">다시 방송 (R)</button>' +
-          '<button class="slab" id="btnHub">게임 고르러 가기 (Esc)</button>' +
+          '<button class="slab" id="btnHub">데스크탑으로 (Esc)</button>' +
         '</div></div>';
       $('btnAgain').onclick = function () { self.start(g.id); };
       $('btnHub').onclick = function () { self.showHub(); };
@@ -439,6 +511,16 @@
       var t = ms / 1000;
       var dt = Math.min(.05, t - this._prevFrame || .016);
       this._prevFrame = t; this.now = t;
+      // 데스크탑 시계·정보줄 업타임 — 1초에 한 번이면 충분하다
+      if (!this._clockT || t - this._clockT > 1) {
+        this._clockT = t;
+        var ck = $('dClock');
+        if (ck) { var d = new Date(); ck.textContent = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+        if (this.phase === 'live' && this.game) {
+          var up = Math.max(0, this.game.duration - this.timeLeft) | 0;
+          $('infoUptime').textContent = '업타임 ' + ('0' + ((up / 60) | 0)).slice(-2) + ':' + ('0' + (up % 60)).slice(-2);
+        }
+      }
       this._shake *= .88; this._flash *= .88;
 
       if (this.phase === 'live') {
