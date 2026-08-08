@@ -48,10 +48,6 @@
     <div id="bigStamp"><div id="bigStampText"></div></div>
     <div id="overlay" class="hidden"></div>
   </div>
-  <div id="chatCol">
-    <div id="chatHead"><span>💬 실시간 채팅</span><span class="chatBadge" id="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
-    <div id="chatFeed"></div>
-  </div>
   </div>
   <!-- 플랫폼식 방송 정보줄 — 실제 스트리밍 페이지의 제목·카테고리·시청자 행 -->
   <div id="infoRow">
@@ -73,6 +69,14 @@
 </div>
 
 </div><!-- /jgsWin -->
+
+<!-- 채팅 팝아웃 창 — 실제 스트리머처럼 채팅을 항상 우측에 띄워 둔다.
+     데스크탑(방송 전)에도, 전체화면 방송 중에도 이 창만은 계속 보인다 -->
+<div id="chatDock">
+  <div id="chatWinbar"><span class="winIco">💬</span><span class="winTitle">실시간 채팅</span>
+    <span class="chatBadge" id="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
+  <div id="chatCol"><div id="chatFeed"></div></div>
+</div>
 
 <!-- 윈도우 작업표시줄 — 페이지 하단 고정. 시작 버튼(프로필) · 실행 앱 · 트레이 -->
 <div id="taskbar">
