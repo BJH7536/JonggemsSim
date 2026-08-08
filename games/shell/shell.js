@@ -417,8 +417,10 @@
       $('paceChip').classList.add('hidden');
       $('donBanner').classList.remove('show');
       this._donQ.length = 0; this._donBusy = false;
-      // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋)
+      // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋). 지난 방송 영상 URL은 회수한다
+      (this._clips || []).forEach(function (c) { if (c.vid) URL.revokeObjectURL(c.vid); });
       this._clips = []; this._evSeen = {}; this._surgeAcc = 0; this._lastClipAt = -99;
+      this.startClipRec();
 
       // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
       if (!localStorage.getItem('JGS_TUT')) {
@@ -598,9 +600,24 @@
           try { img = self.clipCard(mood, tAt); } catch (e2) { img = 0; }
         }
         if (img) {
-          self._clips.push({ t: tAt, ev: ev, s: s, mood: mood, why: why,
-            v: Math.round(self.viewers), img: img });
-          self.showClipToast();
+          var clip = { t: tAt, ev: ev, s: s, mood: mood, why: why,
+            v: Math.round(self.viewers), img: img, vid: null };
+          self._clips.push(clip);
+          self.showClipBanner(clip);
+          // 영상 — 사건의 여운까지 2.5초 더 담은 뒤 현재 세그먼트를 그대로 파일로 굳힌다
+          if (self._rec) {
+            self._recHold = true; // 조립이 끝날 때까지 세그먼트를 자르지 않는다
+            setTimeout(function () {
+              var r = self._rec;
+              if (!r || r.state === 'inactive') { self._recHold = false; return; }
+              try { r.requestData(); } catch (e) { self._recHold = false; return; }
+              setTimeout(function () {
+                self._recHold = false;
+                if (r._chunks.length)
+                  clip.vid = URL.createObjectURL(new Blob(r._chunks.slice(), { type: 'video/webm' }));
+              }, 150);
+            }, 2500);
+          }
         }
       }, 450);
     },
@@ -618,11 +635,47 @@
       c.fillText(mood, 120, 68);
       return cv.toDataURL('image/png');
     },
-    showClipToast: function () {
-      var el = $('clipToast'); if (!el) return;
-      el.classList.add('show');
-      clearTimeout(this._clipToastTimer);
-      this._clipToastTimer = setTimeout(function () { el.classList.remove('show'); }, 1600);
+    showClipBanner: function (clip) {
+      var el = $('clipBanner'); if (!el) return;
+      el.innerHTML = '<i class="recDot"></i><img src="' + clip.img + '" alt="">' +
+        '<span><b>클립 저장됨</b> — ' + clip.mood + ' ' + Shell.util.fmtTime(clip.t) +
+        ' · 흥미도 ' + Math.round(clip.s * 100) + '%</span>';
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    },
+
+    // ---------- 클립 영상 — 리플레이 버퍼 (연출·기록 전용) ----------
+    // 캔버스를 상시 녹화하되 6초마다 세그먼트를 재시작한다. WebM 헤더는 늘 세그먼트의
+    // 첫 청크에 있으므로 "세그먼트 시작~지금"을 이어붙이면 어느 순간이든 재생 가능한
+    // 파일이 된다. 프리롤이 0~6초로 변동하는 건 감수 — 진짜 편집기는 범위 밖이다.
+    startClipRec: function () {
+      this.stopClipRec();
+      var cv = this.ctx.canvas;
+      if (typeof MediaRecorder === 'undefined' || !cv.captureStream) return; // 미지원 → 스틸만
+      var self = this;
+      try {
+        this._recStream = cv.captureStream(24);
+        var mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+        var mk = function () {
+          var chunks = [];
+          var r = new MediaRecorder(self._recStream, { mimeType: mime, videoBitsPerSecond: 2200000 });
+          r._chunks = chunks; // stop 후 늦게 흘러드는 마지막 청크가 다음 세그먼트에 섞이지 않게 녹화기별 소유
+          r.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+          r.start(500);
+          return r;
+        };
+        this._rec = mk();
+        this._recTimer = setInterval(function () {
+          if (self._recHold) return;
+          try { self._rec.stop(); } catch (e) {}
+          self._rec = mk();
+        }, 6000);
+      } catch (e) { this.stopClipRec(); } // 녹화가 안 되는 환경이 방송을 막으면 안 된다
+    },
+    stopClipRec: function () {
+      clearInterval(this._recTimer); this._recTimer = 0; this._recHold = false;
+      try { if (this._rec && this._rec.state !== 'inactive') this._rec.stop(); } catch (e) {}
+      if (this._recStream) this._recStream.getTracks().forEach(function (t) { t.stop(); });
+      this._rec = null; this._recStream = null;
     },
 
     // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
@@ -669,6 +722,7 @@
     endShow: function (reason) {
       if (this.phase !== 'live') return; // 이중 종료 방지 (H-2)
       this.phase = 'result';
+      this.stopClipRec(); // 종료 직전 클립(2.5초 여운 대기 중)은 스틸로만 남는다 — 감수
       var g = this.game, final = Math.round(this.viewers);
 
       Chat.sys(reason === 'dead' ? '— 방송 강제 종료 —'
@@ -710,7 +764,10 @@
       var clipHtml = clips.length
         ? '<div class="clipLab">오늘의 클립 — 흥미 포인트 자동 캡처</div><div class="clipRow">' +
           clips.map(function (c) {
-            return '<figure class="clipCard"><img src="' + c.img + '" alt="">' +
+            return '<figure class="clipCard">' +
+              (c.vid
+                ? '<video src="' + c.vid + '" autoplay muted loop playsinline></video>'
+                : '<img src="' + c.img + '" alt="">') +
               '<figcaption><b>' + Shell.util.fmtTime(c.t) + '</b> ' + c.mood + ' · 흥미도 ' +
               Math.round(c.s * 100) + '%' +
               (c.why.length ? '<span class="cwhy">' + c.why.join(' · ') + '</span>' : '') +
