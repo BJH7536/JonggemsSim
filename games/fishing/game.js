@@ -392,21 +392,21 @@
         var t = stage.now;
         // 배경 정물은 AetherAI 플레이트 — 별·물결·라벨·실루엣은 계속 위에 얹는다
         if (imgReady('sea-bg')) {
-          // 생성물의 수면선은 상단 10.6% 지점(실측 y=61/574)인데 게임 SURFACE는 70/430이다.
+          // 생성물의 수면선은 상단 31.4% 지점(밝은 낮 판 실측 y=180/574)인데 게임 SURFACE는 70/430이다.
           // 위(하늘)/아래(물)를 나눠 그려 이미지 수면선이 정확히 SURFACE에 오게 맞춘다 —
-          // 안 맞추면 수면선이 두 줄로 보인다 (물결은 SURFACE에 그려진다).
-          var sb = IMG['sea-bg'], sbw = sb.naturalWidth, sbh = sb.naturalHeight, sbl = sbh * .106;
+          // 안 맞추면 수면선이 두 줄로 보인다 (물결은 SURFACE에 그려진다). 배경 재생성 시 재실측할 것.
+          var sb = IMG['sea-bg'], sbw = sb.naturalWidth, sbh = sb.naturalHeight, sbl = sbh * .3136;
           ctx.drawImage(sb, 0, 0, sbw, sbl, 0, 0, 960, SURFACE);
           ctx.drawImage(sb, 0, sbl, sbw, sbh - sbl, 0, SURFACE, 960, 430 - SURFACE);
         } else {
-          // 하늘·달·물 — 이미지 로드 전 폴백
+          // 하늘·해·물 — 이미지 로드 전 폴백 (밝은 낮)
           var sky = ctx.createLinearGradient(0, 0, 0, SURFACE);
-          sky.addColorStop(0, '#0c1220'); sky.addColorStop(1, '#16283a');
+          sky.addColorStop(0, '#6db8ec'); sky.addColorStop(1, '#a8dcf5');
           ctx.fillStyle = sky; ctx.fillRect(0, 0, 960, SURFACE);
-          ctx.fillStyle = 'rgba(240,235,215,.85)';
+          ctx.fillStyle = '#ffd94a';
           ctx.beginPath(); ctx.arc(850, 28, 14, 0, TAU); ctx.fill();
           var w = ctx.createLinearGradient(0, SURFACE, 0, 430);
-          w.addColorStop(0, '#17394f'); w.addColorStop(.45, '#0d2233'); w.addColorStop(1, '#03070d');
+          w.addColorStop(0, '#4fc4e0'); w.addColorStop(.45, '#2a7fb8'); w.addColorStop(1, '#155a96');
           ctx.fillStyle = w; ctx.fillRect(0, SURFACE, 960, 430 - SURFACE);
         }
         for (var s = 0; s < 20; s++) {
@@ -414,7 +414,7 @@
           ctx.fillRect((s * 149 + 40) % 960, 6 + (s * 37) % 40, 2, 2);
         }
         // 수면 물결
-        ctx.strokeStyle = 'rgba(180,220,240,.4)'; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5;
         ctx.beginPath();
         for (var x = 0; x <= 960; x += 8) {
           var wy = SURFACE + Math.sin(x * .04 + t * 2) * 2.5;
@@ -424,16 +424,16 @@
         // 수심 구간 경계·라벨
         ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
         ZONES.forEach(function (z, i) {
-          ctx.strokeStyle = 'rgba(140,180,210,.14)'; ctx.setLineDash([6, 8]);
+          ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.setLineDash([6, 8]);
           ctx.beginPath(); ctx.moveTo(0, z.top - 6); ctx.lineTo(960, z.top - 6); ctx.stroke();
           ctx.setLineDash([]);
           var on = st.zone === i;
-          ctx.fillStyle = on ? '#ffd27a' : 'rgba(150,180,200,.4)';
+          ctx.fillStyle = on ? '#ffe98a' : 'rgba(12,50,80,.5)';
           ctx.fillText(z.n + (on ? ' ◀' : ''), 12, z.top + 10);
         });
         // 배경 물고기 실루엣
         st.amb.forEach(function (a) {
-          ctx.fillStyle = 'rgba(20,40,55,.7)';
+          ctx.fillStyle = 'rgba(18,70,110,.45)';
           ctx.save(); ctx.translate(a.x, a.y + Math.sin(t * 1.5 + a.x) * 3);
           ctx.scale(a.v > 0 ? 1 : -1, 1);
           ctx.beginPath(); ctx.ellipse(0, 0, a.s, a.s * .4, 0, 0, TAU); ctx.fill();
@@ -442,7 +442,7 @@
         });
         // 기포
         st.bubbles.forEach(function (b) {
-          ctx.strokeStyle = 'rgba(190,230,250,.35)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.arc(b.x + Math.sin(b.y * .1) * 3, b.y, b.r, 0, TAU); ctx.stroke();
         });
         // 배
@@ -455,13 +455,13 @@
           var bi = IMG['boat'], bh = 50, bw = bh * bi.naturalWidth / bi.naturalHeight;
           ctx.drawImage(bi, 402 - bw, SURFACE + 22 - bh, bw, bh);
         } else {
-          ctx.fillStyle = '#3a2c1e';
+          ctx.fillStyle = '#b9855a';
           ctx.beginPath();
           ctx.moveTo(280, SURFACE - 6); ctx.lineTo(440, SURFACE - 6);
           ctx.lineTo(420, SURFACE + 14); ctx.lineTo(300, SURFACE + 14); ctx.closePath(); ctx.fill();
-          ctx.fillStyle = '#54402c'; ctx.fillRect(300, SURFACE - 20, 60, 14);
-          // 스트리머 실루엣
-          ctx.fillStyle = '#1a1d22';
+          ctx.fillStyle = '#d8a878'; ctx.fillRect(300, SURFACE - 20, 60, 14);
+          // 스트리머 실루엣 — 코럴 후디
+          ctx.fillStyle = '#e8654a';
           ctx.beginPath(); ctx.arc(400, SURFACE - 26, 7, 0, TAU); ctx.fill();
           ctx.fillRect(394, SURFACE - 20, 12, 15);
         }
@@ -481,7 +481,7 @@
           if (st.phase === 'reel' && st.fish)
             ly = st.lureY = SURFACE + 30 + Math.max(0, st.targetY - SURFACE - 30) * clamp(1 - st.fish.prog / 100, 0, 1.3) +
                             (st.surging > 0 ? Math.sin(t * 28) * 5 : 0);
-          ctx.strokeStyle = 'rgba(220,230,240,.5)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(tipX, tipY + bob);
           ctx.quadraticCurveTo(tipX + 30, (tipY + ly) / 2, lx, ly); ctx.stroke();
           // 진입질 알림 — 수면 위 "!!"
@@ -519,22 +519,22 @@
           }
         } else {
           // 수리 중 — 부러진 낚싯대
-          ctx.fillStyle = '#9a9184'; ctx.font = 'bold 20px system-ui, sans-serif'; ctx.textAlign = 'center';
+          ctx.fillStyle = '#2e4658'; ctx.font = 'bold 20px system-ui, sans-serif'; ctx.textAlign = 'center';
           ctx.fillText('🔧 낚싯대 수리 중… ' + Math.max(0, st.repairT).toFixed(1) + 's', 480, 220);
         }
         // 릴 감기 게이지 — 텐션(위험) + 끌어올림(진행)
         if (st.phase === 'reel' && st.fish) {
           var gx = 660, gw = 270;
-          ctx.fillStyle = 'rgba(8,10,14,.8)'; ctx.fillRect(gx - 8, 12, gw + 16, 64);
-          ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#cfe2ee';
+          ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(gx - 8, 12, gw + 16, 64);
+          ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#23445c';
           ctx.fillText('텐션', gx, 26);
-          ctx.fillStyle = '#141a22'; ctx.fillRect(gx, 30, gw, 10);
+          ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.fillRect(gx, 30, gw, 10);
           var tc = st.tension >= EDGE_AT ? '#ff5a4a' : st.tension > 65 ? '#ffb447' : '#6fd98f';
           ctx.fillStyle = tc; ctx.fillRect(gx, 30, gw * clamp(st.tension / 100, 0, 1), 10);
           ctx.fillStyle = 'rgba(255,90,74,.9)'; ctx.fillRect(gx + gw * EDGE_AT / 100, 28, 2, 14);
-          ctx.fillStyle = '#cfe2ee';
+          ctx.fillStyle = '#23445c';
           ctx.fillText('끌어올림 — ' + TIERS[st.fish.tier].n, gx, 54);
-          ctx.fillStyle = '#141a22'; ctx.fillRect(gx, 58, gw, 10);
+          ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.fillRect(gx, 58, gw, 10);
           ctx.fillStyle = '#4aa0ff'; ctx.fillRect(gx, 58, gw * clamp(st.fish.prog / 100, 0, 1), 10);
         }
         // 물보라 VFX — 4x4 시트를 'screen' 블렌드로 얹는다 (포켓과 같은 파이프라인)
@@ -576,11 +576,11 @@
           '"!!" 순간 클릭 = 챔질(잔입질은 페이크) · 릴: 누르면 텐션↑ 당김, 떼면 텐션↓ — 100% 초과 = 줄 끊김(그것도 콘텐츠), 슬랙 방치 = 도망',
     thumb: function (c, w, h) {
       var g = c.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#16283a'); g.addColorStop(.25, '#17394f'); g.addColorStop(1, '#03070d');
+      g.addColorStop(0, '#a8dcf5'); g.addColorStop(.25, '#4fc4e0'); g.addColorStop(1, '#155a96');
       c.fillStyle = g; c.fillRect(0, 0, w, h);
-      c.strokeStyle = 'rgba(180,220,240,.5)';
+      c.strokeStyle = 'rgba(255,255,255,.65)';
       c.beginPath(); c.moveTo(0, h * .22); c.lineTo(w, h * .22); c.stroke();
-      c.fillStyle = '#3a2c1e';
+      c.fillStyle = '#b9855a';
       c.beginPath(); c.moveTo(w * .3, h * .2); c.lineTo(w * .55, h * .2); c.lineTo(w * .5, h * .3); c.lineTo(w * .35, h * .3); c.closePath(); c.fill();
       c.strokeStyle = 'rgba(220,230,240,.5)'; c.lineWidth = 1;
       c.beginPath(); c.moveTo(w * .52, h * .2); c.lineTo(w * .6, h * .85); c.stroke();

@@ -135,10 +135,10 @@
   var IMG = {};
   function loadArt() {
     if (IMG.pot) return;
-    ['pot', 'hammer'].forEach(function (n) {
+    [['pot', 'png'], ['hammer', 'png'], ['sky-bg', 'jpg']].forEach(function (e) {
       var im = new Image();
-      im.src = 'games/giving-up/img/' + n + '.png';
-      IMG[n] = im;
+      im.src = 'games/giving-up/img/' + e[0] + '.' + e[1];
+      IMG[e[0]] = im;
     });
   }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
@@ -503,10 +503,19 @@
 
     // ---------- 렌더 ----------
     function drawCliff(ctx, cam) {
-      var g = ctx.createLinearGradient(0, cam, 0, cam + VH);
-      g.addColorStop(0, '#1a2230'); g.addColorStop(1, '#0e1219');
-      ctx.fillStyle = g; ctx.fillRect(0, cam, W, VH);
-      ctx.strokeStyle = 'rgba(120,140,170,.07)'; ctx.lineWidth = 2;
+      if (imgReady('sky-bg')) {
+        // AetherAI 하늘 플레이트 — 세로 여유분을 카메라 진행도로 팬 (은은한 패럴랙스)
+        var im = IMG['sky-bg'];
+        var sc = Math.max(W / im.naturalWidth, VH * 1.25 / im.naturalHeight);
+        var dw = im.naturalWidth * sc, dh = im.naturalHeight * sc;
+        var span = dh - VH, p = clamp(cam / (WORLD_H - VH), 0, 1);
+        ctx.drawImage(im, (W - dw) / 2, cam - span * p, dw, dh);
+      } else {
+        var g = ctx.createLinearGradient(0, cam, 0, cam + VH);
+        g.addColorStop(0, '#6db8ec'); g.addColorStop(1, '#dff2fc');
+        ctx.fillStyle = g; ctx.fillRect(0, cam, W, VH);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 2;
       for (var y = Math.floor(cam / 70) * 70; y < cam + VH + 70; y += 70) {
         ctx.beginPath(); ctx.moveTo(0, y);
         for (var x = 0; x <= W; x += 120) ctx.lineTo(x, y + Math.sin(x * .013 + y * .05) * 16);
@@ -514,7 +523,7 @@
       }
       if (cam < 420) {
         var s = ctx.createLinearGradient(0, 120, 0, 520);
-        s.addColorStop(0, 'rgba(120,170,220,.20)'); s.addColorStop(1, 'rgba(120,170,220,0)');
+        s.addColorStop(0, 'rgba(255,240,190,.4)'); s.addColorStop(1, 'rgba(255,240,190,0)');
         ctx.fillStyle = s; ctx.fillRect(0, 120, W, 400);
       }
     }
@@ -528,29 +537,29 @@
         if (s.wall) {
           // 가장자리 벽 — 화면 안쪽 립만 세로 스트립으로. 접점이면 면이 밝아진다 (조작 피드백)
           var x0 = s.x < 0 ? 0 : s.x;
-          ctx.fillStyle = '#332d27';
+          ctx.fillStyle = '#8a7a64';
           ctx.fillRect(x0, cam, WALL_LIP, VH);
-          ctx.fillStyle = lit ? 'rgba(255,200,120,.6)' : 'rgba(220,210,190,.18)';
+          ctx.fillStyle = lit ? 'rgba(255,180,80,.75)' : 'rgba(255,255,255,.35)';
           ctx.fillRect(s.x < 0 ? WALL_LIP - 2 : s.x, cam, 2, VH);
           return;
         }
         if (s.t === 'c') {
           var rg = ctx.createRadialGradient(s.x - s.r * .35, s.y - s.r * .4, s.r * .15, s.x, s.y, s.r);
-          rg.addColorStop(0, lit ? '#8b7f6d' : '#6b6155'); rg.addColorStop(1, '#2b2621');
+          rg.addColorStop(0, lit ? '#e0cca8' : '#c9b89c'); rg.addColorStop(1, '#8a7660');
           ctx.fillStyle = rg;
           ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
-          ctx.strokeStyle = lit ? 'rgba(255,180,71,.75)' : 'rgba(0,0,0,.45)';
+          ctx.strokeStyle = lit ? 'rgba(230,140,30,.85)' : 'rgba(90,72,54,.5)';
           ctx.lineWidth = lit ? 2.5 : 2; ctx.stroke();
         } else {
           var g = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
-          g.addColorStop(0, lit ? '#8b7f6d' : '#6b6155'); g.addColorStop(.3, '#4a423a'); g.addColorStop(1, '#2b2621');
+          g.addColorStop(0, lit ? '#e0cca8' : '#c9b89c'); g.addColorStop(.3, '#a89478'); g.addColorStop(1, '#8a7660');
           ctx.fillStyle = g; ctx.fillRect(s.x, s.y, s.w, s.h);
-          ctx.fillStyle = lit ? 'rgba(255,200,120,.5)' : 'rgba(220,210,190,.22)';
+          ctx.fillStyle = lit ? 'rgba(255,180,80,.65)' : 'rgba(255,255,255,.4)';
           ctx.fillRect(s.x, s.y, s.w, 3);
-          ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(s.x, s.y + s.h - 3, s.w, 3);
+          ctx.fillStyle = 'rgba(70,56,40,.3)'; ctx.fillRect(s.x, s.y + s.h - 3, s.w, 3);
         }
       });
-      ctx.strokeStyle = '#cfc7b8'; ctx.lineWidth = 3;
+      ctx.strokeStyle = '#7a6a4e'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(445, SUMMIT_Y); ctx.lineTo(445, SUMMIT_Y - 46); ctx.stroke();
       ctx.fillStyle = '#ffb447';
       ctx.beginPath(); ctx.moveTo(445, SUMMIT_Y - 46); ctx.lineTo(487, SUMMIT_Y - 36); ctx.lineTo(445, SUMMIT_Y - 26); ctx.closePath(); ctx.fill();
@@ -568,7 +577,7 @@
       // 사거리 링 — 망치가 어디까지 닿는지 안 보이면 조작이 추측이 된다
       if (!st.planted) {
         ctx.save();
-        ctx.strokeStyle = 'rgba(255,180,71,.13)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 7]);
+        ctx.strokeStyle = 'rgba(200,120,30,.28)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 7]);
         ctx.beginPath(); ctx.arc(x, y - 16, HAMMER_MAX, 0, TAU); ctx.stroke();
         ctx.restore();
       }
@@ -587,7 +596,7 @@
           ctx.beginPath(); ctx.arc(4, 0, 14, 0, TAU); ctx.fill();
         }
       } else {
-      ctx.fillStyle = st.planted ? '#ffd27a' : '#9aa0a8';
+      ctx.fillStyle = st.planted ? '#ffd27a' : '#6f7a84';
       ctx.fillRect(-6, -9, 18, 18);
       ctx.strokeStyle = '#14161a'; ctx.lineWidth = 2; ctx.strokeRect(-6, -9, 18, 18);
       }
@@ -620,22 +629,22 @@
 
     function drawRuler(ctx) {
       ctx.save();
-      ctx.fillStyle = 'rgba(11,9,8,.62)'; ctx.fillRect(0, 24, 52, VH - 24);
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(0, 24, 52, VH - 24);
       ctx.textAlign = 'right'; ctx.font = '10px system-ui, sans-serif';
       for (var m = 0; m <= 70; m += 5) {
         var wy = GROUND_Y - PR - m * PX_PER_M - st.camY;
         if (wy < 30 || wy > VH) continue;
-        ctx.strokeStyle = 'rgba(200,190,170,.28)'; ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(70,58,44,.4)'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(36, wy); ctx.lineTo(50, wy); ctx.stroke();
-        ctx.fillStyle = '#8a8478'; ctx.fillText(m + 'm', 33, wy + 3.5);
+        ctx.fillStyle = '#5a5248'; ctx.fillText(m + 'm', 33, wy + 3.5);
       }
       var by = GROUND_Y - PR - st.best * PX_PER_M - st.camY;
       if (by > 26 && by < VH) {
-        ctx.strokeStyle = 'rgba(255,180,71,.65)'; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(216,130,26,.75)'; ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 5]);
         ctx.beginPath(); ctx.moveTo(0, by); ctx.lineTo(W, by); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = '#ffb447'; ctx.textAlign = 'left';
+        ctx.fillStyle = '#c87516'; ctx.textAlign = 'left';
         ctx.fillText('최고 ' + st.best.toFixed(1) + 'm', 56, by - 4);
       }
       ctx.restore();
@@ -664,13 +673,13 @@
           '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
     thumb: function (c, w, h) {
       var g = c.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#1a2230'); g.addColorStop(1, '#0e1219');
+      g.addColorStop(0, '#6db8ec'); g.addColorStop(1, '#dff2fc');
       c.fillStyle = g; c.fillRect(0, 0, w, h);
-      c.fillStyle = '#4a423a';
+      c.fillStyle = '#a89478';
       [[10, h * .82, 70], [90, h * .58, 60], [30, h * .34, 55], [130, h * .16, 60]].forEach(function (p) {
         c.fillRect(p[0], p[1], p[2], 8);
       });
-      c.fillStyle = '#6b6155';
+      c.fillStyle = '#c9b89c';
       c.beginPath(); c.arc(w * .78, h * .62, 24, 0, Math.PI * 2); c.fill();
       // 항아리 + 망치
       c.fillStyle = '#6a3f26';

@@ -24,3 +24,4 @@ Assets/**
 !Assets/README.md
 !Assets/*/
 !Assets/*/SOURCES.md
+.playwright-mcp/

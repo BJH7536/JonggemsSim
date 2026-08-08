@@ -398,18 +398,16 @@
         var sc = Math.max(960 / bi.naturalWidth, COUNTER_Y / bi.naturalHeight);
         var dw = bi.naturalWidth * sc, dh = bi.naturalHeight * sc;
         ctx.drawImage(bi, (960 - dw) / 2, (COUNTER_Y - dh) / 2, dw, dh);
-        // 위에 얹는 연출(조명 콘)이 떠 보이지 않게 살짝 눌러준다
-        ctx.fillStyle = 'rgba(10,8,6,.22)'; ctx.fillRect(0, 0, 960, COUNTER_Y);
       } else {
       var bg = ctx.createLinearGradient(0, 0, 0, COUNTER_Y);
-      bg.addColorStop(0, '#12100c'); bg.addColorStop(1, '#1e1a14');
+      bg.addColorStop(0, '#f2e8d5'); bg.addColorStop(1, '#e8d8b8');
       ctx.fillStyle = bg; ctx.fillRect(0, 0, 960, COUNTER_Y);
-      ctx.fillStyle = '#17130e'; ctx.fillRect(0, 96, 960, 7);
-      ctx.fillStyle = '#100d09';
+      ctx.fillStyle = '#d8c8a8'; ctx.fillRect(0, 96, 960, 7);
+      ctx.fillStyle = '#c8b494';
       [[120, 70], [250, 62], [700, 66], [830, 74]].forEach(function (p) { ctx.fillRect(p[0], 96 - p[1], 34, p[1]); });
       }
       [300, 660].forEach(function (lx) {
-        ctx.fillStyle = '#0a0806';
+        ctx.fillStyle = '#5a4a3a';
         ctx.beginPath(); ctx.moveTo(lx - 26, 30); ctx.lineTo(lx + 26, 30); ctx.lineTo(lx + 16, 52); ctx.lineTo(lx - 16, 52); ctx.closePath(); ctx.fill();
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
         var fl = 1 + .05 * Math.sin(t * 9 + lx);
@@ -422,15 +420,15 @@
         ctx.restore();
       });
       var stg = ctx.createLinearGradient(0, COUNTER_Y - 20, 0, COUNTER_Y + 42);
-      stg.addColorStop(0, '#9aa0a8'); stg.addColorStop(.25, '#6a7078'); stg.addColorStop(1, '#41464d');
+      stg.addColorStop(0, '#eef1f4'); stg.addColorStop(.25, '#c4ccd4'); stg.addColorStop(1, '#98a2ac');
       ctx.fillStyle = stg; ctx.fillRect(0, COUNTER_Y - 20, 960, 62);
-      ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(0, COUNTER_Y - 20, 960, 3);
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(0, COUNTER_Y - 20, 960, 3);
       var fr = ctx.createLinearGradient(0, COUNTER_Y + 42, 0, 430);
-      fr.addColorStop(0, '#24272c'); fr.addColorStop(1, '#141619');
+      fr.addColorStop(0, '#c89860'); fr.addColorStop(1, '#a87840');
       ctx.fillStyle = fr; ctx.fillRect(0, COUNTER_Y + 42, 960, 430 - COUNTER_Y - 42);
-      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, COUNTER_Y + 42, 960, 4);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(0, COUNTER_Y + 42, 960, 4);
       scene.soot.forEach(function (i) {
-        ctx.fillStyle = 'rgba(10,8,6,.55)';
+        ctx.fillStyle = 'rgba(40,32,24,.3)';
         ctx.beginPath(); ctx.ellipse(BX[i], COUNTER_Y + 6, 58, 13, 0, 0, TAU); ctx.fill();
       });
     }
@@ -623,9 +621,9 @@
           '같은 사고만 반복 수습하면 시청자가 물린다(신선도 감쇠) · 기름 화재를 놓치면 대참사(+시청자 폭등, 화구 12초 파손) · 빈 화구는 조용히 시청자를 잃는다',
     thumb: function (c, w, h) {
       var g = c.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#1e1a14'); g.addColorStop(1, '#0b0908');
+      g.addColorStop(0, '#f2e8d5'); g.addColorStop(1, '#e8d8b8');
       c.fillStyle = g; c.fillRect(0, 0, w, h);
-      c.fillStyle = '#6a7078'; c.fillRect(0, h * .72, w, h * .28);
+      c.fillStyle = '#c4ccd4'; c.fillRect(0, h * .72, w, h * .28);
       [w * .3, w * .7].forEach(function (x) {
         c.fillStyle = '#1a1d22';
         c.beginPath(); c.ellipse(x, h * .72, 30, 9, 0, 0, Math.PI * 2); c.fill();

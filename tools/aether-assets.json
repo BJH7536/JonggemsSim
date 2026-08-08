@@ -1,7 +1,7 @@
 {
   "_": [
     "AetherAI로 생성할 이미지 목록. tools/aether-gen.js 가 읽는다.",
-    "셸 팔레트에 맞춘다 — 배경 #0b0908, 강조 #ffb447, 보조 #a89b8c. 어두운 톤이 기본이다.",
+    "톤 정책(2026-08-08): 셸 데스크탑·해체쇼는 어두운 톤 유지. 화력쇼·GUOI·심연낚시·주머니괴수는 밝은 낮 톤 — 게임 코드의 벡터 팔레트와 함께 맞춘다.",
     "배포 payload 예산(450KB)이 있으므로 생성 후 용량을 확인하고 필요하면 축소할 것.",
     "라이선스: AetherForge 이용약관상 상업적 이용·재배포·오픈소스 포함 허용, 저작자 표시 불요 (2026-08-07 확인).",
     "출처는 docs/submission/ai-tech-doc.md 에셋 표에 반드시 기재한다."
@@ -50,37 +50,37 @@
       "id": "pocket-me-fire",
       "out": "games/pocket/img/me-fire.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small fire hedgehog creature, round orange body (#ff6a3d) with amber (#ffb447) flame-shaped spikes along its back. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite in bright cheerful anime monster-taming RPG style, single chibi round monster, thick dark outline, clean cel shading with vivid saturated colors, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small fire hedgehog creature, round bright orange body (#ff7a3d) with vivid amber (#ffc85a) flame-shaped spikes along its back, lively energetic pose. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-me-water",
       "out": "games/pocket/img/me-water.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small water droplet creature, round glossy blue body (#4aa0ff) with a pale (#b0d8ff) belly, a wave-shaped fin on its head and a small tail fin. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite in bright cheerful anime monster-taming RPG style, single chibi round monster, thick dark outline, clean cel shading with vivid saturated colors, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small water droplet creature, round glossy sky-blue body (#4aa8ff) with a pale (#c8e6ff) belly, a wave-shaped fin on its head and a small tail fin, lively energetic pose. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-me-grass",
       "out": "games/pocket/img/me-grass.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small grass kitten creature, round green body (#6fd98f) with two big leaf ears and a sprout on its head, pale leaf-green (#c8f0b8) belly. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite in bright cheerful anime monster-taming RPG style, single chibi round monster, thick dark outline, clean cel shading with vivid saturated colors, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small grass kitten creature, round fresh green body (#6fdd8f) with two big leaf ears and a sprout on its head, pale leaf-green (#d2f5c0) belly, lively energetic pose. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-foe-fire",
       "out": "games/pocket/img/foe-fire.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild fire imp creature, round ember-orange body (#ff6a3d) with jagged amber (#ffb447) flame crest, mischievous glowing eyes and a grinning mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite in bright cheerful anime monster-taming RPG style, single chibi round monster, thick dark outline, clean cel shading with vivid saturated colors, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild fire imp creature, round bright ember-orange body (#ff7a3d) with jagged vivid amber (#ffc85a) flame crest, mischievous sparkling eyes and a grinning mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-foe-water",
       "out": "games/pocket/img/foe-water.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild puddle beast creature, round deep-blue body (#4aa0ff) with droplet horns and pale (#b0d8ff) fins, narrow determined eyes and a small fanged mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite in bright cheerful anime monster-taming RPG style, single chibi round monster, thick dark outline, clean cel shading with vivid saturated colors, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild puddle beast creature, round vivid blue body (#4aa8ff) with droplet horns and pale (#c8e6ff) fins, narrow determined eyes and a small fanged mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "id": "pocket-foe-grass",
       "out": "games/pocket/img/foe-grass.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild thorn cub creature, round mossy-green body (#6fd98f) with bramble tufts and two big leaf ears, sharp playful eyes and a smirking mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+      "prompt": "Game battle sprite in bright cheerful anime monster-taming RPG style, single chibi round monster, thick dark outline, clean cel shading with vivid saturated colors, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild thorn cub creature, round fresh mossy-green body (#6fdd8f) with bramble tufts and two big leaf ears, sharp playful eyes and a smirking mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
     {
       "_": "── 스킬 VFX 7종 — generate/effect/v2, frame=16(4x4 시트). 검은 배경으로 생성해 게임에서 'screen' 블렌드로 얹는다 (검정=투명 효과, JPEG 저장 가능해 용량도 준다)"
@@ -189,13 +189,13 @@
       "id": "bg-hwaryeok",
       "out": "games/hwaryeok/img/studio-bg.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Dark cooking studio back wall for a game background, wide horizontal composition with all content in the central horizontal band: shelves with pots, pans, jars and hanging kitchen utensils in silhouette, warm dim amber rim lighting from above, deep charcoal brown palette (#12100c to #1e1a14). Flat 2D game style, muted, no text, no people, bottom third kept simple and dark."
+      "prompt": "Bright cheerful cooking studio back wall for a game background, wide horizontal composition with all content in the central horizontal band: cream white tiled wall (#f7f0e0), open wooden shelves with colorful pots, pans, jars and hanging kitchen utensils, fresh herbs in small pots, warm daylight pouring in from above, inviting pastel palette with warm wood accents (#e8c894). Flat 2D game style, clean and sunny, no text, no people, bottom third kept simple and light."
     },
     {
       "id": "bg-pocket",
       "out": "games/pocket/img/arena-bg.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Dark battle arena interior for a game background, wide horizontal composition: blurred crowd silhouettes in dark stands at the top, cool navy palette (#141a2a to #0e1219), subtle spotlights from above, the center and lower half kept as clean simple dark floor with a faint glow. Flat 2D game style, muted, no text, no characters in the foreground."
+      "prompt": "Bright sunny daytime battle meadow for a game background, wide horizontal composition: vivid blue sky (#7ec8f5) with a few puffy white clouds in the top third, soft distant green hills and a couple of round trees, and a wide open sunlit grass field (#8fd465 to #5cb04a) filling the lower two thirds, kept clean and simple so battle platforms drawn on top stay readable. Flat 2D cheerful anime monster-battle game style, saturated happy colors, soft warm light, no text, no characters, no creatures."
     },
     {
       "_": "── 액터 스프라이트 4종 — 마젠타 배경으로 뽑아 크로마키 (몬스터와 같은 파이프라인)"
@@ -225,19 +225,25 @@
       "prompt": "Game sprite of a sledgehammer HEAD only without any handle, rectangular forged steel block seen from the side, slightly worn edges, oriented horizontally. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
     },
     {
+      "id": "guoi-sky",
+      "out": "games/giving-up/img/sky-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Bright daytime mountain sky for a climbing game background, wide composition: clear blue sky fading from deep sky blue (#6db8ec) at the top to pale warm blue (#dff2fc) at the bottom, a few soft puffy white clouds spread around, faint pale distant mountain ridges along the very bottom edge, gentle sunlight from the upper left. Flat 2D game style, calm and airy, mostly empty sky, no text, no birds, no sun disc."
+    },
+    {
       "_": "── 심연낚시 — 배경 플레이트 + 배 + 어종 5티어. 물결·수심 라벨·낚싯줄·기포·낚싯대는 살아있는 연출이라 벡터로 위에 얹는다. 물고기는 게임 좌표계상 왼쪽을 본다"
     },
     {
       "id": "bg-fishing",
       "out": "games/fishing/img/sea-bg.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Dark night sea for a game background, wide horizontal composition: a thin band of deep night sky along the very top with a small pale moon in the upper right and faint stars, a calm horizontal water surface line near the top edge, and below it deep abyssal water fading darker toward the bottom (#17394f down to #03070d). Flat 2D game style, muted, very dark, no text, no boats, no fish, no characters, the lower two thirds kept as clean simple dark water."
+      "prompt": "Bright sunny tropical ocean cross-section for a game background. The picture is split by a horizontal waterline at 12 percent from the top. ABOVE the line: light blue sky (#8fd4f7) with a warm yellow sun in the upper right and a few small white clouds. BELOW the line, filling ALL of the remaining 88 percent of the frame edge to edge: underwater view of clear sunlit tropical water, a smooth continuous vertical gradient from bright turquoise (#4fc4e0) just under the surface deepening gradually to rich blue (#1a6ab0) at the very bottom, with faint slanted sunbeam shafts and tiny sparkles in the upper water. Every pixel must be colored — absolutely no black, no dark void, no empty background. Flat 2D game style, fresh and vivid, no text, no boats, no fish, no characters."
     },
     {
       "id": "fishing-boat",
       "out": "games/fishing/img/boat.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a small wooden rowboat seen exactly from the side, dark worn brown planks (#3a2c1e, #54402c), with a small chibi streamer character in a dark hoodie sitting toward the RIGHT end of the boat facing right, hands together in front as if holding something invisible. NO fishing rod, NO fishing line. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, muted dark colors, no text."
+      "prompt": "Game sprite of a small wooden rowboat seen exactly from the side, warm honey-brown planks (#c08a52, #e0b078), with a small chibi streamer character in a bright coral hoodie and a little sun hat sitting toward the RIGHT end of the boat facing right, hands together in front as if holding something invisible. NO fishing rod, NO fishing line. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text."
     },
     {
       "id": "fish-0",
