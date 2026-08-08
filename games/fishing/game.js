@@ -52,7 +52,27 @@
   var sfxLand = function () { if (!sfx.gate('fs_l')) return; sfx.tone(523, .1, 'triangle', .1); sfx.tone(659, .1, 'triangle', .1, .08); sfx.tone(1047, .2, 'triangle', .1, .16); };
   var sfxEsc  = function () { if (!sfx.gate('fs_e')) return; sfx.tone(300, .12, 'sine', .05); sfx.tone(200, .18, 'sine', .05, .1); };
 
+  // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
+  // 바다 배경 플레이트·배·어종 5티어·물보라 VFX 시트. 없거나 로드 전이면 기존 벡터로 폴백.
+  // 물결·수심 라벨·낚싯대·낚싯줄·기포는 살아있는 연출이라 계속 절차적으로 그린다.
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약. 재호출 no-op.
+  var IMG = {};
+  function loadArt() {
+    if (IMG['sea-bg']) return;
+    [['sea-bg', 'jpg'], ['boat', 'png'],
+     ['fish-0', 'png'], ['fish-1', 'png'], ['fish-2', 'png'], ['fish-3', 'png'], ['fish-4', 'png'],
+     ['vfx-splash', 'jpg'],
+    ].forEach(function (e) {
+      var im = new Image();
+      im.src = 'games/fishing/img/' + e[0] + '.' + e[1];
+      IMG[e[0]] = im;
+    });
+  }
+  function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
+  var VFX_DUR = 0.6, VFX_GRID = 4;
+
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
       phase: 'pick',           // pick | cast | wait | reel | repair
       zone: -1,                // 선택된 수심 구간
@@ -67,7 +87,7 @@
       lands: 0, snaps: 0, escapes: 0, casts: 0, maxT: 0,
       best: -1, bestName: '—',
       donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
-      bubbles: [],
+      bubbles: [], vfx: [],
       // 배경 물고기 실루엣 — 연출 전용 (C3)
       amb: [],
     };
@@ -79,6 +99,10 @@
 
     function zone() { return ZONES[st.zone]; }
     function biteRoll() { var b = zone().bite; return b[0] + Math.random() * (b[1] - b[0]); }
+    // 랜딩·줄끊김 물보라 — 수면에서 터진다 (연출 전용, 시트 없으면 조용히 생략)
+    function spawnSplash(scale) {
+      if (imgReady('vfx-splash')) st.vfx.push({ x: LURE_X, y: SURFACE + 6, s: scale || 1, born: stage.now });
+    }
 
     // ---------- HUD·패널 ----------
     stage.hud('⏱ 방송 <b id="fsTime">3:00</b> · 랜딩 <b id="fsLand">0</b> · 줄끊김 <b id="fsSnap">0</b> · 최고텐션 <b id="fsMaxT">0%</b>');
@@ -172,6 +196,7 @@
       if (f.tier > st.best) { st.best = f.tier; st.bestName = f.name; }
       var g = rnd(T.gain[0], T.gain[1]);
       sfxLand();
+      spawnSplash(f.tier >= 3 ? 1.7 : f.tier >= 2 ? 1.2 : .8);
       if (f.tier === 0) {
         stage.gain(g, null, 'trash'); // 잡어 — 조용한 소액, 채팅이 놀린다
         stage.emit('trash', { name: f.name });
@@ -191,6 +216,7 @@
       var big = st.fish.tier >= 3;
       st.snaps++;
       sfxSnap(); stage.shake(9); stage.flash(.3);
+      spawnSplash(big ? 1.5 : 1);
       // 대참사 콘텐츠 — 대형·전설 줄 끊김은 구경값이 크다. 대신 수리 8초 동안 샌다
       var g = big ? rnd(SNAP_GAIN[0], SNAP_GAIN[1]) : rnd(40, 80);
       var actual = stage.gain(g, big ? '줄 끊김 대참사!!' : null, 'line_snap');
@@ -364,20 +390,29 @@
 
       draw: function (ctx) {
         var t = stage.now;
-        // 하늘·달
-        var sky = ctx.createLinearGradient(0, 0, 0, SURFACE);
-        sky.addColorStop(0, '#0c1220'); sky.addColorStop(1, '#16283a');
-        ctx.fillStyle = sky; ctx.fillRect(0, 0, 960, SURFACE);
-        ctx.fillStyle = 'rgba(240,235,215,.85)';
-        ctx.beginPath(); ctx.arc(850, 28, 14, 0, TAU); ctx.fill();
+        // 배경 정물은 AetherAI 플레이트 — 별·물결·라벨·실루엣은 계속 위에 얹는다
+        if (imgReady('sea-bg')) {
+          // 생성물의 수면선은 상단 10.6% 지점(실측 y=61/574)인데 게임 SURFACE는 70/430이다.
+          // 위(하늘)/아래(물)를 나눠 그려 이미지 수면선이 정확히 SURFACE에 오게 맞춘다 —
+          // 안 맞추면 수면선이 두 줄로 보인다 (물결은 SURFACE에 그려진다).
+          var sb = IMG['sea-bg'], sbw = sb.naturalWidth, sbh = sb.naturalHeight, sbl = sbh * .106;
+          ctx.drawImage(sb, 0, 0, sbw, sbl, 0, 0, 960, SURFACE);
+          ctx.drawImage(sb, 0, sbl, sbw, sbh - sbl, 0, SURFACE, 960, 430 - SURFACE);
+        } else {
+          // 하늘·달·물 — 이미지 로드 전 폴백
+          var sky = ctx.createLinearGradient(0, 0, 0, SURFACE);
+          sky.addColorStop(0, '#0c1220'); sky.addColorStop(1, '#16283a');
+          ctx.fillStyle = sky; ctx.fillRect(0, 0, 960, SURFACE);
+          ctx.fillStyle = 'rgba(240,235,215,.85)';
+          ctx.beginPath(); ctx.arc(850, 28, 14, 0, TAU); ctx.fill();
+          var w = ctx.createLinearGradient(0, SURFACE, 0, 430);
+          w.addColorStop(0, '#17394f'); w.addColorStop(.45, '#0d2233'); w.addColorStop(1, '#03070d');
+          ctx.fillStyle = w; ctx.fillRect(0, SURFACE, 960, 430 - SURFACE);
+        }
         for (var s = 0; s < 20; s++) {
           ctx.fillStyle = 'rgba(255,255,255,' + (.15 + .2 * Math.abs(Math.sin(t + s))) + ')';
           ctx.fillRect((s * 149 + 40) % 960, 6 + (s * 37) % 40, 2, 2);
         }
-        // 물 — 아래로 갈수록 어둡다
-        var w = ctx.createLinearGradient(0, SURFACE, 0, 430);
-        w.addColorStop(0, '#17394f'); w.addColorStop(.45, '#0d2233'); w.addColorStop(1, '#03070d');
-        ctx.fillStyle = w; ctx.fillRect(0, SURFACE, 960, 430 - SURFACE);
         // 수면 물결
         ctx.strokeStyle = 'rgba(180,220,240,.4)'; ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -413,15 +448,23 @@
         // 배
         var bob = Math.sin(t * 1.6) * 2.5;
         ctx.save(); ctx.translate(0, bob);
-        ctx.fillStyle = '#3a2c1e';
-        ctx.beginPath();
-        ctx.moveTo(280, SURFACE - 6); ctx.lineTo(440, SURFACE - 6);
-        ctx.lineTo(420, SURFACE + 14); ctx.lineTo(300, SURFACE + 14); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#54402c'; ctx.fillRect(300, SURFACE - 20, 60, 14);
-        // 스트리머 실루엣
-        ctx.fillStyle = '#1a1d22';
-        ctx.beginPath(); ctx.arc(400, SURFACE - 26, 7, 0, TAU); ctx.fill();
-        ctx.fillRect(394, SURFACE - 20, 12, 15);
+        if (imgReady('boat')) {
+          // 스프라이트 — 캐릭터가 배 오른쪽에 앉아 있어 낚싯대 기점(x≈404)과 이어진다.
+          // 높이는 50px 고정: 상단 ON AIR 바가 캔버스 y<43을 덮으므로 (벡터 배도 y44부터
+          // 그리도록 설계돼 있었다) 그 아래 띠에 배 전체가 들어가야 한다. 선체가 수면 아래 살짝 잠기는 건 연출.
+          var bi = IMG['boat'], bh = 50, bw = bh * bi.naturalWidth / bi.naturalHeight;
+          ctx.drawImage(bi, 402 - bw, SURFACE + 22 - bh, bw, bh);
+        } else {
+          ctx.fillStyle = '#3a2c1e';
+          ctx.beginPath();
+          ctx.moveTo(280, SURFACE - 6); ctx.lineTo(440, SURFACE - 6);
+          ctx.lineTo(420, SURFACE + 14); ctx.lineTo(300, SURFACE + 14); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#54402c'; ctx.fillRect(300, SURFACE - 20, 60, 14);
+          // 스트리머 실루엣
+          ctx.fillStyle = '#1a1d22';
+          ctx.beginPath(); ctx.arc(400, SURFACE - 26, 7, 0, TAU); ctx.fill();
+          ctx.fillRect(394, SURFACE - 20, 12, 15);
+        }
         // 낚싯대 — 릴 감는 중엔 텐션만큼 휜다
         var bend = st.phase === 'reel' ? st.tension / 100 : 0;
         var tipX = 470 + bend * 18, tipY = SURFACE - 34 + bend * 26;
@@ -451,11 +494,17 @@
             var F = TIERS[st.fish.tier], fr = F.r;
             ctx.save(); ctx.translate(lx, ly + fr * .6);
             ctx.rotate(Math.sin(t * (st.surging > 0 ? 22 : 6)) * (st.surging > 0 ? .5 : .18));
-            ctx.fillStyle = F.c;
-            ctx.beginPath(); ctx.ellipse(0, 0, fr * 1.5, fr * .8, 0, 0, TAU); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(fr * 1.4, 0); ctx.lineTo(fr * 2.2, -fr * .7); ctx.lineTo(fr * 2.2, fr * .7); ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#0c1016';
-            ctx.beginPath(); ctx.arc(-fr * .8, -fr * .2, Math.max(2, fr * .16), 0, TAU); ctx.fill();
+            if (imgReady('fish-' + st.fish.tier)) {
+              // 스프라이트도 벡터처럼 왼쪽을 본다 — 회전(몸부림)은 그대로 태운다
+              var fim = IMG['fish-' + st.fish.tier], fw2 = fr * 3.8, fh2 = fw2 * fim.naturalHeight / fim.naturalWidth;
+              ctx.drawImage(fim, -fw2 / 2, -fh2 / 2, fw2, fh2);
+            } else {
+              ctx.fillStyle = F.c;
+              ctx.beginPath(); ctx.ellipse(0, 0, fr * 1.5, fr * .8, 0, 0, TAU); ctx.fill();
+              ctx.beginPath(); ctx.moveTo(fr * 1.4, 0); ctx.lineTo(fr * 2.2, -fr * .7); ctx.lineTo(fr * 2.2, fr * .7); ctx.closePath(); ctx.fill();
+              ctx.fillStyle = '#0c1016';
+              ctx.beginPath(); ctx.arc(-fr * .8, -fr * .2, Math.max(2, fr * .16), 0, TAU); ctx.fill();
+            }
             ctx.restore();
             if (st.surging > 0) {
               ctx.fillStyle = '#ff8d5a'; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.textAlign = 'center';
@@ -488,6 +537,27 @@
           ctx.fillStyle = '#141a22'; ctx.fillRect(gx, 58, gw, 10);
           ctx.fillStyle = '#4aa0ff'; ctx.fillRect(gx, 58, gw * clamp(st.fish.prog / 100, 0, 1), 10);
         }
+        // 물보라 VFX — 4x4 시트를 'screen' 블렌드로 얹는다 (포켓과 같은 파이프라인)
+        st.vfx = st.vfx.filter(function (f) {
+          var p = (t - f.born) / VFX_DUR;
+          if (p >= 1) return false;
+          if (p < 0) return true;
+          var im = IMG['vfx-splash'];
+          var n = VFX_GRID * VFX_GRID, idx = Math.min(n - 1, (p * n) | 0);
+          var fw = im.naturalWidth / VFX_GRID, fh = im.naturalHeight / VFX_GRID;
+          var size = 170 * f.s;
+          // 생성 시트의 셀 경계 격자선 방지 — 소스 사각형을 4% 안쪽으로 판다
+          var inx = fw * .04, iny = fh * .04;
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.globalAlpha = p > .8 ? (1 - p) * 5 : 1;
+          ctx.drawImage(im,
+                        (idx % VFX_GRID) * fw + inx, ((idx / VFX_GRID) | 0) * fh + iny,
+                        fw - inx * 2, fh - iny * 2,
+                        f.x - size / 2, f.y - size / 2, size, size);
+          ctx.restore();
+          return true;
+        });
       },
     };
   }
@@ -500,6 +570,7 @@
     startViewers: START_VIEWERS,
     usesChain: false,
     chat: window.FISHING_CHAT,
+    preload: loadArt,
     tuning: { ZONES: ZONES, TIERS: TIERS, SNAP_AT: SNAP_AT, EDGE_AT: EDGE_AT, SNAP_GAIN: SNAP_GAIN, REPAIR_TIME: REPAIR_TIME },
     foot: '<kbd>1</kbd>~<kbd>3</kbd> 또는 버튼으로 수심 선택 후 화면 클릭 = 캐스팅 — <b>깊을수록 크게 문다. 대신 기다림이 리스크다.</b><br>' +
           '"!!" 순간 클릭 = 챔질(잔입질은 페이크) · 릴: 누르면 텐션↑ 당김, 떼면 텐션↓ — 100% 초과 = 줄 끊김(그것도 콘텐츠), 슬랙 방치 = 도망',
