@@ -154,6 +154,15 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'ui-banner-mint.png'; Out = 'ui-banner-mint.jpg'; W = 480; H = 96; Fmt = 'jpg'; Q = 80 },
   @{ Dir = 'games\shell\img'; In = 'ui-banner-gold.png'; Out = 'ui-banner-gold.jpg'; W = 480; H = 96; Fmt = 'jpg'; Q = 80 },
   @{ Dir = 'games\shell\img'; In = 'kim-pd.png';         Out = 'kim-pd.png';         W = 148; H = 148; Fmt = 'png' },
+  # ── 인트로 4컷 만화 (JPEG) + 이모지 대체 미니 아이콘 + GUOI 클라이머 머리 ──
+  @{ Dir = 'games\shell\img'; In = 'comic-1.png';   Out = 'comic-1.jpg';   W = 360; H = 360; Fmt = 'jpg'; Q = 72 },
+  @{ Dir = 'games\shell\img'; In = 'comic-2.png';   Out = 'comic-2.jpg';   W = 360; H = 360; Fmt = 'jpg'; Q = 72 },
+  @{ Dir = 'games\shell\img'; In = 'comic-3.png';   Out = 'comic-3.jpg';   W = 360; H = 360; Fmt = 'jpg'; Q = 72 },
+  @{ Dir = 'games\shell\img'; In = 'comic-4.png';   Out = 'comic-4.jpg';   W = 360; H = 360; Fmt = 'jpg'; Q = 72 },
+  @{ Dir = 'games\shell\img'; In = 'ui-lock.png';   Out = 'ui-lock.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-wrench.png'; Out = 'ui-wrench.png'; W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-star.png';   Out = 'ui-star.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\giving-up\img'; In = 'head.png';  Out = 'head.png';      W = 96; H = 96; Fmt = 'png'; Key = $true },
   # ── 주머니 괴수: 몬스터 (마젠타 키잉 → 알파 PNG). 화면 최대 134px → 192px이면 레티나까지 충분 ──
   @{ Dir = 'games\pocket\img'; In = 'me-fire.png';   Out = 'me-fire.png';   W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\pocket\img'; In = 'me-water.png';  Out = 'me-water.png';  W = 192; H = 192; Fmt = 'png'; Key = $true },
@@ -184,7 +193,7 @@ $jobs = @(
   @{ Dir = 'games\hwaryeok\img';  In = 'pan.png';    Out = 'pan.png';    W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\hwaryeok\img';  In = 'cloche.png'; Out = 'cloche.png'; W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\giving-up\img'; In = 'pot.png';    Out = 'pot.png';    W = 128; H = 128; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true; Despill = $true },
+  # hammer.png 는 사용자 제작 픽셀아트 (가공 완료 256x232, 알파) — 건드리지 않는다
   # ── 심연낚시 (배경 플레이트 + 배 + 어종 5티어 + 물보라 시트) ──
   @{ Dir = 'games\fishing\img'; In = 'sea-bg.png';     Out = 'sea-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\giving-up\img'; In = 'sky-bg.png';   Out = 'sky-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },

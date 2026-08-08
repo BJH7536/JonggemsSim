@@ -61,6 +61,10 @@
       im.src = 'games/hwaryeok/img/' + e[0] + '.' + e[1];
       IMG[e[0]] = im;
     });
+    // 이모지 대체 미니 아이콘 — 셸 공용 AetherAI 생성물 재사용
+    ['ui-lock', 'ui-wrench'].forEach(function (n) {
+      var im = new Image(); im.src = 'games/shell/img/' + n + '.png'; IMG[n] = im;
+    });
   }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
   // 팬 스프라이트에서 팬 몸통(볼)의 중심이 가로 어디쯤인가 — 손잡이가 오른쪽이라 중심이
@@ -118,12 +122,12 @@
       if (!b.on) {
         var need = i === 2 ? 30000 : 350000;
         el.innerHTML = '<div class="bnum">화구 ' + (i + 1) + '</div>' +
-          '<div class="bhint" style="margin-top:22px">🔒 시청자 <b>' + need.toLocaleString() + '명</b> 달성 시 개방</div>';
+          '<div class="bhint" style="margin-top:22px"><img class="uiIco lock" src="games/shell/img/ui-lock.png" alt=""> 시청자 <b>' + need.toLocaleString() + '명</b> 달성 시 개방</div>';
         return;
       }
       if (b.broken > 0) {
         el.innerHTML = '<div class="bnum">화구 ' + (i + 1) + '</div>' +
-          '<div class="bdish" style="color:#9a9184">🔧 수리 중</div>' +
+          '<div class="bdish" style="color:#9a9184"><img class="uiIco lock" src="games/shell/img/ui-wrench.png" alt=""> 수리 중</div>' +
           '<div class="bhint">대참사 여파 — <b><span id="hwrep' + i + '">' + b.broken.toFixed(1) + '</span>초</b> 후 복구</div>';
         return;
       }
@@ -132,7 +136,7 @@
           '<div class="modes">' + MODES.map(function (m, mi) {
             var locked = m.lockAt && !st.unlocked.mode3;
             return '<button data-act="start" data-b="' + i + '" data-m="' + mi + '"' + (locked ? ' disabled' : '') + '>' +
-              (locked ? '🔒 ' : '') + m.n + ' ×' + m.mul + '</button>';
+              (locked ? '<img class="uiIco lock" src="games/shell/img/ui-lock.png" alt=""> ' : '') + m.n + ' ×' + m.mul + '</button>';
           }).join('') + '</div>' +
           '<div class="bhint">사고율 ' + MODES.map(function (m) { return Math.round(m.rate * 100) + '%'; }).join(' / ') +
           '<br>빈 화구는 시청자가 샌다</div>';
@@ -451,16 +455,16 @@
         ctx.strokeStyle = '#14161a'; ctx.lineWidth = 3; ctx.stroke();
         ctx.fillStyle = '#565c64'; ctx.beginPath(); ctx.arc(x, COUNTER_Y - 42, 5, 0, TAU); ctx.fill();
         }
-        ctx.font = '15px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('🔒', x, COUNTER_Y - 52);
+        if (imgReady('ui-lock')) ctx.drawImage(IMG['ui-lock'], x - 8, COUNTER_Y - 66, 16, 16);
+        else { ctx.font = '15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🔒', x, COUNTER_Y - 52); }
         return;
       }
       if (b.broken > 0) { // 파손: 연기 + 수리 아크
         if (Math.random() < .3) scene.steam.push({ x: x + rnd(-20, 20), y: COUNTER_Y - 8, vy: -(14 + Math.random() * 12), a: .35, r: 5 + Math.random() * 6, smoke: true });
         ctx.strokeStyle = 'rgba(255,180,71,.7)'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.arc(x, COUNTER_Y - 14, 26, -Math.PI / 2, -Math.PI / 2 + (1 - b.broken / 12) * TAU); ctx.stroke();
-        ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('🔧', x, COUNTER_Y - 8);
+        if (imgReady('ui-wrench')) ctx.drawImage(IMG['ui-wrench'], x - 8, COUNTER_Y - 22, 16, 16);
+        else { ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🔧', x, COUNTER_Y - 8); }
         return;
       }
       if (!b.dish) return;

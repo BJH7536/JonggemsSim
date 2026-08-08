@@ -219,10 +219,7 @@
       "prompt": "Game sprite of a round earthen clay pot jar seen from the side, warm brown ceramic with a darker base and a simple rim, the kind a climbing character would sit inside. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
     },
     {
-      "id": "guoi-hammer",
-      "out": "games/giving-up/img/hammer.png",
-      "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a steel climbing pickaxe HEAD only without any handle, seen from the side, oriented horizontally: the front end is a long sharp pick spike curving downward into a hook (like a climbing hook that grabs ledges), the back end is a short flat counterweight block. Slightly worn forged steel in neutral cool grey tones (#9aa0a8, #6a7078) — the metal must contain absolutely NO purple, magenta or pink reflections. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+      "_": "guoi-hammer(곡괭이)는 사용자 제작 픽셀아트로 대체됨 (games/giving-up/img/곡괭이-원본.png → hammer.png, 가공 스크립트는 커밋 로그) — 재생성 금지"
     },
     {
       "id": "guoi-ledge",
@@ -387,6 +384,65 @@
       "out": "games/shell/img/ui-button.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Game UI button plate, single wide rounded rectangle with softly beveled edges, vivid mint green gradient (#00ffa3 to #00c47e) with a subtle top highlight and darker bottom edge, slight dark outline, designed so dark text on top stays readable. Flat clean vector game UI style, no text, no icons, centered. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background."
+    },
+    {
+      "_": "── 인트로 4컷 만화 — 첫 실행 스토리 (JGS.tv 파트너 계약). 글자는 HTML 캡션이 얹으므로 이미지엔 무텍스트. 주인공은 캠 얼굴, 2컷은 김 피디를 ref로 일관성 유지"
+    },
+    {
+      "id": "comic-1",
+      "out": "games/shell/img/comic-1.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Webtoon comic panel, bright clean cel shading, thick clean outlines, vibrant colors, square composition. Subject: the same silver-haired young streamer character from the reference image (same face, same headphones, same navy hoodie), sitting alone at a PC desk in a dim room lit only by the monitor glow, slumped and discouraged, the monitor showing an empty stream chat window. Mood: a lonely start. No text, no speech bubbles, no letters, no numbers. Original character.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "comic-2",
+      "out": "games/shell/img/comic-2.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Webtoon comic panel, bright clean cel shading, thick clean outlines, vibrant colors, square composition. Subject: the same middle-aged Korean producer with thin glasses and grey cardigan from the reference image, smiling warmly and holding out a glowing mint-green contract document toward the viewer, inside a modern broadcast station office with mint neon accent lighting. Mood: an offer that changes everything. No text, no speech bubbles, no letters, no numbers. Original character.",
+      "ref": "games/shell/img/kim-pd.png"
+    },
+    {
+      "id": "comic-3",
+      "out": "games/shell/img/comic-3.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Webtoon comic panel, bright clean cel shading, thick clean outlines, vibrant colors, square composition. Subject: the same silver-haired young streamer character from the reference image panicking mid-broadcast with arms flailing, the monitor showing a cartoon kitchen on fire inside a game, a chat window exploding with a flood of messages and a viewer-counter arrow shooting upward. Mood: chaos becomes content. No text, no speech bubbles, no letters, no numbers. Original character.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "comic-4",
+      "out": "games/shell/img/comic-4.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Webtoon comic panel, bright clean cel shading, thick clean outlines, vibrant colors, square composition. Subject: the same silver-haired young streamer character from the reference image standing confident with a fist raised, bathed in mint neon glow, a large brilliant diamond emblem shining above, silhouettes of a cheering crowd below. Mood: the dream of becoming the diamond partner. No text, no speech bubbles, no letters, no numbers. Original character.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "_": "── 이모지 대체 미니 아이콘 3종 (자물쇠·렌치·별) + GUOI 클라이머 머리 — 잔존 비-AetherAI 시각 요소 교체"
+    },
+    {
+      "id": "ui-lock",
+      "out": "games/shell/img/ui-lock.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a rounded padlock with a thick shackle, muted grey-lavender (#9a92a8) body with a warm amber (#ffd27a) keyhole. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-wrench",
+      "out": "games/shell/img/ui-wrench.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a diagonal wrench spanner tool, muted grey-lavender (#9a92a8) with a lighter (#c8c2d4) highlight edge. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-star",
+      "out": "games/shell/img/ui-star.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a plump five-pointed star, warm gold (#ffd24a) fill with amber (#ffb447) shading and a tiny shine. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "guoi-head",
+      "out": "games/giving-up/img/head.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of ONLY the round chibi head of the same silver-haired young streamer character from the reference image — same messy silver hair, same black gaming headphones, same face — seen from the side facing RIGHT in a determined expression, no body, no neck, no shoulders. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text. Original character.",
+      "ref": "games/shell/faces/adventurer_silence.png"
     },
     {
       "id": "kim-pd",

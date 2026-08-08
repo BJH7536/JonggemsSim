@@ -15,6 +15,10 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  // 이모지 대체 미니 아이콘 (AetherAI — "시각 요소 전부 생성물" 방침)
+  var STAR = '<img class="uiIco star" src="games/shell/img/ui-star.png" alt="★">';
+  var LOCK = '<img class="uiIco lock" src="games/shell/img/ui-lock.png" alt="잠금">';
+  var COIN = '<img class="uiIco" src="games/shell/img/ui-coin.png" alt="코인">';
 
   var W = 960, H = 430;
   var STORE_KEY = 'jonggems-channel-v1';
@@ -236,7 +240,7 @@
             return '<div class="rrow"><span>' +
               (r.c ? '<img class="rclip" src="' + r.c + '" alt="" title="클립 — ' + (r.cm || '') + '">' : '') +
               r.g + '</span><span><b>' + r.v.toLocaleString() + '</b>명' +
-              (r.r ? '<span class="rec">★ 신기록</span>' : '') + '</span></div>';
+              (r.r ? '<span class="rec">' + STAR + ' 신기록</span>' : '') + '</span></div>';
           }).join('') + '</div>'
         : '';
 
@@ -569,7 +573,7 @@
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     },
     showStamp: function (text) {
-      $('bigStampText').textContent = text;
+      $('bigStampText').innerHTML = String(text).replace(/★/g, STAR); // 내부 상수만 들어온다
       var st = $('bigStamp');
       st.classList.remove('show'); void st.offsetWidth; st.classList.add('show');
       clearTimeout(this._stampTimer); // 연속 스탬프의 조기 소멸 방지 (L-2)
@@ -851,7 +855,7 @@
           if (v < m) break;
         }
       }
-      chip.textContent = txt;
+      chip.innerHTML = txt.replace(/★/g, STAR); // 내부 상수만 들어온다
       chip.classList.toggle('hidden', !txt);
       chip.classList.toggle('hot', hot);
     },
@@ -993,7 +997,7 @@
               (ts.delta ? ' (' + (ts.delta > 0 ? '+' : '') + ts.delta + ')' : '') + '</span>'
             : '<span class="tpts">최고 등급</span>';
           return '<div class="pdTier' + (ts.promoted ? ' up' : '') + '">' +
-            '<span class="tname" style="color:' + T.c + '">' + (ts.promoted ? '★ ' : '') + T.n + ' 파트너</span>' +
+            '<span class="tname" style="color:' + T.c + '">' + (ts.promoted ? STAR + ' ' : '') + T.n + ' 파트너</span>' +
             bar + '</div>';
         })() +
         '</div></div>';
@@ -1012,7 +1016,7 @@
         clipHtml +
         '<div class="statgrid">' +
           '<span>최종 시청자</span><b>' + final.toLocaleString() + '명 ' +
-            (isRecord ? '<span class="rec">★ 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
+            (isRecord ? '<span class="rec">' + STAR + ' 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
           rows +
           '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명</b>' +
           '<span>도네 수익</span><b>+' + earned.toLocaleString() + ' 코인 → 잔액 ' + this.ch.coins.toLocaleString() + '</b>' +
