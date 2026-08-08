@@ -98,6 +98,14 @@ eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; })
 Shell.games.forEach(function (g) {
   ok(g.title + ': 필수 필드가 있다',
      g.title && g.tagline && g.duration > 0 && g.startViewers > 0 && typeof g.start === 'function');
+  // 아트 지연 로드 (contract 4.1) — 전 게임이 이미지를 쓰므로 전 게임에 요구한다.
+  // 두 번 불러도 안전해야 한다 (셸이 방송 준비마다 부른다) — 여기서 실제로 두 번 부른다.
+  // 게임의 이미지 경로는 index.html 기준이라 이 페이지에선 404가 콘솔에 찍힌다 — 예상 노이즈.
+  // 파일 존재 자체는 아래 배포 payload 검사(FACES 목록)가 절대 경로로 따로 검증한다.
+  ok(g.title + ': preload 훅이 있고 재호출이 안전하다', (function () {
+    if (typeof g.preload !== 'function') return false;
+    try { g.preload(); g.preload(); return true; } catch (e) { return false; }
+  })());
   ok(g.title + ': 채팅 어휘에 start/end가 있다', !!(g.chat.T.start && g.chat.T.end));
   var thin = Object.keys(g.chat.T).filter(function (k) { return g.chat.T[k].flavor.length < 6; });
   eq(g.title + ': 모든 이벤트가 flavor 6개 이상 (비반복 게이트 전제)', thin, []);
@@ -165,6 +173,41 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
     });
   });
   eq('바위가 주 루트의 발 디딜 공간을 막지 않는다', blocked, []);
+
+  // 출발 지점이 천장 밑에 깔려 있지 않은가.
+  // 위 두 검사는 ROUTE 발판끼리의 관계만 보므로 "스폰 → 첫 발판" 구간이 사각지대였고,
+  // 실제로 스폰(480)이 첫 발판(x 360~600) 바로 밑 16px 틈에 갇혀 있었다(플레이 피드백).
+  // 항아리 윗면에서 수직으로 올려다봤을 때 가장 낮은 천장까지의 거리를 잰다.
+  var topY = T.GROUND_Y - T.PR * 2;   // 스폰 시 항아리 윗면
+  var ceil = Infinity, ceilAt = null;
+  T.TERRAIN.forEach(function (s) {
+    if (s.hidden) return;
+    var lowest;                        // 이 지형의 아랫면 (스폰 x 기준)
+    if (s.t === 'r') {
+      if (T.START_X < s.x || T.START_X > s.x + s.w) return;
+      lowest = s.y + s.h;
+    } else {
+      var dx = Math.abs(s.x - T.START_X);
+      if (dx >= s.r) return;
+      lowest = s.y + Math.sqrt(s.r * s.r - dx * dx);
+    }
+    if (lowest > topY) return;         // 항아리보다 아래에 있는 것은 천장이 아니다
+    if (topY - lowest < ceil) { ceil = topY - lowest; ceilAt = s; }
+  });
+  ok('출발 지점 머리 위가 ' + T.HEAD_ROOM_MIN + 'px 이상 비어 있다 (실측 ' +
+     (ceil === Infinity ? '천장 없음' : Math.round(ceil) + 'px') + ')',
+     ceil >= T.HEAD_ROOM_MIN);
+
+  // 출발 지점에서 첫 발판이 "한 번에 걸리는" 거리인가.
+  // 머리 위가 트여 있어도(위 검사) 첫 발판이 사거리 밖이면 지상 장대높이뛰기부터 배워야
+  // 한다 — START_X 800 시절 자동 플레이 38초 동안 걸기 0회가 그 증거다(2026-08-08 실측).
+  // 도입부는 "걸고 오른다" 한 동작이어야 하고, 그 성립 조건을 여기 박아둔다.
+  var spawn = { x: T.START_X, y: T.GROUND_Y - T.PR };
+  var r0 = T.ROUTE[0];
+  var nx = Math.max(r0.x, Math.min(spawn.x, r0.x + r0.w));
+  var firstHook = Math.hypot(nx - spawn.x, r0.y - spawn.y);
+  ok('출발 지점에서 첫 발판까지 ' + Math.round(firstHook) + 'px — 한 번에 걸린다 (기준 ' +
+     T.FIRST_HOOK_MAX + 'px)', firstHook <= T.FIRST_HOOK_MAX);
 })();
 
 // ---- 배포 payload 예산 ----
@@ -198,11 +241,21 @@ FACES = FACES.concat(
 FACES = FACES.concat(['../hwaryeok/img/studio-bg.jpg', '../hwaryeok/img/pan.png',
   '../hwaryeok/img/cloche.png', '../giving-up/img/pot.png', '../giving-up/img/hammer.png',
   '../pocket/img/arena-bg.jpg']);
+// 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)
+FACES = FACES.concat(
+  ['boat', 'fish-0', 'fish-1', 'fish-2', 'fish-3', 'fish-4']
+    .map(function (n) { return '../fishing/img/' + n + '.png'; }),
+  ['../fishing/img/sea-bg.jpg', '../fishing/img/vfx-splash.jpg',
+   '../bomb/img/bench-bg.jpg', '../bomb/img/bomb-body.png', '../bomb/img/vfx-boom.jpg']);
 // 450 → 900 → 1200 (2026-08-08): "전부 AetherAI로" 방침에 따라 전 게임 아트가 들어왔다
 // (포켓 13종 + 캠 7종 교체 + 배경 2종 + 액터 4종). 900 인상 때 "또 올리면 에셋을 의심할 것"
-// 이라 적었고, 의심한 결과: 이번이 아트 완성 단계라 마지막 인상이다. 실측 payload 1064KB,
-// 일반 회선 1~2초 — "링크 클릭 즉시 플레이"는 유지된다. 여기서 더 오르면 정말 잘라낼 것.
-var BUDGET_KB = 1200;
+// 이라 적었고, 의심한 결과: 이번이 아트 완성 단계라 마지막 인상이다. 1.2MB도 일반 회선
+// 1~2초 — "링크 클릭 즉시 플레이"는 유지된다. 여기서 더 오르면 그때는 정말 잘라낼 것.
+// → 1200 → 2000 (2026-08-08 오후): 게임 2종(심연낚시·해체쇼)에도 아트가 들어와 총량이
+//   늘었다. 대신 같은 PR에서 게임 아트 전부를 지연 로드로 돌렸다 — 첫 화면은 이제
+//   바탕화면+아이콘 ~150KB만 내려받는다. "링크 클릭 즉시 플레이"의 실체는 첫 화면이고,
+//   이 예산은 총량 상한(회선 부담 가드)으로 남는다.
+var BUDGET_KB = 2000;
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {
     return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
