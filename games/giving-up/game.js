@@ -36,6 +36,7 @@
   var GROUND_Y = 1520;        // 높이 0m 기준선
   var PX_PER_M = 20;
   var SUMMIT_Y = 195;         // 정상 발판 상단 → 약 66m
+  var WALL_LIP = 14;          // 가장자리 벽이 화면 안쪽으로 드러나는 폭 — 망치가 박히는 면
 
   // 고정 지형. 매 방송 같은 산이어야 최고 기록이 의미를 가진다 (절차 생성 금지).
   // 발판(rect)과 바위(circle)를 섞는다 — 발판만 있으면 실수가 "못 올라감"으로만 끝나지만,
@@ -47,6 +48,33 @@
   // 미로가 아니다 — 주 루트는 좌우 지그재그 사다리(수직 40~70px, 망치 사거리 118의
   // 절반 수준)로 항상 읽히게 하고, 바위는 루트 밖 가장자리로 빼서 "미끄러지면 만나는
   // 위험"으로만 쓴다. ROUTE는 selftest가 기하로 등반 가능성을 검증한다.
+  // 바위 — 루트 밖 가장자리. 주 루트를 막지 않고, 미끄러진 몸이 굴러떨어지는 경로에 있다.
+  // (벽 홀드 배치가 이 목록을 참조하므로 TERRAIN 조립보다 먼저 선언한다)
+  // 4개(1240·1150·700·420)는 벽 홀드 신설 때 안쪽으로 30px쯤 옮겼다 — 서는 공간과의
+  // 간섭을 배치 회피 로직 없이 원천 제거하기 위해서다. 가장자리 위험이라는 역할은 유지.
+  var ROCKS = [
+    C(120, 1470, 40), C(700, 1390, 44), C(112, 1240, 40), C(850, 1150, 38),
+    C(90, 1000, 38),  C(860, 900, 42),  C(108, 700, 36),  C(870, 560, 40),
+    C(104, 420, 34),  C(870, 300, 38),
+  ];
+
+  // 벽 홀드 — 가장자리 벽을 '오를 수 있게' 하는 작은 돌출 선반. 매끈한 수직 벽면은
+  // 장대 기하상 순수 상승이 안 나온다(자루-벽 교차점을 사거리로 재산정하면 몸이 제자리
+  // 평형 — 2026-08-08 실측). 그래서 수평면을 가진 선반을 성기게 박아 "밀기·저항은
+  // 벽면, 상승은 선반"으로 나눈다. 간격 88px은 주 루트 기준(사거리×0.75 = 96px) 이내
+  // 이되 주 루트(수직 40~70px)보다 성겨서, 벽 루트는 어렵지만 가능한 보조 루트다.
+  // 가장자리 바위와 서는 공간이 겹치는 자리는 위로 비켜 배치한다 (selftest가 검증).
+  // 균일 88px 간격 — 주 루트 기준(사거리×0.75 = 96px) 이내. 지면에서 첫 홀드는 120px
+  // (사거리 128 이내)라 바닥에서 벽 루트로 진입할 수 있다. 바위 회피 로직은 없다 —
+  // 간섭하던 바위 쪽을 옮겨 원천 제거했고, selftest가 간격·간섭을 상시 검증한다.
+  var WALL_HOLDS = [];
+  (function () {
+    for (var wy = GROUND_Y - 120; wy > SUMMIT_Y + 40; wy -= 88) {
+      WALL_HOLDS.push({ t: 'r', x: WALL_LIP, y: wy, w: 34, h: 12 });
+      WALL_HOLDS.push({ t: 'r', x: W - WALL_LIP - 34, y: wy, w: 34, h: 12 });
+    }
+  })();
+
   var ROUTE = [
     R(360, 1450, 240, 22), R(150, 1385, 190, 22), R(420, 1322, 200, 22), R(660, 1262, 190, 22),
     R(430, 1205, 170, 22), R(180, 1150, 180, 22), R(420, 1096, 170, 22), R(670, 1042, 180, 22),
@@ -56,16 +84,14 @@
     R(360, 412, 140, 22),  R(120, 368, 150, 22),  R(370, 326, 140, 22),  R(610, 284, 150, 22),
     R(360, 244, 140, 22),
   ];
-  var TERRAIN = [R(0, GROUND_Y, 960, 80)].concat(ROUTE, [
+  var TERRAIN = [R(0, GROUND_Y, 960, 80)].concat(ROUTE, ROCKS, [
     R(340, SUMMIT_Y, 220, 28),
-    // 바위 — 루트 밖 가장자리. 주 루트를 막지 않고, 미끄러진 몸이 굴러떨어지는 경로에 있다
-    C(120, 1470, 40), C(700, 1390, 44), C(80, 1240, 40), C(885, 1150, 38),
-    C(90, 1000, 38),  C(860, 900, 42),  C(80, 700, 36),  C(870, 560, 40),
-    C(80, 420, 34),   C(870, 300, 38),
-    // 보이지 않는 양옆 벽 — 화면 밖으로 빠지지 않게
-    { t: 'r', x: -60, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
-    { t: 'r', x: 960, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
-  ]);
+    // 화면 가장자리 벽 — 안쪽 WALL_LIP만큼 드러나고 망치가 박힌다 (밀기·매달리기·저항).
+    // 이전엔 면이 정확히 x=0/960인 숨은 벽이었는데, 커서 좌표가 캔버스 안(0~960)으로
+    // 제한돼 자루 스윕이 벽 내부에 절대 못 들어갔다 — "가장자리 벽 판정이 없다"의 원인.
+    { t: 'r', x: -60, y: -400, w: 60 + WALL_LIP, h: WORLD_H + 400, wall: true },
+    { t: 'r', x: W - WALL_LIP, y: -400, w: 60 + WALL_LIP, h: WORLD_H + 400, wall: true },
+  ], WALL_HOLDS);
 
   // 출발 지점 — 자동 플레이 A/B 실측으로 확정 (2026-08-08, 하네스는 ?guoidebug 훅 참고).
   //   480(초판): 첫 발판 바로 밑 16px 틈에 갇힘. 시작 즉시 조작 불능 (플레이 피드백)
@@ -297,7 +323,7 @@
         st.airVy = 0;
       }
       st.wasContact = !!touching;
-      st.px = clamp(st.px, PR, W - PR);
+      st.px = clamp(st.px, WALL_LIP + PR, W - WALL_LIP - PR);
       st.py = Math.min(st.py, GROUND_Y - PR + 40);
 
       // 몸이 밀린 뒤 망치 끝을 다시 잡는다. 접점을 몸이 움직이기 전 좌표로 그려두면
@@ -495,11 +521,19 @@
 
     function drawTerrain(ctx, cam) {
       TERRAIN.forEach(function (s) {
-        if (s.hidden) return;
         var top = s.t === 'c' ? s.y - s.r : s.y;
         var bot = s.t === 'c' ? s.y + s.r : s.y + s.h;
         if (top > cam + VH || bot < cam) return;
         var lit = s === st.contact;
+        if (s.wall) {
+          // 가장자리 벽 — 화면 안쪽 립만 세로 스트립으로. 접점이면 면이 밝아진다 (조작 피드백)
+          var x0 = s.x < 0 ? 0 : s.x;
+          ctx.fillStyle = '#332d27';
+          ctx.fillRect(x0, cam, WALL_LIP, VH);
+          ctx.fillStyle = lit ? 'rgba(255,200,120,.6)' : 'rgba(220,210,190,.18)';
+          ctx.fillRect(s.x < 0 ? WALL_LIP - 2 : s.x, cam, 2, VH);
+          return;
+        }
         if (s.t === 'c') {
           var rg = ctx.createRadialGradient(s.x - s.r * .35, s.y - s.r * .4, s.r * .15, s.x, s.y, s.r);
           rg.addColorStop(0, lit ? '#8b7f6d' : '#6b6155'); rg.addColorStop(1, '#2b2621');
@@ -623,6 +657,7 @@
       CLUTCH_V: CLUTCH_V, CLUTCH_MIN_H: CLUTCH_MIN_H,
       HAMMER_MAX: HAMMER_MAX, HAMMER_MIN: HAMMER_MIN, FALL_FRESH: FALL_FRESH,
       ROUTE: ROUTE, TERRAIN: TERRAIN,
+      WALL_HOLDS: WALL_HOLDS, WALL_LIP: WALL_LIP,
       START_X: START_X, PR: PR, HEAD_ROOM_MIN: HEAD_ROOM_MIN, FIRST_HOOK_MAX: FIRST_HOOK_MAX,
     },
     foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +

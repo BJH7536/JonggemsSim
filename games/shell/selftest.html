@@ -208,6 +208,36 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
   var firstHook = Math.hypot(nx - spawn.x, r0.y - spawn.y);
   ok('출발 지점에서 첫 발판까지 ' + Math.round(firstHook) + 'px — 한 번에 걸린다 (기준 ' +
      T.FIRST_HOOK_MAX + 'px)', firstHook <= T.FIRST_HOOK_MAX);
+
+  // 가장자리 벽 홀드 — "화면 가장자리에 벽 판정 + 벽으로 오르기" (사용자 피드백).
+  // 주 루트와 같은 기하 기준을 적용한다: 같은 벽의 연속 홀드 수직 간격 ≤ 사거리×0.75.
+  // 홀드는 바위 회피로 y가 밀릴 수 있으므로 생성 결과를 그대로 검사한다.
+  (function () {
+    var sides = { L: [], R: [] };
+    T.WALL_HOLDS.forEach(function (h) { (h.x < 480 ? sides.L : sides.R).push(h); });
+    var bad = [];
+    ['L', 'R'].forEach(function (k) {
+      var hs = sides[k].slice().sort(function (a, b) { return b.y - a.y; }); // 아래→위
+      // 바닥에서 첫 홀드도 사거리 안이어야 벽 루트에 진입할 수 있다
+      if (T.GROUND_Y - hs[0].y > T.HAMMER_MAX) bad.push(k + ':ground(' + (T.GROUND_Y - hs[0].y) + ')');
+      for (var i = 1; i < hs.length; i++) {
+        var vGap = hs[i - 1].y - hs[i].y;
+        if (vGap <= 0 || vGap > T.HAMMER_MAX * 0.75) bad.push(k + i + ':(v' + vGap + ')');
+      }
+    });
+    eq('벽 홀드 ' + T.WALL_HOLDS.length + '개가 좌우 각각 사거리 안에서 이어진다', bad, []);
+    // 바위 회피 배치 검증 — 서는 공간(상단 40px)이 바위와 겹치지 않는다
+    var blocked = [];
+    T.TERRAIN.forEach(function (s) {
+      if (s.t !== 'c') return;
+      T.WALL_HOLDS.forEach(function (h, hi) {
+        var cx = Math.max(h.x, Math.min(s.x, h.x + h.w));
+        var cy = Math.max(h.y - 40, Math.min(s.y, h.y + h.h));
+        if (Math.hypot(s.x - cx, s.y - cy) < s.r) blocked.push(hi);
+      });
+    });
+    eq('바위가 벽 홀드의 발 디딜 공간을 막지 않는다', blocked, []);
+  })();
 })();
 
 // ---- 배포 payload 예산 ----
