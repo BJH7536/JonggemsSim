@@ -89,14 +89,15 @@ public static class Chroma {
 $root = Join-Path $PSScriptRoot ".."
 
 function Resize-Image {
-  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false, [bool]$Despill = $false)
+  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false, [bool]$Despill = $false, [bool]$Contain = $false)
 
   # 주의: 파라미터가 [string]$Src 이고 PowerShell은 변수명 대소문자를 구분하지 않는다.
   # $src 에 Image를 대입하면 선언 타입에 맞춰 문자열로 변환된다. 반드시 다른 이름을 쓸 것.
   $orig = [System.Drawing.Image]::FromFile($Src)
   # 비율 유지 cover. 소스가 전부 정사각(1024/1536x1024 → 목표와 동일 비율)이라 잘림 없음 —
   # 비율이 다른 소스를 추가하면 몬스터는 contain으로 바꿀 것 (cover는 머리를 자른다).
-  $scale = [Math]::Max($W / $orig.Width, $H / $orig.Height)
+  # Contain = 무크롭 (전신 스프라이트 — cover는 입·꼬리·양끝을 자른다, 어류/폭탄 실측)
+  $scale = if ($Contain) { [Math]::Min($W / $orig.Width, $H / $orig.Height) } else { [Math]::Max($W / $orig.Width, $H / $orig.Height) }
   $sw = [int][Math]::Round($orig.Width * $scale)
   $sh = [int][Math]::Round($orig.Height * $scale)
   $ox = [int](($W - $sw) / 2)
@@ -136,7 +137,7 @@ function Resize-Image {
 
 $jobs = @(
   # ── 셸 (데스크탑 허브) ──
-  @{ Dir = 'games\shell\img'; In = 'desktop-wallpaper.png'; Out = 'desktop-wallpaper.jpg'; W = 1280; H = 480; Fmt = 'jpg'; Q = 78 },
+  @{ Dir = 'games\shell\img'; In = 'desktop-wallpaper.png'; Out = 'desktop-wallpaper.jpg'; W = 1600; H = 900; Fmt = 'jpg'; Q = 74 },
   @{ Dir = 'games\shell\img'; In = 'icon-hwaryeok.png';  Out = 'icon-hwaryeok.png';  W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'icon-giving-up.png'; Out = 'icon-giving-up.png'; W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'icon-pocket.png';    Out = 'icon-pocket.png';    W = 96; H = 96; Fmt = 'png' },
@@ -203,15 +204,41 @@ $jobs = @(
   @{ Dir = 'games\giving-up\img'; In = 'boulder.png';  Out = 'boulder.png';    W = 144; H = 144; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\fishing\img'; In = 'boat.png';       Out = 'boat.png';       W = 256; H = 256; Fmt = 'png'; Key = $true },
   # 어종은 화면 크기(r×3.8 = 34~152px)에 맞춰 티어별로 다르게 줄인다 — 전설만 크다
-  @{ Dir = 'games\fishing\img'; In = 'fish-0.png';     Out = 'fish-0.png';     W = 96;  H = 96;  Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\fishing\img'; In = 'fish-1.png';     Out = 'fish-1.png';     W = 128; H = 128; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\fishing\img'; In = 'fish-2.png';     Out = 'fish-2.png';     W = 160; H = 160; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\fishing\img'; In = 'fish-3.png';     Out = 'fish-3.png';     W = 224; H = 224; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\fishing\img'; In = 'fish-4.png';     Out = 'fish-4.png';     W = 320; H = 320; Fmt = 'png'; Key = $true },
+  # 어종 30 — contain(무크롭) + 마젠타 키잉
+  @{ Dir = 'games\fishing\img'; In = 'sp-minnow.png'; Out = 'sp-minnow.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-guppy.png'; Out = 'sp-guppy.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-clam.png'; Out = 'sp-clam.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-conch.png'; Out = 'sp-conch.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-starfish.png'; Out = 'sp-starfish.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-shrimp.png'; Out = 'sp-shrimp.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-carp.png'; Out = 'sp-carp.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-sardine.png'; Out = 'sp-sardine.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-anchovy.png'; Out = 'sp-anchovy.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-squid.png'; Out = 'sp-squid.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-jelly.png'; Out = 'sp-jelly.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-babyturtle.png'; Out = 'sp-babyturtle.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-catfish.png'; Out = 'sp-catfish.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-snakehead.png'; Out = 'sp-snakehead.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-sailfin.png'; Out = 'sp-sailfin.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-dolphin.png'; Out = 'sp-dolphin.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-sunfish.png'; Out = 'sp-sunfish.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-seaturtle.png'; Out = 'sp-seaturtle.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-bigeye.png'; Out = 'sp-bigeye.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-lantern.png'; Out = 'sp-lantern.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-steelgill.png'; Out = 'sp-steelgill.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-shark.png'; Out = 'sp-shark.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-giantsquid.png'; Out = 'sp-giantsquid.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-monkfish.png'; Out = 'sp-monkfish.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-abysslord.png'; Out = 'sp-abysslord.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-abyssmother.png'; Out = 'sp-abyssmother.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-whale.png'; Out = 'sp-whale.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-leviathan.png'; Out = 'sp-leviathan.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-ghostjelly.png'; Out = 'sp-ghostjelly.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
+  @{ Dir = 'games\fishing\img'; In = 'sp-goldsunfish.png'; Out = 'sp-goldsunfish.png'; W = 128; H = 128; Fmt = 'png'; Key = $true; Contain = $true },
   @{ Dir = 'games\fishing\img'; In = 'vfx-splash.png'; Out = 'vfx-splash.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
   # ── 해체쇼 (배경 플레이트 + 폭탄 몸통 + 폭발 시트) ──
   @{ Dir = 'games\bomb\img'; In = 'bench-bg.png';  Out = 'bench-bg.jpg';  W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
-  @{ Dir = 'games\bomb\img'; In = 'bomb-body.png'; Out = 'bomb-body.png'; W = 512; H = 512; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\bomb\img'; In = 'bomb-body.png'; Out = 'bomb-body.png'; W = 512; H = 512; Fmt = 'png'; Key = $true; Contain = $true },
   @{ Dir = 'games\bomb\img'; In = 'vfx-boom.png';  Out = 'vfx-boom.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
   # ── UI 크롬 아이콘 (마젠타 키잉 → 알파 PNG). 표시 12~15px → 64px이면 충분 ──
   @{ Dir = 'games\shell\img'; In = 'ui-logo.png';  Out = 'ui-logo.png';  W = 64; H = 64; Fmt = 'png'; Key = $true },
@@ -254,8 +281,9 @@ foreach ($j in $jobs) {
   $key = if ($j.ContainsKey('Key')) { $j.Key } else { $false }
   $wkey = if ($j.ContainsKey('WhiteKey')) { $j.WhiteKey } else { $false }
   $desp = if ($j.ContainsKey('Despill')) { $j.Despill } else { $false }
+  $cont = if ($j.ContainsKey('Contain')) { $j.Contain } else { $false }
   # 변환이 실패했는데도 원본을 지우거나 "줄었다"고 출력하면 안 된다 (실제로 그런 적 있음)
-  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey -Despill $desp }
+  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey -Despill $desp -Contain $cont }
   catch {
     Write-Host ("실패    {0} — {1}" -f $j.In, $_.Exception.Message)
     if (Test-Path $tmp) { Remove-Item $tmp -Force }

@@ -586,8 +586,9 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
    허브에서는 창이 최소화되어 바탕화면 아이콘이 그대로 보인다 — 방송 전의 스트리머는
    데스크탑에 있다는 감각이 이 레이아웃의 전부다. */
 body {
+  /* 베일은 평면색으로 — 어두운 세로 그라데이션은 8비트 밴딩(가로줄)을 만든다 (실측) */
   background:
-    linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55)),
+    linear-gradient(rgba(8,6,12,.45), rgba(8,6,12,.45)),
     url('img/desktop-wallpaper.jpg') center/cover fixed no-repeat,
     #141517;
   padding-bottom: 56px;               /* 작업표시줄 자리 */
