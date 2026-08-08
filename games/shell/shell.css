@@ -316,3 +316,92 @@ body {
 .climbbar .val { font-size: 19px; font-weight: 700; color: var(--amber2); font-variant-numeric: tabular-nums; }
 .climbbar .val.warn { color: #ff8d7a; }
 .climbbar .hint { flex: 1 1 220px; font-size: 11px; color: var(--dim); line-height: 1.6; text-align: right; }
+
+/* ---------- 데스크탑 허브 (스트리머의 PC) ----------
+   카드 그리드를 모니터 안의 바탕화면으로 바꿨다. "종합게임 스트리머"의 방송 전 상태는
+   목록을 고르는 게 아니라 자기 PC에서 오늘 뭘 켤지 고르는 순간이라, 그 은유를 그대로 쓴다.
+   무대(앰버) / 플랫폼(보라) 구분은 유지하고, 데스크탑은 플랫폼 쪽에 속한다. */
+.deskWrap { padding: 0; background: none; border: 0; box-shadow: none; }
+.monitor {
+  border: 12px solid #1a1622; border-radius: 14px;
+  background: #0a0810; box-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px #2a2338;
+}
+.mstand {
+  width: 120px; height: 12px; margin: 0 auto;
+  background: linear-gradient(#241d31, #14101c); border-radius: 0 0 8px 8px;
+}
+.screen {
+  position: relative; min-height: 340px; padding: 18px 18px 46px; border-radius: 4px; overflow: hidden;
+  /* 3단으로 쌓는다 — 위에서부터 있는 것이 보이고, 없으면 조용히 아래가 드러난다.
+     .jpg = optimize-images.ps1 를 거친 배포용, .png = 생성 직후 원본(1MB대라 배포 부적합),
+     맨 아래 그라디언트 = 이미지가 아직 없을 때. 어느 상태에서도 화면이 깨지지 않는다. */
+  background:
+    url('img/desktop-wallpaper.jpg') center/cover no-repeat,
+    url('img/desktop-wallpaper.png') center/cover no-repeat,
+    radial-gradient(760px 340px at 22% 8%, #241a33, #0d0a14 70%);
+}
+
+.deskIcons { display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start; }
+.dIcon {
+  width: 92px; padding: 8px 4px 7px; border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: var(--ink); font: inherit; cursor: pointer; text-align: center;
+}
+.dIcon:hover { background: rgba(169,112,255,.14); border-color: rgba(169,112,255,.35); }
+.dIcon.on { background: rgba(169,112,255,.22); border-color: var(--plat); }
+.dIconArt {
+  display: block; width: 56px; height: 56px; margin: 0 auto 6px; border-radius: 12px;
+  overflow: hidden; background: #141019; box-shadow: 0 4px 12px rgba(0,0,0,.45);
+}
+.dIconArt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 아이콘 PNG가 아직 없을 때 — 기능은 그대로, 그림만 대체한다 */
+.dIcon.noimg .dIconArt {
+  background: linear-gradient(145deg, #3a2b18, #1a1220);
+  border: 1px solid rgba(255,180,71,.35);
+}
+.dIcon.noimg .dIconArt img { display: none; }
+.dIconName { display: block; font-size: 11.5px; line-height: 1.35; text-shadow: 0 1px 3px #000; }
+.dIconFresh { display: block; font-size: 10px; color: var(--ok); margin-top: 2px; }
+.dIconFresh.warn { color: var(--amber); }
+
+/* 런처 창 */
+.deskWin {
+  position: absolute; right: 18px; bottom: 56px; width: min(330px, calc(100% - 36px));
+  background: rgba(18,14,26,.94); border: 1px solid #3a2f4d; border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.55); overflow: hidden;
+}
+.dwBar {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  background: linear-gradient(#241c33, #1a1428); border-bottom: 1px solid #3a2f4d;
+}
+.dwDots { display: flex; gap: 4px; }
+.dwDots i { width: 9px; height: 9px; border-radius: 50%; background: #4a3d63; }
+.dwDots i:first-child { background: #ff5f57; }
+.dwTitle { font-size: 12px; font-weight: 700; color: var(--plat2); letter-spacing: .5px; }
+.dwBody { display: flex; gap: 10px; padding: 10px; }
+.dwBody .gthumb { width: 114px; height: 52px; border-radius: 5px; flex: 0 0 auto; }
+.dwInfo { flex: 1; min-width: 0; }
+.dwInfo .gd { font-size: 11.5px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }
+.dwInfo .gf { font-size: 11px; margin-top: 6px; color: #cfc7b8; display: flex; justify-content: space-between; }
+.dwGo {
+  display: block; width: calc(100% - 20px); margin: 0 10px 10px; padding: 9px;
+  background: var(--tally); border: 0; border-radius: 7px;
+  color: #fff; font: 700 13px inherit; letter-spacing: 1px; cursor: pointer;
+}
+.dwGo:hover { filter: brightness(1.12); }
+
+/* 작업표시줄 */
+.deskBar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 38px;
+  display: flex; align-items: center; gap: 12px; padding: 0 12px;
+  background: rgba(10,8,16,.88); border-top: 1px solid #2a2338; font-size: 11.5px;
+}
+.dStart { display: flex; align-items: center; gap: 7px; font-weight: 700; color: var(--plat2); }
+.dStart img { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--plat); }
+.dBarInfo { color: #cfc7b8; }
+.dBarHint { margin-left: auto; color: var(--dim); }
+
+@media (max-width: 720px) {
+  .deskWin { position: static; width: auto; margin-top: 12px; }
+  .screen { padding-bottom: 18px; }
+  .deskBar { position: static; margin: 12px -18px -18px; }
+}
