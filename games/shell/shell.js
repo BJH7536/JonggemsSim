@@ -453,9 +453,12 @@
       $('paceChip').classList.add('hidden');
       $('donBanner').classList.remove('show');
       this._donQ.length = 0; this._donBusy = false;
-      // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋). 지난 방송 영상 URL은 회수한다
-      (this._clips || []).forEach(function (c) { if (c.vid) URL.revokeObjectURL(c.vid); });
+      // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋). 지난 방송 영상 URL은
+      // 아카이브(하이라이트 다시보기)에 남은 것만 빼고 회수한다
+      var arch0 = Shell._clipArchive || [];
+      (this._clips || []).forEach(function (c) { if (c.vid && arch0.indexOf(c) < 0) URL.revokeObjectURL(c.vid); });
       this._clips = []; this._evSeen = {}; this._surgeAcc = 0; this._lastClipAt = -99;
+      this._lastReplayAt = 0; this._replayBusy = false;
       this._showCoins = 0; // 이번 방송의 도네 코인 누계
       this._showFresh = Math.round(this.freshMult(g.id) * 100); // 평가용 — 회전 전 신선도
       this._missions = Shell.makeMissions(this.ch);             // 김 피디의 오늘 미션 (결정론)
@@ -721,26 +724,26 @@
           try { img = self.clipCard(mood, tAt); } catch (e2) { img = 0; }
         }
         if (img) {
-          var clip = { t: tAt, ev: ev, s: s, mood: mood, why: why,
+          var clip = { t: tAt, ev: ev, s: s, mood: mood, why: why, game: self.game.title,
             v: Math.round(self.viewers), img: img, vid: null };
           self._clips.push(clip);
-          // 배너는 영상이 굳은 뒤에 띄운다 — 좌상단에서 리플레이가 실제로 재생돼야 한다
+          // 리플레이 창은 영상이 굳은 뒤에 띄운다 — 좌상단에서 실제로 재생돼야 한다
           // (사용자 피드백). 녹화 미지원·조립 실패 땐 스틸로라도 반드시 띄운다.
           if (self._rec) {
             self._recHold = true; // 조립이 끝날 때까지 세그먼트를 자르지 않는다
             setTimeout(function () {
               var r = self._rec;
-              if (!r || r.state === 'inactive') { self._recHold = false; self.showClipBanner(clip); return; }
-              try { r.requestData(); } catch (e) { self._recHold = false; self.showClipBanner(clip); return; }
+              if (!r || r.state === 'inactive') { self._recHold = false; self.showReplay(clip, 'INSTANT REPLAY'); return; }
+              try { r.requestData(); } catch (e) { self._recHold = false; self.showReplay(clip, 'INSTANT REPLAY'); return; }
               setTimeout(function () {
                 self._recHold = false;
                 if (r._chunks.length)
                   clip.vid = URL.createObjectURL(new Blob(r._chunks.slice(), { type: 'video/webm' }));
-                self.showClipBanner(clip);
+                self.showReplay(clip, 'INSTANT REPLAY');
               }, 150);
             }, 2500);
           } else {
-            self.showClipBanner(clip);
+            self.showReplay(clip, 'INSTANT REPLAY');
           }
         }
       }, 450);
@@ -759,20 +762,29 @@
       c.fillText(mood, 120, 68);
       return cv.toDataURL('image/png');
     },
-    showClipBanner: function (clip) {
-      var el = $('clipBanner'); if (!el) return;
+    // 리플레이 창 — 진짜 스트리머의 OBS 리플레이 소스처럼, 게임 위 좌상단에서 클립이
+    // 실제로 재생된다. 방금 딴 클립(INSTANT REPLAY)과 조용한 구간의 과거 하이라이트
+    // (아카이브 다시보기) 둘 다 이 창을 쓴다. 연출 전용 — 수치 무관 (C3).
+    showReplay: function (clip, label) {
+      var el = $('replayWin'); if (!el) return;
+      this._lastReplayAt = this._upT;
+      this._replayBusy = true;
+      var self = this;
+      clearTimeout(this._replayTimer);
+      this._replayTimer = setTimeout(function () { self._replayBusy = false; }, 6800);
       var media = clip.vid
         ? '<video src="' + clip.vid + '" autoplay muted playsinline></video>'
         : '<img src="' + clip.img + '" alt="">';
-      el.innerHTML = '<i class="recDot"></i>' + media +
-        '<span><b>클립 저장됨</b> — ' + clip.mood + ' ' + Shell.util.fmtTime(clip.t) +
-        ' · 흥미도 ' + Math.round(clip.s * 100) + '%' +
-        (clip.vid ? '<em class="replay">인스턴트 리플레이</em>' : '') + '</span>';
-      // 리플레이는 하이라이트 직전부터 — 프리롤(세그먼트 앞부분)을 건너뛴다.
+      el.innerHTML = '<div class="rwHead"><i class="recDot"></i>' + label +
+        '<span class="rwSave">클립 저장됨</span></div>' + media +
+        '<div class="rwCap"><b>' + (clip.game ? clip.game + ' · ' : '') + Shell.util.fmtTime(clip.t) +
+        '</b> ' + clip.mood + ' · 흥미도 ' + Math.round(clip.s * 100) + '%</div>';
+      if (label !== 'INSTANT REPLAY') el.querySelector('.rwSave').style.display = 'none';
+      // 하이라이트 지점 직전부터 재생 — 프리롤(세그먼트 앞부분)을 건너뛴다.
       // MediaRecorder WebM은 duration이 Infinity로 나오는 경우가 있어(크롬) 그땐 처음부터.
       var v = el.querySelector('video');
       if (v) v.onloadedmetadata = function () {
-        try { if (isFinite(v.duration) && v.duration > 3.6) v.currentTime = v.duration - 3.4; } catch (e) {}
+        try { if (isFinite(v.duration) && v.duration > 5.8) v.currentTime = v.duration - 5.6; } catch (e) {}
       };
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     },
@@ -875,6 +887,15 @@
       var clips = (this._clips || []).slice().sort(function (a, b) { return b.s - a.s; })
         .slice(0, Shell.CLIP.KEEP).sort(function (a, b) { return a.t - b.t; });
       this._repClips = clips;
+      // 세션 하이라이트 아카이브 — 영상 있는 클립을 방송을 넘어 보관 (흥미도 상위 8,
+      // blob URL이라 새로고침까지만 산다). 다음 방송의 조용한 구간에 '다시보기'로 재생.
+      var arch = Shell._clipArchive = Shell._clipArchive || [];
+      (this._clips || []).forEach(function (c) { if (c.vid) arch.push(c); });
+      arch.sort(function (a, b) { return b.s - a.s; });
+      while (arch.length > 8) {
+        var old = arch.pop();
+        if (old.vid && clips.indexOf(old) < 0) URL.revokeObjectURL(old.vid);
+      }
       var bestClip = null;
       for (var bc = 0; bc < clips.length; bc++) if (!bestClip || clips[bc].s > bestClip.s) bestClip = clips[bc];
 
@@ -1033,6 +1054,13 @@
         // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
         this._graphT += dt; this._upT += dt;
         this._surgeAcc *= Math.exp(-dt / 1.4); // 급증 신호는 ~1.4초 반감 — '방금'만 급증이다
+        // 조용한 구간의 하이라이트 다시보기 — 진짜 스트리머처럼 과거 명장면이 좌상단에 돈다.
+        // 최근 45초 안에 리플레이가 없었을 때만 (규약 3 — 큰 자극과 겹치지 않게)
+        if (this._upT > 25 && this._upT - this._lastReplayAt > 45 && !this._replayBusy &&
+            Shell._clipArchive && Shell._clipArchive.length) {
+          var arc = Shell._clipArchive;
+          this.showReplay(arc[Math.floor(Math.random() * arc.length)], '하이라이트 다시보기');
+        }
         if (this._graphT >= 1) {
           this._graphT = 0;
           this._graph.push({ t: this._upT, v: this.viewers });
