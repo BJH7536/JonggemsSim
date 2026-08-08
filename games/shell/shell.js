@@ -116,14 +116,12 @@
       $('followBtn').addEventListener('click', function () {
         self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
       });
-      // 첫 방문 스플래시 — 목표(시청자=점수=생명)를 말하기 전에는 데스크탑을 보여주지 않는다
-      if (!localStorage.getItem('JGS_INTRO')) {
-        $('introSplash').classList.remove('hidden');
-        $('introGo').addEventListener('click', function () {
-          localStorage.setItem('JGS_INTRO', '1');
-          $('introSplash').classList.add('hidden');
-        });
-      }
+      // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
+      $('introSplash').classList.remove('hidden');
+      $('introGo').addEventListener('click', function () {
+        $('introSplash').classList.add('hidden');
+      });
+      addEventListener('resize', function () { self2.fitHud(); });
       this.showHub();
       requestAnimationFrame(this.loop.bind(this));
     },
@@ -436,6 +434,8 @@
       $('overlay').classList.add('hidden');
       $('overlay').innerHTML = '';
       document.body.classList.add('fullshow'); // 방송 = 전체화면 (진짜 게임처럼)
+      var self0 = this;
+      requestAnimationFrame(function () { self0.fitHud(); }); // 레이아웃 확정 후 HUD 정렬
       $('tally').classList.remove('off');
       $('tallyR').textContent = g.title;
       $('chainMeter').classList.toggle('hidden', !g.usesChain);
@@ -812,6 +812,22 @@
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     },
 
+    // 전체화면 HUD 정렬 — 캔버스는 object-fit: contain이라 그림이 레터박스된다.
+    // 조작 패널·설명은 게임 '그림'의 좌우 폭·바닥에 붙어야 한다 (버튼도 게임 안의 내용).
+    fitHud: function () {
+      if (!document.body.classList.contains('fullshow')) return;
+      var r = this.ctx.canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var sc = Math.min(r.width / W, r.height / H);
+      var gw = W * sc, gh = H * sc;
+      var gx = r.left + (r.width - gw) / 2;
+      var gbot = window.innerHeight - (r.top + (r.height - gh) / 2 + gh);
+      var st = document.body.style;
+      st.setProperty('--gx', Math.round(gx) + 'px');
+      st.setProperty('--gw', Math.round(gw) + 'px');
+      st.setProperty('--gbot', Math.max(44, Math.round(gbot)) + 'px');
+    },
+
     // ---------- 클립 영상 — 리플레이 버퍼 (연출·기록 전용) ----------
     // 캔버스를 상시 녹화하되 6초마다 세그먼트를 재시작한다. WebM 헤더는 늘 세그먼트의
     // 첫 청크에 있으므로 "세그먼트 시작~지금"을 이어붙이면 어느 순간이든 재생 가능한
@@ -1113,6 +1129,10 @@
           // 지키면서 "새고 있다"는 압박만 온도로 전달한다
           $('liveBar').classList.toggle('cold', this.now - this._lastGainAt > 2.5);
           this.updatePace();
+          this.fitHud(); // 창 크기 변화 대비 — 1초 주기면 충분
+        }
+        if (this.phase === 'starting') {
+          this.fitHud();
         }
       }
       this._shake *= .88; this._flash *= .88;
