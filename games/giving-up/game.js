@@ -135,7 +135,8 @@
   var IMG = {};
   function loadArt() {
     if (IMG.pot) return;
-    [['pot', 'png'], ['hammer', 'png'], ['sky-bg', 'jpg']].forEach(function (e) {
+    [['pot', 'png'], ['hammer', 'png'], ['sky-bg', 'jpg'],
+     ['ledge', 'png'], ['boulder', 'png']].forEach(function (e) {
       var im = new Image();
       im.src = 'games/giving-up/img/' + e[0] + '.' + e[1];
       IMG[e[0]] = im;
@@ -221,7 +222,7 @@
         '<div class="cell"><div class="lab">현재 높이</div><div class="val" id="guH">0.0m</div></div>' +
         '<div class="cell"><div class="lab">최고 높이</div><div class="val" id="guB">0.0m</div></div>' +
         '<div class="cell"><div class="lab">추락 신선도</div><div class="val" id="guF">100%</div></div>' +
-        '<div class="hint"><b>마우스를 움직이면 망치가 그쪽으로 뻗는다</b> — 커서까지만 뻗으니 가까운 턱에 살짝 걸칠 수도 있다.<br>' +
+        '<div class="hint"><b>마우스를 움직이면 곡괭이가 그쪽으로 뻗는다</b> — 커서까지만 뻗으니 가까운 턱에 살짝 걸칠 수도 있다.<br>' +
         '바위에 걸고 <b>반대로 밀어내면</b> 몸이 딸려 올라간다. 크게 떨어질수록 시청자가 폭증한다.</div>' +
       '</div>';
 
@@ -391,7 +392,7 @@
       stage.emit('idle');
     }
 
-    stage.ticker('방송 시작! 마우스로 망치를 걸어 올라가라', false);
+    stage.ticker('방송 시작! 마우스로 곡괭이를 걸어 올라가라', false);
     renderPanel();
 
     return {
@@ -544,19 +545,35 @@
           return;
         }
         if (s.t === 'c') {
-          var rg = ctx.createRadialGradient(s.x - s.r * .35, s.y - s.r * .4, s.r * .15, s.x, s.y, s.r);
-          rg.addColorStop(0, lit ? '#e0cca8' : '#c9b89c'); rg.addColorStop(1, '#8a7660');
-          ctx.fillStyle = rg;
-          ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
-          ctx.strokeStyle = lit ? 'rgba(230,140,30,.85)' : 'rgba(90,72,54,.5)';
-          ctx.lineWidth = lit ? 2.5 : 2; ctx.stroke();
+          // AetherAI 바위 스프라이트 — 접점 링(조작 피드백)은 이미지 위에 계속 얹는다
+          if (imgReady('boulder')) {
+            ctx.drawImage(IMG['boulder'], s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+            if (lit) {
+              ctx.strokeStyle = 'rgba(230,140,30,.85)'; ctx.lineWidth = 2.5;
+              ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.stroke();
+            }
+          } else {
+            var rg = ctx.createRadialGradient(s.x - s.r * .35, s.y - s.r * .4, s.r * .15, s.x, s.y, s.r);
+            rg.addColorStop(0, lit ? '#e0cca8' : '#c9b89c'); rg.addColorStop(1, '#8a7660');
+            ctx.fillStyle = rg;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+            ctx.strokeStyle = lit ? 'rgba(230,140,30,.85)' : 'rgba(90,72,54,.5)';
+            ctx.lineWidth = lit ? 2.5 : 2; ctx.stroke();
+          }
         } else {
-          var g = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
-          g.addColorStop(0, lit ? '#e0cca8' : '#c9b89c'); g.addColorStop(.3, '#a89478'); g.addColorStop(1, '#8a7660');
-          ctx.fillStyle = g; ctx.fillRect(s.x, s.y, s.w, s.h);
+          // AetherAI 발판(렛지) — 폭에 맞춰 가로로 늘린다 (돌 슬랩이라 스트레치가 티 안 남).
+          // 지면·정상 같은 대형 사각형은 계속 절차적으로 (늘리면 뭉개진다).
+          if (s.w <= 300 && imgReady('ledge')) {
+            ctx.drawImage(IMG['ledge'], s.x - 3, s.y - 4, s.w + 6, s.h + 9);
+          } else {
+            var g = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
+            g.addColorStop(0, lit ? '#e0cca8' : '#c9b89c'); g.addColorStop(.3, '#a89478'); g.addColorStop(1, '#8a7660');
+            ctx.fillStyle = g; ctx.fillRect(s.x, s.y, s.w, s.h);
+            ctx.fillStyle = 'rgba(70,56,40,.3)'; ctx.fillRect(s.x, s.y + s.h - 3, s.w, 3);
+          }
+          // 붙잡을 수 있는 윗면 표시 — 접점이면 앰버로 (아트보다 조작 피드백이 우선)
           ctx.fillStyle = lit ? 'rgba(255,180,80,.65)' : 'rgba(255,255,255,.4)';
           ctx.fillRect(s.x, s.y, s.w, 3);
-          ctx.fillStyle = 'rgba(70,56,40,.3)'; ctx.fillRect(s.x, s.y + s.h - 3, s.w, 3);
         }
       });
       ctx.strokeStyle = '#7a6a4e'; ctx.lineWidth = 3;
@@ -654,7 +671,7 @@
   Shell.register({
     id: 'giving-up',
     title: 'Giving Up On It',
-    tagline: '망치 하나로 절벽을 오른다. 조금씩 오르면 조금 벌고, 크게 떨어지면 왕창 번다 — 여기서도 안전한 플레이가 최악이다.',
+    tagline: '갈고리 곡괭이 하나로 절벽을 오른다. 조금씩 오르면 조금 벌고, 크게 떨어지면 왕창 번다 — 여기서도 안전한 플레이가 최악이다.',
     duration: SHOW_TIME,
     startViewers: START_VIEWERS,
     usesChain: false,
@@ -669,7 +686,7 @@
       WALL_HOLDS: WALL_HOLDS, WALL_LIP: WALL_LIP,
       START_X: START_X, PR: PR, HEAD_ROOM_MIN: HEAD_ROOM_MIN, FIRST_HOOK_MAX: FIRST_HOOK_MAX,
     },
-    foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
+    foot: '<b>마우스</b>로 곡괭이를 움직인다 — 곡괭이는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
           '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
     thumb: function (c, w, h) {
       var g = c.createLinearGradient(0, 0, 0, h);

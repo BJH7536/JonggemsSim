@@ -333,13 +333,18 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   pointer-events: none; opacity: 0;
 }
 #clipBanner b { color: #7dffd0; }
-#clipBanner img { width: 64px; height: 29px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(0,255,163,.35); }
+#clipBanner img, #clipBanner video {
+  width: 150px; height: 66px; object-fit: cover; border-radius: 5px;
+  border: 1px solid rgba(0,255,163,.35); background: #000; flex: 0 0 auto;
+}
+#clipBanner .replay { display: block; font-style: normal; font-size: 10px; letter-spacing: 2px; color: var(--dim); margin-top: 3px; }
 #clipBanner .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
-#clipBanner.show { animation: clipin 3.4s cubic-bezier(.2,.9,.3,1) forwards; }
+/* 리플레이가 실제로 재생될 시간을 준다 — 5.6초 (진입 0.5 + 재생 ~4.4 + 퇴장) */
+#clipBanner.show { animation: clipin 5.6s cubic-bezier(.2,.9,.3,1) forwards; }
 @keyframes clipin {
   0% { left: -440px; opacity: 0; }
-  9% { left: 12px; opacity: 1; }
-  84% { left: 12px; opacity: 1; }
+  6% { left: 12px; opacity: 1; }
+  90% { left: 12px; opacity: 1; }
   100% { left: 12px; opacity: 0; transform: translateY(-8px); }
 }
 @keyframes clipRec { to { opacity: .25; } }
@@ -761,3 +766,54 @@ body {
   #desktop { right: 0; bottom: 214px; }
   #jgsWin { right: 0; bottom: 214px; border-right: 0; }
 }
+
+/* ---------- 김 피디 — 파트너 평가 카드(리포트) · 미션 쪽지(데스크탑) ---------- */
+.pdCard {
+  display: flex; gap: 11px; align-items: flex-start; margin: 10px 0 4px;
+  padding: 10px 12px; border: 1px solid #2c3036; border-radius: 9px;
+  background: linear-gradient(rgba(23,25,28,.55), rgba(23,25,28,.55)),
+    url('img/ui-panelbg.jpg') center/cover, #17191c;
+}
+.pdCard img { width: 56px; height: 56px; border-radius: 8px; border: 1px solid #2c3036; flex: 0 0 auto; }
+.pdTop { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.pdWho { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); }
+.pdGrade { font-family: Georgia, serif; font-weight: bold; font-size: 27px; line-height: 1; }
+.pdGrade.gS { color: #ffd24a; text-shadow: 0 0 15px rgba(255,210,74,.75); }
+.pdGrade.gA { color: var(--plat2); text-shadow: 0 0 12px rgba(0,255,163,.5); }
+.pdGrade.gB { color: #9ec8e0; }
+.pdGrade.gC { color: var(--dim); }
+.pdGrade.gD { color: #ff8d7a; }
+.pdScore { font-size: 11px; color: var(--dim); }
+.pdLine { font-size: 13px; color: #ece7dd; margin-top: 4px; }
+.pdTip { font-size: 11.5px; color: var(--amber2); margin-top: 3px; }
+.pdMis { display: flex; flex-wrap: wrap; gap: 5px 14px; margin-top: 6px; font-size: 11.5px; }
+.pdMis .hit { color: var(--ok); }
+.pdMis .miss { color: var(--dim); }
+.pdMis b { color: #ffd24a; }
+.pdNote {
+  position: absolute; right: 24px; bottom: 44px; max-width: 300px;
+  display: flex; gap: 9px; align-items: flex-start;
+  padding: 10px 12px; border: 1px solid #2e3138; border-radius: 10px;
+  background: linear-gradient(rgba(23,25,28,.85), rgba(23,25,28,.85)),
+    url('img/ui-panelbg.jpg') center/cover, #17191c;
+}
+.pdNote img { width: 44px; height: 44px; border-radius: 7px; border: 1px solid #2c3036; }
+.pdnRow { font-size: 11.5px; color: #c9cdd2; padding: 1px 0; }
+.pdnRow b { color: var(--amber2); }
+
+/* ---------- AetherAI 면 오버라이드 — 수제 CSS 그라데이션 금지 방침 (2026-08-08 지시) ---------- */
+#clipBanner {
+  background: url('img/ui-banner-mint.jpg') center/cover, #071812;
+}
+#donBanner {
+  background: url('img/ui-banner-gold.jpg') center/cover, #1e1608;
+}
+.shopItem {
+  background: linear-gradient(rgba(23,25,28,.6), rgba(23,25,28,.6)),
+    url('img/ui-panelbg.jpg') center/cover, #17191c;
+}
+.shopItem .siBuy {
+  background: url('img/ui-button.png') center/100% 100% no-repeat, linear-gradient(#4a3f28, #2c2414);
+  border: none; color: #06301e; text-shadow: 0 1px 0 rgba(255,255,255,.22);
+}
+.shopItem .siBuy:hover { filter: brightness(1.08); box-shadow: none; color: #000; }

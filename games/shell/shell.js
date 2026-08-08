@@ -238,12 +238,22 @@
       $('obsDot').classList.remove('live');
       $('overlay').classList.add('hidden');
       $('overlay').innerHTML = '';
+      // 김 피디의 미션 쪽지 — 다음 방송의 명시적 목표 (유지 장치). makeMissions는 결정론이라
+      // 여기 표시와 _launch 시점 평가가 항상 같은 값을 본다.
+      var mis = Shell.makeMissions(this.ch);
+      var pdNote = '<div class="pdNote">' +
+        '<img src="games/shell/img/kim-pd.png" alt="" onerror="this.style.display=\'none\'">' +
+        '<div><div class="rlab">김 피디의 오늘 미션</div>' + mis.map(function (m) {
+          return '<div class="pdnRow">' + m.label + ' <b>' + m.target.toLocaleString() + '</b> · 보상 ' +
+            m.reward.toLocaleString() + '코인</div>';
+        }).join('') + '</div></div>';
+
       $('desktop').innerHTML =
         '<div class="deskIcons">' + icons + '</div>' +
         '<div id="dTip"></div>' +
         '<div class="deskStat">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
           this.ch.shows + '</b>회 · 더블클릭 = 바로 방송</div>' +
-        recent;
+        pdNote + recent;
 
       this.bindHub();
       // 아직 한 번도 방송한 적 없으면 첫 게임 아이콘에 코치마크 — 진입까지 헤매지 않게
@@ -437,6 +447,8 @@
       (this._clips || []).forEach(function (c) { if (c.vid) URL.revokeObjectURL(c.vid); });
       this._clips = []; this._evSeen = {}; this._surgeAcc = 0; this._lastClipAt = -99;
       this._showCoins = 0; // 이번 방송의 도네 코인 누계
+      this._showFresh = Math.round(this.freshMult(g.id) * 100); // 평가용 — 회전 전 신선도
+      this._missions = Shell.makeMissions(this.ch);             // 김 피디의 오늘 미션 (결정론)
       this.startClipRec();
 
       // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
@@ -643,6 +655,22 @@
     // 페르소나가 이관되면 ①이 개체 반응으로 승격된다.
     MOOD_KO: { surprise: '돌발', panic: '위기', aha: '결정적 장면', confusion: '방송사고',
                thinking: '정적', question: '전환점' },
+
+    // ---------- 김 피디 대사 (연출 전용 — 등급은 Shell.gradeShow가 결정론으로 산정) ----------
+    PD_LINES: {
+      S: ['이게 방송이지. 클립 정리해서 메인에 올릴게요.', '오늘 지표, 회의에서 자랑하겠습니다.', '편성 앞자리로 옮기자는 얘기가 나왔어요.'],
+      A: ['좋아요. 이 흐름이면 다음 등급 갑니다.', '오늘 유입 곡선 예뻤습니다.', '시청자가 남는 방송이었어요.'],
+      B: ['나쁘지 않은데, 한 방이 없었죠.', '중간은 갔습니다. 내일 더 세게 갑시다.', '유지는 됐는데 화제가 안 남았어요.'],
+      C: ['오늘 좀 심심했다는 반응이에요.', '지표가 미지근합니다. 그림을 만들어야 해요.', '이대로면 편성 밀립니다.'],
+      D: ['피디로서 할 말이… 다음 방송 준비합시다.', '오늘 건 없던 걸로 하죠.', '지표 보고는 제가 어떻게든 막았습니다.'],
+    },
+    PD_TIPS: {
+      growth: '시청자를 더 불려야 합니다 — 큰 그림 한 방이 필요해요',
+      hold: '터뜨린 뒤에 다 빠져나갔어요 — 끝까지 잡아두세요',
+      clips: '클립 감이 없었습니다 — 사고든 역전이든 장면을 만드세요',
+      don: '도네 반응이 약해요 — 시청자가 지갑을 열 순간을 주세요',
+      vari: '같은 게임만 파면 물립니다 — 종겜 돌리세요',
+    },
     maybeClip: function (ev) {
       if (this.phase !== 'live') return;
       var seen = this._evSeen[ev] || 0;
@@ -681,20 +709,23 @@
           var clip = { t: tAt, ev: ev, s: s, mood: mood, why: why,
             v: Math.round(self.viewers), img: img, vid: null };
           self._clips.push(clip);
-          self.showClipBanner(clip);
-          // 영상 — 사건의 여운까지 2.5초 더 담은 뒤 현재 세그먼트를 그대로 파일로 굳힌다
+          // 배너는 영상이 굳은 뒤에 띄운다 — 좌상단에서 리플레이가 실제로 재생돼야 한다
+          // (사용자 피드백). 녹화 미지원·조립 실패 땐 스틸로라도 반드시 띄운다.
           if (self._rec) {
             self._recHold = true; // 조립이 끝날 때까지 세그먼트를 자르지 않는다
             setTimeout(function () {
               var r = self._rec;
-              if (!r || r.state === 'inactive') { self._recHold = false; return; }
-              try { r.requestData(); } catch (e) { self._recHold = false; return; }
+              if (!r || r.state === 'inactive') { self._recHold = false; self.showClipBanner(clip); return; }
+              try { r.requestData(); } catch (e) { self._recHold = false; self.showClipBanner(clip); return; }
               setTimeout(function () {
                 self._recHold = false;
                 if (r._chunks.length)
                   clip.vid = URL.createObjectURL(new Blob(r._chunks.slice(), { type: 'video/webm' }));
+                self.showClipBanner(clip);
               }, 150);
             }, 2500);
+          } else {
+            self.showClipBanner(clip);
           }
         }
       }, 450);
@@ -715,9 +746,19 @@
     },
     showClipBanner: function (clip) {
       var el = $('clipBanner'); if (!el) return;
-      el.innerHTML = '<i class="recDot"></i><img src="' + clip.img + '" alt="">' +
+      var media = clip.vid
+        ? '<video src="' + clip.vid + '" autoplay muted playsinline></video>'
+        : '<img src="' + clip.img + '" alt="">';
+      el.innerHTML = '<i class="recDot"></i>' + media +
         '<span><b>클립 저장됨</b> — ' + clip.mood + ' ' + Shell.util.fmtTime(clip.t) +
-        ' · 흥미도 ' + Math.round(clip.s * 100) + '%</span>';
+        ' · 흥미도 ' + Math.round(clip.s * 100) + '%' +
+        (clip.vid ? '<em class="replay">인스턴트 리플레이</em>' : '') + '</span>';
+      // 리플레이는 하이라이트 직전부터 — 프리롤(세그먼트 앞부분)을 건너뛴다.
+      // MediaRecorder WebM은 duration이 Infinity로 나오는 경우가 있어(크롬) 그땐 처음부터.
+      var v = el.querySelector('video');
+      if (v) v.onloadedmetadata = function () {
+        try { if (isFinite(v.duration) && v.duration > 3.6) v.currentTime = v.duration - 3.4; } catch (e) {}
+      };
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     },
 
@@ -827,6 +868,23 @@
       this.ch.shows++;
       var earned = this._showCoins || 0;
       this.ch.coins += earned; // 도네 코인 정산 — 상점(방송용품)의 재원
+
+      // ---------- 파트너 평가 (김 피디) + 미션 정산 — 전부 관측 산물만 읽는다 (C3) ----------
+      var peak = final;
+      for (var gi = 0; gi < this._graph.length; gi++) peak = Math.max(peak, this._graph[gi].v);
+      var isDead = reason === 'dead' || reason === 'crash';
+      var evGrade = Shell.gradeShow({ final: final, start: g.startViewers, peak: peak,
+        clips: (this._clips || []).length, coins: earned, freshPct: this._showFresh, dead: isDead });
+      var got = { peak: Math.round(peak), coins: earned, clips: (this._clips || []).length };
+      var mBonus = 0;
+      var missions = (this._missions || []).map(function (m) {
+        var hit = got[m.k] >= m.target;
+        if (hit) mBonus += m.reward;
+        return { m: m, hit: hit, got: got[m.k] };
+      });
+      this.ch.coins += mBonus; // 미션 보상도 코인 — 장식 재원일 뿐, 룰 수치 무관
+      // 승급급 성적은 과하게, 낮은 성적은 조용히 (규약 2)
+      if (!isDead && (evGrade.grade === 'S' || evGrade.grade === 'A')) this.showStamp('파트너 평가 ' + evGrade.grade);
       // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
         c: bestClip ? bestClip.img : 0,
@@ -855,6 +913,32 @@
           }).join('') + '</div>'
         : '';
 
+      // 김 피디 카드 — 등급·한줄평·최약 항목 지적·미션 결과
+      var pdPool = this.PD_LINES[evGrade.grade];
+      var pdLine = pdPool[Math.floor(Math.random() * pdPool.length)];
+      var tip = '';
+      if (evGrade.grade === 'B' || evGrade.grade === 'C' || evGrade.grade === 'D') {
+        var norm = [['growth', 40], ['hold', 20], ['clips', 18], ['don', 12], ['vari', 10]];
+        var worst = null, wv = 2;
+        norm.forEach(function (n) { var r2 = evGrade.parts[n[0]] / n[1]; if (r2 < wv) { wv = r2; worst = n[0]; } });
+        if (worst) tip = '<div class="pdTip">' + this.PD_TIPS[worst] + '</div>';
+      }
+      var mHtml = missions.length
+        ? '<div class="pdMis">' + missions.map(function (r3) {
+            return '<span class="' + (r3.hit ? 'hit' : 'miss') + '">' + (r3.hit ? '✓' : '—') + ' ' +
+              r3.m.label + ' ' + r3.m.target.toLocaleString() +
+              (r3.hit ? ' <b>+' + r3.m.reward.toLocaleString() + '코인</b>'
+                      : ' (기록 ' + r3.got.toLocaleString() + ')') + '</span>';
+          }).join('') + '</div>'
+        : '';
+      var pdHtml = '<div class="pdCard">' +
+        '<img src="games/shell/img/kim-pd.png" alt="" onerror="this.style.display=\'none\'">' +
+        '<div class="pdBody"><div class="pdTop"><span class="pdWho">담당 김 피디</span>' +
+        '<span class="pdGrade g' + evGrade.grade + '">' + evGrade.grade + '</span>' +
+        '<span class="pdScore">' + evGrade.score + '점 · 성장 ' + evGrade.parts.growth + ' · 유지 ' + evGrade.parts.hold +
+        ' · 클립 ' + evGrade.parts.clips + ' · 도네 ' + evGrade.parts.don + ' · 종겜 ' + evGrade.parts.vari + '</span></div>' +
+        '<div class="pdLine">"' + pdLine + '"</div>' + tip + mHtml + '</div></div>';
+
       var head = reason === 'dead' ? '송출 끊김' : reason === 'crash' ? '게임 튕김' : '방송 리포트';
       var lead = reason === 'dead' ? '시청자가 전부 떠났다. 검은 화면만 남았다.'
         : reason === 'crash' ? '게임이 뻗었다. 급하게 정산하고 방송을 접었다 — 이것도 방송사고다.'
@@ -864,6 +948,7 @@
       $('overlay').classList.remove('hidden');
       $('overlay').innerHTML = '<div class="panel">' +
         '<h2>' + head + '</h2><p>' + lead + '</p>' +
+        pdHtml +
         '<canvas id="repGraph" width="620" height="150"></canvas>' +
         clipHtml +
         '<div class="statgrid">' +
@@ -1085,6 +1170,37 @@
   //   base    = (버스트 무게-1)/3 → 무게 2(도네급 양념)는 급증 만점에도 임계 미달 (규약 5)
   //   novelty = FRESH_MULT[방송 내 발생 횟수] → 3회째부터는 무엇이어도 클립 불가 (규약 4)
   //   surge   = 직전 시청자 급증 0~1 → 무게 4의 설계 피크만 급증 없이도 통과
+  // ---------- 파트너 평가 (김 피디) — "JGS.tv 파트너 계약" 스토리의 평가 장치 ----------
+  // 결정론 공식 · 관측 산물(시청자·클립·코인)만 읽는다 (C3). 검증: selftest.
+  //   성장(40) 최종/시작 로그 스케일 · 유지(20) 최종/피크 · 클립(18) · 도네(12) · 종겜(10)
+  //   송출 끊김·튕김은 ×0.6 — 방송사고로는 S/A가 나오지 않는다.
+  Shell.gradeShow = function (m) {
+    var growth = clamp(Math.log10(Math.max(1, m.final / Math.max(1, m.start))) * 25, 0, 40);
+    var hold = m.peak > 0 ? clamp(m.final / m.peak, 0, 1) * 20 : 0;
+    var clips = Math.min(3, m.clips || 0) * 6;
+    var don = clamp(Math.log10((m.coins || 0) + 1) * 4, 0, 12);
+    var vari = m.freshPct >= 100 ? 10 : m.freshPct >= 70 ? 5 : 0;
+    var score = growth + hold + clips + don + vari;
+    if (m.dead) score *= .6;
+    score = Math.round(score);
+    var g = score >= 85 ? 'S' : score >= 70 ? 'A' : score >= 50 ? 'B' : score >= 30 ? 'C' : 'D';
+    return { score: score, grade: g,
+      parts: { growth: Math.round(growth), hold: Math.round(hold), clips: clips, don: Math.round(don), vari: vari } };
+  };
+
+  // 오늘의 미션 — 결정론 (shows 회차로 회전, 목표는 채널 기록에 비례). 보상은 코인(장식 재원)뿐.
+  Shell.makeMissions = function (ch) {
+    var bestAll = 0;
+    for (var k in ch.best) bestAll = Math.max(bestAll, ch.best[k] || 0);
+    var pool = [
+      { k: 'peak',  label: '피크 시청자', target: Math.max(1000, Math.round(bestAll * .6 / 100) * 100), reward: 400 },
+      { k: 'coins', label: '도네 코인',   target: Math.min(3000, 300 + ch.shows * 100), reward: 400 },
+      { k: 'clips', label: '클립',        target: 2, reward: 400 },
+    ];
+    var i = ch.shows % 3;
+    return [pool[i], pool[(i + 1) % 3]];
+  };
+
   // 상점 구매 — 순수 함수로 떼어 둔 이유: 차감·중복·잔액 검사가 조용히 틀리면
   // 코인이 증발하거나 무한 구매가 된다. 검증: games/shell/selftest.html
   Shell.shopBuy = function (ch, item) {
