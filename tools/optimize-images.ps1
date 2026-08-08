@@ -176,7 +176,12 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'ui-sound.png'; Out = 'ui-sound.png'; W = 64; H = 64; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\shell\img'; In = 'ui-net.png';   Out = 'ui-net.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\shell\img'; In = 'ui-eye.png';   Out = 'ui-eye.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\shell\img'; In = 'ui-heart.png'; Out = 'ui-heart.png'; W = 64; H = 64; Fmt = 'png'; Key = $true }
+  @{ Dir = 'games\shell\img'; In = 'ui-heart.png'; Out = 'ui-heart.png'; W = 64; H = 64; Fmt = 'png'; Key = $true },
+  # ── UI 면 텍스처 (배경은 JPEG 크롭 밴드, 버튼 플레이트는 키잉 PNG) ──
+  @{ Dir = 'games\shell\img'; In = 'ui-titlebar.png'; Out = 'ui-titlebar.jpg'; W = 512; H = 96;  Fmt = 'jpg'; Q = 76 },
+  @{ Dir = 'games\shell\img'; In = 'ui-taskbar.png';  Out = 'ui-taskbar.jpg';  W = 512; H = 96;  Fmt = 'jpg'; Q = 76 },
+  @{ Dir = 'games\shell\img'; In = 'ui-panelbg.png';  Out = 'ui-panelbg.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 74 },
+  @{ Dir = 'games\shell\img'; In = 'ui-button.png';   Out = 'ui-button.png';   W = 256; H = 256; Fmt = 'png'; Key = $true }
 )
 
 $total = 0

@@ -241,9 +241,10 @@ FACES = FACES.concat(
 FACES = FACES.concat(['../hwaryeok/img/studio-bg.jpg', '../hwaryeok/img/pan.png',
   '../hwaryeok/img/cloche.png', '../giving-up/img/pot.png', '../giving-up/img/hammer.png',
   '../pocket/img/arena-bg.jpg']);
-// UI 크롬 아이콘 (AetherAI — 창·작업표시줄·트레이의 이모지 대체)
+// UI 크롬 아이콘 + 면 텍스처 (AetherAI — 이모지·CSS 단색면 대체)
 FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-eye', 'ui-heart']
-  .map(function (n) { return 'img/' + n + '.png'; }));
+  .map(function (n) { return 'img/' + n + '.png'; }),
+  ['img/ui-titlebar.jpg', 'img/ui-taskbar.jpg', 'img/ui-panelbg.jpg', 'img/ui-button.png']);
 // 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)
 FACES = FACES.concat(
   ['boat', 'fish-0', 'fish-1', 'fish-2', 'fish-3', 'fish-4']

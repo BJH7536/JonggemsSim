@@ -1,17 +1,18 @@
 /* 방송 셸 스타일 — prototypes/05-hwaryeok-show.html의 검증된 스타일을 셸로 승격.
    게임별 조작 UI(#panel 안쪽)는 각 게임이 자기 클래스를 여기에 추가한다. */
 :root {
-  --tally: #ff2d2d; --amber: #ffb447; --amber2: #ffd27a; --ink: #ece7dd; --dim: #8a8478;
+  --tally: #ff2d2d; --amber: #ffb447; --amber2: #ffd27a; --ink: #efeff1; --dim: #9d9ea3;
   --ok: #6fd98f; --steel: #2a2e35;
-  /* 플랫폼 크롬 전용 보라 — 무대(게임 화면)는 앰버, 플랫폼(톱바·허브·채팅 테두리)은 보라.
-     두 세계를 색으로 가르면 "방송 플랫폼 안에서 게임을 송출 중"이라는 구도가 읽힌다 */
-  --plat: #a970ff; --plat2: #c9a8ff; --platbg: #16121f;
+  /* 플랫폼 크롬 전용 민트 그린 (치지직풍) — 무대(게임 화면)는 앰버, 플랫폼(톱바·채팅·
+     작업표시줄)은 차콜+민트. 두 세계를 색으로 가르면 "방송 플랫폼 안에서 게임을 송출 중"
+     이라는 구도가 읽힌다 */
+  --plat: #00ffa3; --plat2: #7dffd0; --platbg: #17191c;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0; padding: 0 0 40px;
   font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif;
-  background: #0b0910 radial-gradient(1100px 520px at 50% -120px, #191225, #0b0910);
+  background: #141517 radial-gradient(1100px 520px at 50% -120px, #1c1f22, #141517);
   color: var(--ink);
   -webkit-user-select: none; user-select: none;
 }
@@ -24,7 +25,7 @@ body {
 .tbL { display: flex; align-items: baseline; gap: 10px; }
 .tbLogo {
   font-family: Georgia, serif; font-weight: bold; font-size: 24px; letter-spacing: 1px;
-  color: var(--plat); text-shadow: 0 0 18px rgba(169,112,255,.5);
+  color: var(--plat); text-shadow: 0 0 18px rgba(0,255,163,.5);
 }
 .tbLogo span { color: var(--plat2); font-size: 15px; }
 .tbStudio { color: var(--dim); font-size: 12px; letter-spacing: 3px; }
@@ -32,7 +33,7 @@ body {
 .tbStat b { color: var(--plat2); font-variant-numeric: tabular-nums; }
 #tbLive {
   font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 3px 10px; border-radius: 11px;
-  border: 1px solid #3a3344; color: #7a7488;
+  border: 1px solid #2e3138; color: #84868c;
 }
 #tbLive.on { border-color: var(--tally); color: #fff; background: var(--tally); animation: tpulse 2.4s infinite; }
 #stagewrap { max-width: 1280px; margin: 0 auto; padding: 0 10px; }
@@ -44,18 +45,18 @@ body {
 #chatDock {
   position: fixed; top: 0; right: 0; bottom: 44px; width: 300px; z-index: 6;
   display: flex; flex-direction: column;
-  background: #0f0c15; border-left: 1px solid #3a3344;
+  background: #141517; border-left: 1px solid #2e3138;
   box-shadow: -14px 0 36px rgba(0,0,0,.5);
 }
 #chatWinbar {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px;
-  background: linear-gradient(#221a30, #171126); border-bottom: 1px solid #3a3344;
-  font-size: 12px; color: #cfc7b8; user-select: none;
+  background: linear-gradient(#202327, #17191c); border-bottom: 1px solid #2e3138;
+  font-size: 12px; color: #c9cdd2; user-select: none;
 }
 #chatWinbar .winTitle { flex: 1; }
 #chatCol {
   flex: 1; min-height: 0; display: flex; flex-direction: column;
-  background: linear-gradient(#171221, #0f0c15);
+  background: linear-gradient(#191b1f, #141517);
 }
 .chatBadge { border: 1px solid var(--plat); color: var(--plat2); font-size: 9.5px; padding: 1px 7px; border-radius: 9px; letter-spacing: 0; }
 .chatBadge.llm { border-color: var(--ok); color: var(--ok); }
@@ -115,7 +116,7 @@ body {
 #plaque {
   position: absolute; top: 34px; left: 10px; z-index: 2;
   background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 6px;
-  padding: 6px 12px; font-size: 12px; line-height: 1.7; color: #cfc7b8;
+  padding: 6px 12px; font-size: 12px; line-height: 1.7; color: #c9cdd2;
 }
 #plaque:empty { display: none; }
 #plaque b { color: var(--amber2); font-variant-numeric: tabular-nums; }
@@ -190,24 +191,24 @@ body {
 /* ---------- 방송 준비 화면 (허브) — 스트리밍 대시보드의 문법으로 ---------- */
 /* 규약 4 확장: 게임 단위 신선도를 카드에 그대로 노출한다 — 같은 게임만 파면 물린다는
    사실이 선택 화면에서 보여야 "종겜"이 컨셉이 아니라 메커닉이 된다. */
-.panel.hub { width: min(860px, 96%); border-color: #3a3344; background: linear-gradient(#1d1728, #120e1a); }
+.panel.hub { width: min(860px, 96%); border-color: #2e3138; background: linear-gradient(#1e2023, #17191c); }
 .panel.hub h2 { color: var(--plat2); }
 .hubTop { display: flex; gap: 16px; align-items: flex-start; }
 .hubCam {
   width: 84px; height: 84px; border-radius: 8px; flex: 0 0 auto;
-  border: 2px solid var(--plat); box-shadow: 0 0 20px rgba(169,112,255,.3);
+  border: 2px solid var(--plat); box-shadow: 0 0 20px rgba(0,255,163,.3);
 }
 #hubGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); gap: 12px; margin: 16px 0 4px; }
 .gcard {
-  text-align: left; background: #171221; border: 1px solid #3a3344;
+  text-align: left; background: #191b1f; border: 1px solid #2e3138;
   border-radius: 10px; padding: 0 0 12px; cursor: pointer; color: var(--ink); overflow: hidden;
   transition: border-color .15s, transform .1s, box-shadow .15s;
 }
-.gcard:hover { border-color: var(--plat); transform: translateY(-3px); box-shadow: 0 10px 26px rgba(169,112,255,.18); }
+.gcard:hover { border-color: var(--plat); transform: translateY(-3px); box-shadow: 0 10px 26px rgba(0,255,163,.18); }
 .gcard:hover .golive { opacity: 1; }
 .gcard:active { transform: translateY(0); }
 .gthumbWrap { position: relative; }
-.gthumb { display: block; width: 100%; height: auto; border-bottom: 1px solid #2a2437; }
+.gthumb { display: block; width: 100%; height: auto; border-bottom: 1px solid #26292e; }
 .golive {
   position: absolute; right: 8px; top: 8px; opacity: 0; transition: opacity .15s;
   background: var(--tally); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1px;
@@ -215,7 +216,7 @@ body {
 }
 .gcard .gt { font-size: 16px; font-weight: 700; color: var(--ink); margin: 10px 14px 0; }
 .gcard .gd { font-size: 11.5px; color: var(--dim); margin: 5px 14px 0; line-height: 1.55; min-height: 3.1em; }
-.gcard .gf { font-size: 11px; margin: 8px 14px 0; color: #cfc7b8; display: flex; justify-content: space-between; }
+.gcard .gf { font-size: 11px; margin: 8px 14px 0; color: #c9cdd2; display: flex; justify-content: space-between; }
 .gcard .gf b { font-variant-numeric: tabular-nums; }
 .gcard .gf.warn b { color: #ff8d7a; }
 .freshbar { height: 4px; background: #000; border-radius: 3px; margin: 5px 14px 0; overflow: hidden; }
@@ -223,14 +224,14 @@ body {
 .freshbar i.warn { background: #ff8d7a; }
 .chanline { font-size: 12.5px; color: var(--dim); margin-top: 10px; }
 .chanline b { color: var(--plat2); font-variant-numeric: tabular-nums; }
-.recent { margin-top: 14px; border-top: 1px solid #2a2437; padding-top: 10px; }
+.recent { margin-top: 14px; border-top: 1px solid #26292e; padding-top: 10px; }
 .recent .rlab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin-bottom: 6px; }
-.recent .rrow { display: flex; justify-content: space-between; font-size: 12px; color: #cfc7b8; padding: 2px 0; }
+.recent .rrow { display: flex; justify-content: space-between; font-size: 12px; color: #c9cdd2; padding: 2px 0; }
 .recent .rrow b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 .recent .rrow .rec { color: var(--ok); font-size: 10.5px; margin-left: 6px; }
 
 /* ---------- 방송 리포트 그래프 ---------- */
-#repGraph { display: block; width: 100%; height: auto; background: #0e0b14; border: 1px solid #2a2437; border-radius: 6px; margin: 8px 0 4px; }
+#repGraph { display: block; width: 100%; height: auto; background: #101214; border: 1px solid #26292e; border-radius: 6px; margin: 8px 0 4px; }
 
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
@@ -246,10 +247,10 @@ body {
 .pkmove span { font-size: 10px; color: var(--dim); }
 .pkmove span.warn { color: #ff8d7a; }
 .pkside { flex: 1 1 260px; display: flex; flex-direction: column; gap: 7px; }
-.pkfoe { font-size: 11.5px; color: var(--dim); background: #171221; border: 1px solid #3a3344; border-radius: 8px; padding: 7px 10px; }
+.pkfoe { font-size: 11.5px; color: var(--dim); background: #191b1f; border: 1px solid #2e3138; border-radius: 8px; padding: 7px 10px; }
 .pkbench { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .pkmon {
-  background: #171221; border: 1px solid #3a3344; border-radius: 8px; color: var(--ink);
+  background: #191b1f; border: 1px solid #2e3138; border-radius: 8px; color: var(--ink);
   padding: 7px 9px; cursor: pointer; text-align: left; transition: border-color .15s;
 }
 .pkmon:hover:not(:disabled) { border-color: var(--plat); }
@@ -270,7 +271,7 @@ body {
 #panel { margin-top: 10px; }
 #panel:empty { display: none; }
 #foot { text-align: center; color: #6b6455; font-size: 11.5px; margin-top: 12px; line-height: 1.7; }
-#foot kbd { border: 1px solid #4a4232; border-radius: 3px; padding: 0 4px; color: #cfc7b8; }
+#foot kbd { border: 1px solid #4a4232; border-radius: 3px; padding: 0 4px; color: #c9cdd2; }
 
 /* 화력쇼 — 화구 조작 스트립 */
 .strip4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -306,7 +307,7 @@ body {
 .modes button:hover:not(:disabled) { border-color: var(--amber); color: var(--amber2); }
 .modes button:disabled { opacity: .4; cursor: default; }
 .bhint { font-size: 10px; color: var(--dim); margin-top: 6px; line-height: 1.5; }
-.bhint b { color: #cfc7b8; }
+.bhint b { color: #c9cdd2; }
 
 /* Giving Up On It — 등반 계기판 */
 .climbbar {
@@ -327,7 +328,7 @@ body {
 .deskWrap { padding: 0; background: none; border: 0; box-shadow: none; }
 .monitor {
   border: 12px solid #1a1622; border-radius: 14px;
-  background: #0a0810; box-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px #2a2338;
+  background: #0a0810; box-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px #26292e;
 }
 .mstand {
   width: 120px; height: 12px; margin: 0 auto;
@@ -349,8 +350,8 @@ body {
   width: 92px; padding: 8px 4px 7px; border: 1px solid transparent; border-radius: 8px;
   background: transparent; color: var(--ink); font: inherit; cursor: pointer; text-align: center;
 }
-.dIcon:hover { background: rgba(169,112,255,.14); border-color: rgba(169,112,255,.35); }
-.dIcon.on { background: rgba(169,112,255,.22); border-color: var(--plat); }
+.dIcon:hover { background: rgba(0,255,163,.14); border-color: rgba(0,255,163,.35); }
+.dIcon.on { background: rgba(0,255,163,.22); border-color: var(--plat); }
 .dIconArt {
   display: block; width: 56px; height: 56px; margin: 0 auto 6px; border-radius: 12px;
   overflow: hidden; background: #141019; box-shadow: 0 4px 12px rgba(0,0,0,.45);
@@ -366,30 +367,24 @@ body {
 .dIconFresh { display: block; font-size: 10px; color: var(--ok); margin-top: 2px; }
 .dIconFresh.warn { color: var(--amber); }
 
-/* 런처 창 */
-.deskWin {
-  position: absolute; right: 18px; bottom: 56px; width: min(330px, calc(100% - 36px));
-  background: rgba(18,14,26,.94); border: 1px solid #3a2f4d; border-radius: 10px;
+/* 게임 설명 툴팁 — 창이 아니라 아이콘 옆 팝업 (호버로 열리고 벗어나면 닫힌다).
+   pointer-events가 없어 어떤 아이콘 클릭도 막지 않는다 */
+#dTip {
+  position: fixed; z-index: 5; width: 300px; pointer-events: none;
+  background: rgba(23,25,28,.97); border: 1px solid #2e3138; border-radius: 10px;
   box-shadow: 0 16px 40px rgba(0,0,0,.55); overflow: hidden;
 }
-.dwBar {
-  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
-  background: linear-gradient(#241c33, #1a1428); border-bottom: 1px solid #3a2f4d;
-}
-.dwDots { display: flex; gap: 4px; }
-.dwDots i { width: 9px; height: 9px; border-radius: 50%; background: #4a3d63; }
-.dwDots i:first-child { background: #ff5f57; }
-.dwTitle { font-size: 12px; font-weight: 700; color: var(--plat2); letter-spacing: .5px; }
-.dwBody { display: flex; gap: 10px; padding: 10px; }
-.dwBody .gthumb { width: 114px; height: 52px; border-radius: 5px; flex: 0 0 auto; }
-.dwInfo { flex: 1; min-width: 0; }
+#dTip:empty { display: none; }
+#dTip .gthumb { display: block; width: 100%; height: auto; }
+.dwInfo { padding: 10px 12px 4px; }
+.dwInfo .tipTitle { display: block; font-size: 14px; color: var(--plat2); margin-bottom: 5px; }
 .dwInfo .gd { font-size: 11.5px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }
-.dwInfo .gf { font-size: 11px; margin-top: 6px; color: #cfc7b8; display: flex; justify-content: space-between; }
+.dwInfo .gf { font-size: 11px; margin-top: 6px; color: #c9cdd2; display: flex; justify-content: space-between; }
 /* 방송 시작 버튼 대신 — 진입은 실제 데스크탑처럼 더블클릭이다 */
 .dwHint {
-  display: block; margin: 0 14px 14px; padding: 10px; text-align: center;
-  border: 1px dashed rgba(169,112,255,.5); border-radius: 7px;
-  color: var(--plat2); font-size: 12.5px; letter-spacing: .5px;
+  display: block; margin: 10px 12px 12px; padding: 8px; text-align: center;
+  border: 1px dashed rgba(0,255,163,.45); border-radius: 7px;
+  color: var(--plat2); font-size: 12px; letter-spacing: .5px;
 }
 .dwHint b { color: #fff; }
 
@@ -397,15 +392,14 @@ body {
 .deskBar {
   position: absolute; left: 0; right: 0; bottom: 0; height: 38px;
   display: flex; align-items: center; gap: 12px; padding: 0 12px;
-  background: rgba(10,8,16,.88); border-top: 1px solid #2a2338; font-size: 11.5px;
+  background: rgba(14,16,18,.88); border-top: 1px solid #26292e; font-size: 11.5px;
 }
 .dStart { display: flex; align-items: center; gap: 7px; font-weight: 700; color: var(--plat2); }
 .dStart img { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--plat); }
-.dBarInfo { color: #cfc7b8; }
+.dBarInfo { color: #c9cdd2; }
 .dBarHint { margin-left: auto; color: var(--dim); }
 
 @media (max-width: 720px) {
-  .deskWin { position: static; width: auto; margin-top: 12px; }
   .screen { padding-bottom: 18px; }
   .deskBar { position: static; margin: 12px -18px -18px; }
 }
@@ -416,16 +410,16 @@ body {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 10px; text-align: center;
   background:
-    radial-gradient(520px 260px at 50% 30%, rgba(169,112,255,.16), transparent 70%),
-    linear-gradient(#141020, #0b0910);
+    radial-gradient(520px 260px at 50% 30%, rgba(0,255,163,.16), transparent 70%),
+    linear-gradient(#141020, #141517);
 }
 .ssTop { font-size: 11px; letter-spacing: 6px; color: var(--plat2); opacity: .8; }
 .startSoon h2 { margin: 0; font-size: 26px; color: var(--ink); font-family: Georgia, serif; }
-.ssGame { font-size: 13px; color: #cfc7b8; }
+.ssGame { font-size: 13px; color: #c9cdd2; }
 .ssGame .cat { margin-right: 8px; }
 .ssCount {
   font: bold 64px Georgia, serif; color: var(--plat2); line-height: 1;
-  text-shadow: 0 0 30px rgba(169,112,255,.6); min-height: 68px;
+  text-shadow: 0 0 30px rgba(0,255,163,.6); min-height: 68px;
 }
 .ssCount.pop { animation: sspop .65s ease-out; }
 @keyframes sspop { 0% { transform: scale(1.5); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 100% { opacity: 1; } }
@@ -443,7 +437,7 @@ body {
 #infoRow {
   display: flex; align-items: center; gap: 12px;
   margin: 8px 0 2px; padding: 10px 14px;
-  background: linear-gradient(#171221, #110d1a); border: 1px solid #2a2437; border-radius: 8px;
+  background: linear-gradient(#191b1f, #110d1a); border: 1px solid #26292e; border-radius: 8px;
 }
 #infoDot { font-size: 10px; }
 #infoDot.on { color: var(--tally); animation: tpulse 2.4s infinite; }
@@ -456,7 +450,7 @@ body {
   border: 1px solid var(--plat); color: var(--plat2); font-size: 10.5px;
 }
 .infoR { display: flex; align-items: center; gap: 12px; }
-.infoViewers { font-size: 12.5px; color: #cfc7b8; font-variant-numeric: tabular-nums; }
+.infoViewers { font-size: 12.5px; color: #c9cdd2; font-variant-numeric: tabular-nums; }
 #followBtn {
   padding: 6px 14px; border: 0; border-radius: 7px; cursor: pointer;
   background: var(--plat); color: #fff; font: 700 12px inherit;
@@ -464,7 +458,7 @@ body {
 #followBtn:hover { filter: brightness(1.15); }
 
 /* ---------- 작업표시줄 트레이 (시계·아이콘) ---------- */
-.dTray { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 11px; color: #cfc7b8; }
+.dTray { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 11px; color: #c9cdd2; }
 .dTray i { font-style: normal; opacity: .85; }
 #dRec { color: var(--tally); font-size: 10px; letter-spacing: 1px; animation: tpulse 2.4s infinite; }
 #dClock { font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -479,7 +473,7 @@ body {
   background:
     linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55)),
     url('img/desktop-wallpaper.jpg') center/cover fixed no-repeat,
-    #0b0910;
+    #141517;
   padding-bottom: 56px;               /* 작업표시줄 자리 */
 }
 
@@ -491,24 +485,13 @@ body {
 #desktop .deskIcons { flex-direction: column; align-content: flex-start; height: 100%; }
 #desktop .dIcon { width: 96px; }
 #desktop .dIconName { text-shadow: 0 1px 4px #000, 0 0 12px rgba(0,0,0,.8); }
-/* 런처(방송 설명) 창 — 게임 화면처럼 크게: 아이콘 열 오른쪽의 바탕화면을 거의 다 쓴다.
-   방송 시작 버튼은 없다: 진입은 더블클릭 */
-#desktop .deskWin {
-  position: absolute; left: 150px; right: 16px; top: 36px; bottom: auto;
-  width: auto; max-height: calc(100% - 52px);
-  display: flex; flex-direction: column;
-}
-#desktop .deskWin .dwBody { flex: 1 1 auto; min-height: 0; overflow: auto; flex-direction: column; gap: 12px; padding: 14px; }
-#desktop .deskWin .gthumb { width: 100%; height: auto; }
-#desktop .dwInfo .gd { font-size: 13px; }
-#desktop .dwInfo .gf { font-size: 12.5px; }
 .deskStat {
-  position: fixed; left: 30px; bottom: 60px; font-size: 11.5px; color: #cfc7b8;
+  position: fixed; left: 30px; bottom: 60px; font-size: 11.5px; color: #c9cdd2;
   text-shadow: 0 1px 4px #000; letter-spacing: .3px;
 }
 #desktop .recent {
   position: absolute; left: 24px; bottom: 44px; width: min(320px, 40%);
-  background: rgba(18,14,26,.92); border: 1px solid #3a2f4d; border-radius: 10px; padding: 12px 14px;
+  background: rgba(23,25,28,.92); border: 1px solid #2e3138; border-radius: 10px; padding: 12px 14px;
 }
 
 /* JGS.tv 창 크롬 — 방송 중에만 열리고, 열리면 전체화면(채팅 독 왼쪽 전체)이다.
@@ -516,21 +499,21 @@ body {
 #jgsWin {
   position: fixed; inset: 0 300px 44px 0; z-index: 4;
   display: flex; flex-direction: column;
-  background: #0f0c15; border-right: 1px solid #3a3344;
+  background: #141517; border-right: 1px solid #2e3138;
   overflow: auto;
 }
 #jgsWin.minimized { display: none; }
 #winbar {
   display: flex; align-items: center; gap: 9px; padding: 8px 12px;
-  background: linear-gradient(#221a30, #171126); border-bottom: 1px solid #3a3344;
-  font-size: 12px; color: #cfc7b8; user-select: none;
+  background: linear-gradient(#202327, #17191c); border-bottom: 1px solid #2e3138;
+  font-size: 12px; color: #c9cdd2; user-select: none;
 }
 .winIco { font-size: 13px; }
 .winTitle { flex: 1; letter-spacing: .5px; }
 .winBtns { display: flex; gap: 6px; }
 .winBtns i {
   width: 26px; height: 20px; display: grid; place-items: center;
-  font-style: normal; font-size: 11px; border-radius: 4px; color: #9a92a8;
+  font-style: normal; font-size: 11px; border-radius: 4px; color: #9d9ea3;
 }
 .winBtns i:hover { background: rgba(255,255,255,.08); }
 .winBtns i.x:hover { background: #c0392b; color: #fff; }
@@ -543,10 +526,10 @@ body {
 #followBtn .uiIco { width: 12px; height: 12px; }
 /* 게임 화면이 창을 최대한 채우게 — 폭을 "세로 여유 × 캔버스 비율(960/430)"로 계산해
    패널·조작 안내(foot)까지 스크롤 없이 들어가는 최대 크기로 띄운다.
-   385px ≈ 창 크롬+정보줄+패널+foot 높이 (1600x900 실측으로 역산) */
-#jgsWin #topbar { max-width: clamp(960px, calc((100vh - 385px) * 2.233), 1600px); width: 100%; }
+   392px ≈ 창 크롬+정보줄+패널+foot 높이 (1600x900 실측으로 역산) */
+#jgsWin #topbar { max-width: clamp(960px, calc((100vh - 392px) * 2.233), 1600px); width: 100%; }
 #jgsWin #stagewrap {
-  max-width: clamp(960px, calc((100vh - 385px) * 2.233), 1600px);
+  max-width: clamp(960px, calc((100vh - 392px) * 2.233), 1600px);
   width: 100%; margin: 0 auto; padding: 0 14px 14px;
 }
 
@@ -554,7 +537,7 @@ body {
 #taskbar {
   position: fixed; left: 0; right: 0; bottom: 0; height: 44px; z-index: 10;
   display: flex; align-items: center; gap: 10px; padding: 0 12px;
-  background: rgba(12,9,18,.92); border-top: 1px solid #2a2338;
+  background: rgba(16,18,20,.92); border-top: 1px solid #26292e;
   backdrop-filter: blur(8px);
 }
 #tbStart {
@@ -562,20 +545,64 @@ body {
   background: transparent; border: 1px solid transparent; border-radius: 7px;
   color: var(--plat2); font: 700 12px inherit; cursor: default;
 }
-#tbStart:hover { background: rgba(169,112,255,.12); border-color: rgba(169,112,255,.3); }
+#tbStart:hover { background: rgba(0,255,163,.12); border-color: rgba(0,255,163,.3); }
 #tbStart img { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--plat); }
 #tbApps { display: flex; gap: 6px; }
 .tbApp {
   display: flex; align-items: center; gap: 6px; padding: 6px 12px;
-  border-radius: 6px; font-size: 11.5px; color: #cfc7b8;
+  border-radius: 6px; font-size: 11.5px; color: #c9cdd2;
   border: 1px solid transparent; border-bottom: 2px solid #4a4456;
 }
 .tbApp i { font-style: normal; }
-.tbApp.on { background: rgba(169,112,255,.16); border-bottom-color: var(--plat); color: var(--ink); }
+.tbApp.on { background: rgba(0,255,163,.16); border-bottom-color: var(--plat); color: var(--ink); }
 .tbApp.dim { opacity: .65; }
 .tbApp em { font-style: normal; font-size: 8px; color: #4a4456; margin-left: 2px; }
 .tbApp em.live { color: var(--tally); animation: tpulse 2.4s infinite; }
 #taskbar .dTray { margin-left: auto; }
+
+/* ---------- AetherAI UI 면 텍스처 ---------- */
+/* 아이콘만으론 "UI가 생성물"이라는 인상이 안 남아 면(타이틀바·작업표시줄·패널·버튼)도
+   생성 텍스처로 채운다. 다층 배경이라 이미지가 없으면 아래 깔린 기존 그라데이션이
+   그대로 보인다 — 텍스처는 얹는 층이지 의존성이 아니다. 글자·상태등은 계속 HTML/CSS. */
+#winbar, #chatWinbar, .dwBar {
+  background: linear-gradient(rgba(23,17,38,.45), rgba(23,17,38,.45)),
+    url('img/ui-titlebar.jpg') center/cover no-repeat, linear-gradient(#202327, #17191c);
+}
+#taskbar {
+  background: linear-gradient(rgba(16,18,20,.6), rgba(16,18,20,.6)),
+    url('img/ui-taskbar.jpg') center/cover no-repeat, rgba(16,18,20,.92);
+}
+#dTip {
+  background: linear-gradient(rgba(23,25,28,.8), rgba(23,25,28,.8)),
+    url('img/ui-panelbg.jpg') center/cover, #17191c;
+}
+#desktop .recent {
+  background: linear-gradient(rgba(23,25,28,.78), rgba(23,25,28,.78)),
+    url('img/ui-panelbg.jpg') center/cover, #17191c;
+}
+#chatCol {
+  background: linear-gradient(rgba(23,25,28,.8), rgba(23,25,28,.8)),
+    url('img/ui-panelbg.jpg') center/cover, linear-gradient(#191b1f, #141517);
+}
+.panel {
+  background: linear-gradient(rgba(30,22,14,.84), rgba(30,22,14,.84)),
+    url('img/ui-panelbg.jpg') center/cover, linear-gradient(#221a10, #150e08);
+}
+/* 버튼 — 생성 플레이트(민트)를 면으로, 글자는 HTML 그대로 (또렷함·한글 유지).
+   밝은 민트 위라 글자는 진한 초록-흑색 — 치지직 버튼 문법 */
+.slab {
+  background: url('img/ui-button.png') center/100% 100% no-repeat, linear-gradient(#4a3f28, #2c2414);
+  color: #06301e; font-weight: 700; text-shadow: 0 1px 0 rgba(255,255,255,.22);
+}
+.slab:hover:not(:disabled) { color: #000; filter: brightness(1.08); }
+.slab.primary {
+  background: url('img/ui-button.png') center/100% 100% no-repeat, linear-gradient(#8a6f2c, #5c4a1c);
+  filter: saturate(1.15) brightness(1.12);
+}
+#followBtn {
+  background: url('img/ui-button.png') center/100% 100% no-repeat, var(--plat);
+  color: #06301e;
+}
 
 /* ---------- 반응형 — 채팅 독·전체화면 창 (기준 규칙보다 뒤: 캐스케이드에서 이겨야 한다) ---------- */
 @media (max-width: 900px) {
