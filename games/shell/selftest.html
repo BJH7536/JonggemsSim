@@ -88,6 +88,24 @@ eq('구매 성공 시 정확히 차감', (Shell.shopBuy(shopCh, { id: 'x', price
 ok('잔액 부족은 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'y', price: 999 }) === 'poor' && shopCh.coins === 400);
 ok('중복 구매는 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'x', price: 100 }) === 'owned' && shopCh.coins === 400);
 
+// ---- 파트너 평가 (김 피디) — 결정론 공식. 틀리면 평가가 채널 서사를 거꾸로 쓴다 ----
+var GS = Shell.gradeShow;
+ok('대박 방송(100배 성장·클립 3·도네)은 S',
+   GS({ final: 30000, start: 300, peak: 33000, clips: 3, coins: 2000, freshPct: 100, dead: false }).grade === 'S');
+ok('송출 끊김은 같은 지표여도 S/A 불가',
+   'SA'.indexOf(GS({ final: 30000, start: 300, peak: 33000, clips: 3, coins: 2000, freshPct: 100, dead: true }).grade) < 0);
+ok('성장이 클수록 점수가 높다 (단조)',
+   GS({ final: 3000, start: 300, peak: 3300, clips: 1, coins: 500, freshPct: 100, dead: false }).score >
+   GS({ final: 600, start: 300, peak: 3300, clips: 1, coins: 500, freshPct: 100, dead: false }).score);
+ok('아무 일도 없던 방송은 D',
+   GS({ final: 300, start: 300, peak: 300, clips: 0, coins: 0, freshPct: 45, dead: false }).grade === 'D');
+
+// ---- 오늘의 미션 — 결정론·회전 (허브 표시와 정산이 같은 값을 봐야 한다) ----
+var M0 = Shell.makeMissions({ shows: 0, best: {} }), M1 = Shell.makeMissions({ shows: 1, best: {} });
+ok('미션은 2개, 목표·보상은 양수', M0.length === 2 && M0.every(function (m) { return m.target > 0 && m.reward > 0; }));
+ok('회차마다 구성이 회전한다', M0[0].k !== M1[0].k);
+ok('같은 채널 상태 → 같은 미션 (결정론)', JSON.stringify(M0) === JSON.stringify(Shell.makeMissions({ shows: 0, best: {} })));
+
 // ---- 채팅 검증 게이트 ----
 Chat.init(document.createElement('div'));
 Chat.load({
@@ -285,7 +303,8 @@ FACES = FACES.concat(
 // 화력쇼·GUOI 아트 (AetherAI — 배경 플레이트·팬·클로슈·항아리·망치 헤드)
 FACES = FACES.concat(['../hwaryeok/img/studio-bg.jpg', '../hwaryeok/img/pan.png',
   '../hwaryeok/img/cloche.png', '../giving-up/img/pot.png', '../giving-up/img/hammer.png',
-  '../giving-up/img/sky-bg.jpg', '../pocket/img/arena-bg.jpg']);
+  '../giving-up/img/sky-bg.jpg', '../giving-up/img/ledge.png', '../giving-up/img/boulder.png',
+  '../pocket/img/arena-bg.jpg']);
 // UI 크롬 아이콘 + 면 텍스처 (AetherAI — 이모지·CSS 단색면 대체)
 FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-eye', 'ui-heart']
   .map(function (n) { return 'img/' + n + '.png'; }),
@@ -294,6 +313,8 @@ FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-
 // 상점 아이콘 (AetherAI — 데스크탑 앱 1종 + 상품 5종)
 FACES = FACES.concat(['icon-shop', 'shop-camgold', 'shop-neonsign', 'shop-fanfare',
   'shop-tallyplat', 'shop-holobadge'].map(function (n) { return 'img/' + n + '.png'; }));
+// 김 피디 초상 + 알림 배너 플레이트 (AetherAI)
+FACES = FACES.concat(['img/kim-pd.png', 'img/ui-banner-mint.jpg', 'img/ui-banner-gold.jpg']);
 // 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)
 FACES = FACES.concat(
   ['boat', 'fish-0', 'fish-1', 'fish-2', 'fish-3', 'fish-4']
@@ -308,7 +329,10 @@ FACES = FACES.concat(
 //   늘었다. 대신 같은 PR에서 게임 아트 전부를 지연 로드로 돌렸다 — 첫 화면은 이제
 //   바탕화면+아이콘 ~150KB만 내려받는다. "링크 클릭 즉시 플레이"의 실체는 첫 화면이고,
 //   이 예산은 총량 상한(회선 부담 가드)으로 남는다.
-var BUDGET_KB = 2000;
+// → 2000 → 2200 (2026-08-08 밤): "작은 것 하나하나 AetherAI" 방침으로 GUOI 발판·바위,
+//   상점 아이콘 6, 김 피디 초상, 배너 플레이트 2가 추가됐다. 전부 지연 로드 뒤에 있어
+//   첫 화면(~150KB)은 불변 — 이 예산은 총량 상한(회선 부담 가드)이다.
+var BUDGET_KB = 2200;
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {
     return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });

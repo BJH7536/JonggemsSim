@@ -45,6 +45,23 @@ public static class Chroma {
     Marshal.Copy(px, 0, d.Scan0, n);
     bmp.UnlockBits(d);
   }
+  // 전체 픽셀 디스필 — 반사 금속(곡괭이 등)은 마젠타 배경빛이 몸통 안쪽까지 배어든다.
+  // 가장자리 한정 디스필로는 못 잡아서, 모든 픽셀에서 excess = min(R,B) − G 를 걷어낸다.
+  // 회색·주황·파랑·초록은 excess ≤ 0 이라 무손상 — 보라 팔레트 에셋에는 쓰지 말 것.
+  public static void DespillAll(Bitmap bmp) {
+    var r = new Rectangle(0, 0, bmp.Width, bmp.Height);
+    var d = bmp.LockBits(r, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+    int n = Math.Abs(d.Stride) * bmp.Height;
+    byte[] px = new byte[n];
+    Marshal.Copy(d.Scan0, px, 0, n);
+    for (int i = 0; i < n; i += 4) {
+      int B = px[i], G = px[i + 1], R = px[i + 2];
+      int excess = Math.Min(R, B) - G;
+      if (excess > 0) { px[i + 2] = (byte)(R - excess); px[i] = (byte)(B - excess); }
+    }
+    Marshal.Copy(px, 0, d.Scan0, n);
+    bmp.UnlockBits(d);
+  }
   // VFX 시트용 — 생성 모델이 "검은 배경" 지시를 무시하고 흰 배경으로 준다(실측).
   // 흰색일수록 투명(a = 1 − min(R,G,B)/255)으로 보고 검정 위에 눕힌다: out = C × a.
   // 게임이 'screen' 블렌드로 얹으므로 검정은 0 기여 — 결과적으로 이펙트 선만 떠오른다.
@@ -72,7 +89,7 @@ public static class Chroma {
 $root = Join-Path $PSScriptRoot ".."
 
 function Resize-Image {
-  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false)
+  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false, [bool]$Despill = $false)
 
   # 주의: 파라미터가 [string]$Src 이고 PowerShell은 변수명 대소문자를 구분하지 않는다.
   # $src 에 Image를 대입하면 선언 타입에 맞춰 문자열로 변환된다. 반드시 다른 이름을 쓸 것.
@@ -95,6 +112,7 @@ function Resize-Image {
   # 키잉은 축소 후에 한다 — 원본(1024²)보다 25배 적은 픽셀이고, 축소 보간이 만든
   # 마젠타 반투명 띠까지 같은 패스에서 디스필된다.
   if ($Key) { [Chroma]::KeyMagenta($bmp) }
+  if ($Despill) { [Chroma]::DespillAll($bmp) }
   if ($WhiteKey) { [Chroma]::WhiteToBlack($bmp) }
 
   if ($Fmt -eq 'jpg') {
@@ -131,6 +149,10 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'shop-fanfare.png';   Out = 'shop-fanfare.png';   W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'shop-tallyplat.png'; Out = 'shop-tallyplat.png'; W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'shop-holobadge.png'; Out = 'shop-holobadge.png'; W = 96; H = 96; Fmt = 'png' },
+  # ── 알림 배너 플레이트 (JPEG 크롭 밴드) + 김 피디 초상 (캠 얼굴과 같은 문법) ──
+  @{ Dir = 'games\shell\img'; In = 'ui-banner-mint.png'; Out = 'ui-banner-mint.jpg'; W = 480; H = 96; Fmt = 'jpg'; Q = 80 },
+  @{ Dir = 'games\shell\img'; In = 'ui-banner-gold.png'; Out = 'ui-banner-gold.jpg'; W = 480; H = 96; Fmt = 'jpg'; Q = 80 },
+  @{ Dir = 'games\shell\img'; In = 'kim-pd.png';         Out = 'kim-pd.png';         W = 148; H = 148; Fmt = 'png' },
   # ── 주머니 괴수: 몬스터 (마젠타 키잉 → 알파 PNG). 화면 최대 134px → 192px이면 레티나까지 충분 ──
   @{ Dir = 'games\pocket\img'; In = 'me-fire.png';   Out = 'me-fire.png';   W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\pocket\img'; In = 'me-water.png';  Out = 'me-water.png';  W = 192; H = 192; Fmt = 'png'; Key = $true },
@@ -161,10 +183,14 @@ $jobs = @(
   @{ Dir = 'games\hwaryeok\img';  In = 'pan.png';    Out = 'pan.png';    W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\hwaryeok\img';  In = 'cloche.png'; Out = 'cloche.png'; W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\giving-up\img'; In = 'pot.png';    Out = 'pot.png';    W = 128; H = 128; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true; Despill = $true },
   # ── 심연낚시 (배경 플레이트 + 배 + 어종 5티어 + 물보라 시트) ──
   @{ Dir = 'games\fishing\img'; In = 'sea-bg.png';     Out = 'sea-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\giving-up\img'; In = 'sky-bg.png';   Out = 'sky-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
+  # 발판(렛지)은 가로로 늘려 그리므로 얇은 밴드로 크롭, 바위는 정사각 (둘 다 마젠타 키잉)
+  # 실표시 폭 ≤246·높이 22px라 384x96/144면 레티나에도 충분 — payload 예산 압박으로 축소
+  @{ Dir = 'games\giving-up\img'; In = 'ledge.png';    Out = 'ledge.png';      W = 384; H = 96;  Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\giving-up\img'; In = 'boulder.png';  Out = 'boulder.png';    W = 144; H = 144; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\fishing\img'; In = 'boat.png';       Out = 'boat.png';       W = 256; H = 256; Fmt = 'png'; Key = $true },
   # 어종은 화면 크기(r×3.8 = 34~152px)에 맞춰 티어별로 다르게 줄인다 — 전설만 크다
   @{ Dir = 'games\fishing\img'; In = 'fish-0.png';     Out = 'fish-0.png';     W = 96;  H = 96;  Fmt = 'png'; Key = $true },
@@ -217,8 +243,9 @@ foreach ($j in $jobs) {
   $q = if ($j.ContainsKey('Q')) { $j.Q } else { 80 }
   $key = if ($j.ContainsKey('Key')) { $j.Key } else { $false }
   $wkey = if ($j.ContainsKey('WhiteKey')) { $j.WhiteKey } else { $false }
+  $desp = if ($j.ContainsKey('Despill')) { $j.Despill } else { $false }
   # 변환이 실패했는데도 원본을 지우거나 "줄었다"고 출력하면 안 된다 (실제로 그런 적 있음)
-  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey }
+  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey -Despill $desp }
   catch {
     Write-Host ("실패    {0} — {1}" -f $j.In, $_.Exception.Message)
     if (Test-Path $tmp) { Remove-Item $tmp -Force }

@@ -222,7 +222,19 @@
       "id": "guoi-hammer",
       "out": "games/giving-up/img/hammer.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a sledgehammer HEAD only without any handle, rectangular forged steel block seen from the side, slightly worn edges, oriented horizontally. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+      "prompt": "Game sprite of a steel climbing pickaxe HEAD only without any handle, seen from the side, oriented horizontally: the front end is a long sharp pick spike curving downward into a hook (like a climbing hook that grabs ledges), the back end is a short flat counterweight block. Slightly worn forged steel in neutral cool grey tones (#9aa0a8, #6a7078) — the metal must contain absolutely NO purple, magenta or pink reflections. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "guoi-ledge",
+      "out": "games/giving-up/img/ledge.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single very long thin horizontal stone ledge platform seen from the side, sunlit warm tan rock (#c9b89c) with a brighter flat top surface (#e0cca8) and a darker underside (#8a7660), a few subtle cracks and two tiny grass tufts on top. MUCH wider than tall, spanning the full width of the frame, centered vertically as a thin slab. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "guoi-boulder",
+      "out": "games/giving-up/img/boulder.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single round smooth boulder seen from the side, sunlit warm tan rock (#c9b89c) with a brighter top-left highlight (#e0cca8) and darker lower-right shading (#8a7660), a few subtle cracks. Perfectly round silhouette. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
     },
     {
       "id": "guoi-sky",
@@ -375,6 +387,27 @@
       "out": "games/shell/img/ui-button.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Game UI button plate, single wide rounded rectangle with softly beveled edges, vivid mint green gradient (#00ffa3 to #00c47e) with a subtle top highlight and darker bottom edge, slight dark outline, designed so dark text on top stays readable. Flat clean vector game UI style, no text, no icons, centered. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background."
+    },
+    {
+      "id": "kim-pd",
+      "out": "games/shell/img/kim-pd.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Chibi bust portrait of an original middle-aged Korean broadcast producer manager character: short neat black hair, thin rectangular glasses, tired but kind eyes, a small encouraging smile, grey cardigan over a shirt with a lanyard ID badge. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person."
+    },
+    {
+      "_": "── 알림 배너 플레이트 2종 — 클립(민트)·도네(골드) 배너의 면. CSS 그라데이션 대체 (Claude 수제 면 금지 방침). 글자는 HTML이 얹으므로 저대비"
+    },
+    {
+      "id": "ui-banner-mint",
+      "out": "games/shell/img/ui-banner-mint.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Wide horizontal UI notification banner plate texture for a dark streaming app: very dark teal smoked-glass surface (#07221a to #051510) with a soft vivid mint green (#00ffa3) glow bleeding in from the left edge and an extremely subtle diagonal sheen. Fills the entire frame edge to edge, no rounded corners, no border. Very low contrast so small white text on top stays readable. No text, no icons."
+    },
+    {
+      "id": "ui-banner-gold",
+      "out": "games/shell/img/ui-banner-gold.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Wide horizontal UI notification banner plate texture for a dark streaming app: very dark warm brown smoked-glass surface (#30240a to #1a1408) with a soft warm amber gold (#ffb447) glow bleeding in from the left edge and an extremely subtle diagonal sheen. Fills the entire frame edge to edge, no rounded corners, no border. Very low contrast so small light text on top stays readable. No text, no icons."
     },
     {
       "_": "── 상점 (방송용품) — 데스크탑 앱 아이콘 1종 + 상품 아이콘 5종. 게임 런처 아이콘과 같은 문법(어두운 배경 플랫 벡터)으로 한 세트로 보이게. 상품은 전부 순수 장식 — 표시 ~52px"
