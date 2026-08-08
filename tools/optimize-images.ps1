@@ -124,6 +124,13 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'icon-pocket.png';    Out = 'icon-pocket.png';    W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'icon-fishing.png';   Out = 'icon-fishing.png';   W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'icon-bomb.png';      Out = 'icon-bomb.png';      W = 96; H = 96; Fmt = 'png' },
+  # ── 상점 (데스크탑 앱 아이콘 + 상품 아이콘 — 표시 56px) ──
+  @{ Dir = 'games\shell\img'; In = 'icon-shop.png';      Out = 'icon-shop.png';      W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'shop-camgold.png';   Out = 'shop-camgold.png';   W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'shop-neonsign.png';  Out = 'shop-neonsign.png';  W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'shop-fanfare.png';   Out = 'shop-fanfare.png';   W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'shop-tallyplat.png'; Out = 'shop-tallyplat.png'; W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'shop-holobadge.png'; Out = 'shop-holobadge.png'; W = 96; H = 96; Fmt = 'png' },
   # ── 주머니 괴수: 몬스터 (마젠타 키잉 → 알파 PNG). 화면 최대 134px → 192px이면 레티나까지 충분 ──
   @{ Dir = 'games\pocket\img'; In = 'me-fire.png';   Out = 'me-fire.png';   W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\pocket\img'; In = 'me-water.png';  Out = 'me-water.png';  W = 192; H = 192; Fmt = 'png'; Key = $true },

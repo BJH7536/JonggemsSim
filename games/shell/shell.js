@@ -62,11 +62,14 @@
         fresh: d.fresh || {},       // gameId -> 0..4 (감쇠 단계)
         best: d.best || {},         // gameId -> 최고 시청자
         log: d.log || [],           // 최근 방송 기록 [{g, v, r}] 최신순 4개
+        coins: d.coins || 0,        // 도네 코인 잔액 — 방송 정산 때 적립, 상점에서 소비
+        gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
       };
     },
     updateTopbar: function () {
       $('tbSubs').textContent = this.ch.subs.toLocaleString();
       $('tbShows').textContent = this.ch.shows;
+      var tc = $('tbCoins'); if (tc) tc.textContent = this.ch.coins.toLocaleString();
       var live = this.phase === 'live';
       $('tbLive').textContent = live ? '● LIVE' : 'OFFLINE';
       $('tbLive').className = live ? 'on' : 'off';
@@ -96,6 +99,7 @@
       this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
       this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
+      this.applyGear(); // 보유 방송용품(장식)을 화면에 반영
       var self2 = this;
       $('followBtn').addEventListener('click', function () {
         self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
@@ -147,7 +151,11 @@
         if (self.phase !== 'live') {
           if ((e.key === 'r' || e.key === 'R') && self.phase === 'result' && self.game) self.start(self.game.id);
           if (e.key === 'Escape' && self.phase === 'result') self.showHub();
-          if (e.key === 'Escape' && self.phase === 'hub') self.hideTip();
+          if (e.key === 'Escape' && self.phase === 'hub') {
+            // 상점 등 데스크탑 위 오버레이가 열려 있으면 먼저 닫는다
+            if (!$('overlay').classList.contains('hidden')) self.showHub();
+            else self.hideTip();
+          }
           return;
         }
         if (e.key === 'Escape') { self.endShow('quit'); return; }
@@ -208,6 +216,12 @@
           '<span class="dIconFresh' + (pct < 100 ? ' warn' : '') + '">' + pct + '%</span>' +
           '</button>';
       }).join('');
+      // 상점 — 게임이 아니라 데스크탑 앱이다 (더블클릭 = 실행 은유 공유)
+      icons += '<button class="dIcon" data-app="shop">' +
+        '<span class="dIconArt"><img src="games/shell/img/icon-shop.png" alt=""></span>' +
+        '<span class="dIconName">방송용품 상점</span>' +
+        '<span class="dIconFresh">' + this.ch.coins.toLocaleString() + '💰</span>' +
+        '</button>';
 
       var recent = this.ch.log.length
         ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
@@ -251,10 +265,10 @@
       });
       var icons = root.querySelector('.deskIcons');
       icons.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-game]');
+        var btn = e.target.closest('.dIcon');
         if (!btn) return;
         root.querySelectorAll('.dIcon').forEach(function (b) { b.classList.toggle('on', b === btn); });
-        self.showTip(btn); // 터치 환경 대비 — 클릭으로도 뜬다
+        if (btn.hasAttribute('data-game')) self.showTip(btn); // 터치 환경 대비 — 클릭으로도 뜬다
       });
       // 설명은 창이 아니라 호버 툴팁이다 — 아이콘에 올리면 옆에 뜨고, 벗어나면 사라진다.
       // 창처럼 화면을 덮지 않으므로 다른 아이콘 클릭을 막지 않는다 (사용자 피드백).
@@ -268,8 +282,10 @@
       });
       // 실제 데스크탑처럼 더블클릭은 곧장 실행이다 — 카운트다운을 거쳐 방송이 켜진다
       icons.addEventListener('dblclick', function (e) {
-        var btn = e.target.closest('[data-game]');
-        if (btn) self.start(btn.getAttribute('data-game'));
+        var btn = e.target.closest('.dIcon');
+        if (!btn) return;
+        if (btn.hasAttribute('data-game')) self.start(btn.getAttribute('data-game'));
+        else if (btn.getAttribute('data-app') === 'shop') self.openShop();
       });
     },
 
@@ -420,6 +436,7 @@
       // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋). 지난 방송 영상 URL은 회수한다
       (this._clips || []).forEach(function (c) { if (c.vid) URL.revokeObjectURL(c.vid); });
       this._clips = []; this._evSeen = {}; this._surgeAcc = 0; this._lastClipAt = -99;
+      this._showCoins = 0; // 이번 방송의 도네 코인 누계
       this.startClipRec();
 
       // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
@@ -534,6 +551,10 @@
     DON_MSG: ['오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
               '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁'],
     showDonation: function (facts) {
+      // 코인 적립 — 이번 방송 누계로 모았다가 정산(endShow) 때 잔액에 더한다.
+      // 시청자 수치는 게임이 이미 gain으로 반영했다 — 코인은 별도 통화라 규약 1과 무관.
+      var amt = parseInt(String((facts && facts.d) || '0').replace(/,/g, ''), 10);
+      if (amt > 0) this._showCoins += amt;
       this._donQ.push({
         amt: (facts && facts.d) ? String(facts.d) : '1,000',
         who: Chat.personas[Math.floor(Math.random() * Chat.personas.length)],
@@ -552,7 +573,64 @@
         '<b style="color:' + d.who.color + '">' + d.who.nick + '</b>님이 <b class="amt">' +
         d.amt + ' 코인</b> 후원! <span class="dmsg">' + d.msg + '</span>';
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      // 도네 팡파레 (상점 용품) — 배너 위에 소리만 얹는다. 수치 무관, 순수 장식
+      if (this.ch.gear.fanfare) {
+        Shell.sfx.tone(1047, .09, 'triangle', .07); Shell.sfx.tone(1319, .1, 'triangle', .06, .08);
+        Shell.sfx.tone(1568, .18, 'triangle', .06, .16);
+      }
       setTimeout(function () { self._donBusy = false; self.drainDon(); }, 3400);
+    },
+
+    // ---------- 상점 (방송용품) ----------
+    // 재원 = 도네 코인 (양념 수입, 규약 5). 상품은 전부 순수 장식 — 시작 시청자·보상 배율·
+    // 언락 임계·실패 벌칙에 관여하는 상품은 금지다 (능력 강화 = 업그레이드 포화 = 게임 종료).
+    // 아이콘은 AetherAI 생성 (tools/aether-assets.json의 icon-shop·shop-* 항목).
+    SHOP_ITEMS: [
+      { id: 'camgold',   n: '골드 캠 프레임',   d: '스트리머 캠에 금테를 두른다', price: 500 },
+      { id: 'holobadge', n: '홀로그램 채팅 배지', d: '채팅창 배지가 홀로그램으로 빛난다', price: 1500 },
+      { id: 'fanfare',   n: '도네 팡파레',      d: '도네 배너에 반짝임 + 팡파레 효과음', price: 3000 },
+      { id: 'neonsign',  n: '스튜디오 네온 간판', d: '방송 화면 테두리에 민트 네온', price: 6000 },
+      { id: 'tallyplat', n: '플래티넘 ON AIR',  d: 'ON AIR 바가 플래티넘으로 바뀐다', price: 12000 },
+    ],
+    applyGear: function () {
+      var ch = this.ch;
+      this.SHOP_ITEMS.forEach(function (it) {
+        document.body.classList.toggle('g-' + it.id, !!ch.gear[it.id]);
+      });
+    },
+    openShop: function () {
+      var self = this;
+      // #overlay는 방송 창(#jgsWin) 안에 있다 — 허브에선 창이 최소화 상태라 먼저 연다
+      $('jgsWin').classList.remove('minimized');
+      $('appJgs').classList.add('on');
+      $('overlay').classList.remove('hidden');
+      $('overlay').innerHTML = '<div class="panel shopWin">' +
+        '<h2><img class="shopH" src="games/shell/img/icon-shop.png" alt="">방송용품 상점</h2>' +
+        '<p class="shopBal">보유 코인 <b id="shopCoins">' + this.ch.coins.toLocaleString() + '</b>' +
+        ' <span class="fine">— 도네가 정산되면 쌓인다. 용품은 전부 장식이다 (방송이 세지진 않는다)</span></p>' +
+        '<div class="shopGrid">' + this.SHOP_ITEMS.map(function (it) {
+          var owned = !!self.ch.gear[it.id];
+          return '<div class="shopItem' + (owned ? ' owned' : '') + '">' +
+            '<img src="games/shell/img/shop-' + it.id + '.png" alt="" onerror="this.style.visibility=\'hidden\'">' +
+            '<div class="siName">' + it.n + '</div><div class="siDesc">' + it.d + '</div>' +
+            (owned
+              ? '<div class="siOwned">보유 중 — 적용됨</div>'
+              : '<button class="siBuy" data-buy="' + it.id + '">' + it.price.toLocaleString() + ' 코인</button>') +
+            '</div>';
+        }).join('') + '</div>' +
+        '<div class="btnrow"><button class="slab" id="shopClose">데스크탑으로 (Esc)</button></div></div>';
+      $('shopClose').onclick = function () { self.showHub(); };
+      $('overlay').querySelectorAll('[data-buy]').forEach(function (b) {
+        b.onclick = function () {
+          var it = self.SHOP_ITEMS.filter(function (x) { return x.id === b.getAttribute('data-buy'); })[0];
+          var r = Shell.shopBuy(self.ch, it);
+          if (r === 'poor') { b.textContent = '코인 부족'; setTimeout(function () { b.textContent = it.price.toLocaleString() + ' 코인'; }, 900); return; }
+          if (r !== 'ok') return;
+          self.saveChannel(); self.applyGear(); self.updateTopbar();
+          Shell.sfx.tone(523, .09, 'triangle', .1); Shell.sfx.tone(784, .14, 'triangle', .1, .09);
+          self.openShop(); // 잔액·보유 상태 반영해 다시 그린다
+        };
+      });
     },
 
     // ---------- 클립 — 흥미도 기반 자동 캡처 (관측 전용, C3) ----------
@@ -747,6 +825,8 @@
       var newSubs = Math.floor(final / 100); // 최종 시청자의 1%가 채널에 남는다
       this.ch.subs += newSubs;
       this.ch.shows++;
+      var earned = this._showCoins || 0;
+      this.ch.coins += earned; // 도네 코인 정산 — 상점(방송용품)의 재원
       // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
         c: bestClip ? bestClip.img : 0,
@@ -791,6 +871,7 @@
             (isRecord ? '<span class="rec">★ 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
           rows +
           '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명</b>' +
+          '<span>도네 수익</span><b>+' + earned.toLocaleString() + ' 코인 → 잔액 ' + this.ch.coins.toLocaleString() + '</b>' +
         '</div>' +
         '<p class="fine">다음 <b>' + g.title + '</b> 방송의 신선도는 <b>' + nextPct + '%</b>' +
           (nextPct < 100 && other ? ' — <b>' + other.title + '</b>을(를) 한 번 방송하면 회복된다. 이게 종겜을 하는 이유다.' : '.') +
@@ -1004,6 +1085,17 @@
   //   base    = (버스트 무게-1)/3 → 무게 2(도네급 양념)는 급증 만점에도 임계 미달 (규약 5)
   //   novelty = FRESH_MULT[방송 내 발생 횟수] → 3회째부터는 무엇이어도 클립 불가 (규약 4)
   //   surge   = 직전 시청자 급증 0~1 → 무게 4의 설계 피크만 급증 없이도 통과
+  // 상점 구매 — 순수 함수로 떼어 둔 이유: 차감·중복·잔액 검사가 조용히 틀리면
+  // 코인이 증발하거나 무한 구매가 된다. 검증: games/shell/selftest.html
+  Shell.shopBuy = function (ch, item) {
+    if (!item) return 'bad';
+    if (ch.gear[item.id]) return 'owned';
+    if (ch.coins < item.price) return 'poor';
+    ch.coins -= item.price;
+    ch.gear[item.id] = true;
+    return 'ok';
+  };
+
   Shell.CLIP = { THRESH: .5, GAP: 8, KEEP: 4, RAW_MAX: 10 };
   Shell.interestScore = function (burst, seen, surge) {
     var base = (clamp(burst || 1, 1, 4) - 1) / 3;
