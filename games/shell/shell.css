@@ -285,6 +285,18 @@ body {
 .clipCard .cwhy { display: block; color: var(--dim); }
 .recent .rrow { align-items: center; }
 .recent .rrow .rclip { width: 46px; height: 21px; object-fit: cover; border-radius: 3px; margin-right: 7px; vertical-align: middle; border: 1px solid #2c3036; }
+/* 클립 저장 순간 표시 — 무자극 칩. FX 큐(vpopup)를 먹지 않고 구석에서 조용히 스친다 (규약 3) */
+#clipToast {
+  position: absolute; top: 100px; right: 10px; z-index: 2;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; letter-spacing: 1px; color: #7dffd0;
+  background: rgba(10,14,12,.78); border: 1px solid rgba(0,255,163,.35);
+  border-radius: 6px; padding: 4px 9px;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+#clipToast.show { opacity: 1; }
+#clipToast i { width: 6px; height: 6px; border-radius: 50%; background: #ff5a4a; animation: clipRec 1s steps(2, start) infinite; }
+@keyframes clipRec { to { opacity: .25; } }
 
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }

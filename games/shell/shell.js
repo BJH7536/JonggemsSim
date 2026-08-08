@@ -592,8 +592,15 @@
           cv.getContext('2d').drawImage(self.ctx.canvas, 0, 0, 240, 108);
           self._clips.push({ t: tAt, ev: ev, s: s, mood: mood, why: why,
             v: Math.round(self.viewers), img: cv.toDataURL('image/jpeg', .55) });
+          self.showClipToast();
         } catch (e) {} // 캡처 실패(오염된 캔버스 등)가 방송을 죽이면 안 된다
       }, 450);
+    },
+    showClipToast: function () {
+      var el = $('clipToast'); if (!el) return;
+      el.classList.add('show');
+      clearTimeout(this._clipToastTimer);
+      this._clipToastTimer = setTimeout(function () { el.classList.remove('show'); }, 1600);
     },
 
     // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
