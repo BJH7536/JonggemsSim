@@ -273,7 +273,7 @@
         '<div class="dwBar"><span class="dwDots"><i></i><i></i><i></i></span>' +
           '<span class="dwTitle">' + g.title + '</span></div>' +
         '<div class="dwBody">' +
-          '<canvas class="gthumb" data-thumb="' + g.id + '" width="520" height="230"></canvas>' +
+          '<canvas class="gthumb" data-thumb="' + g.id + '" width="960" height="430"></canvas>' +
           '<div class="dwInfo">' +
             '<p class="gd">' + g.tagline + '</p>' +
             '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +

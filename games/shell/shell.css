@@ -491,15 +491,17 @@ body {
 #desktop .deskIcons { flex-direction: column; align-content: flex-start; height: 100%; }
 #desktop .dIcon { width: 96px; }
 #desktop .dIconName { text-shadow: 0 1px 4px #000, 0 0 12px rgba(0,0,0,.8); }
-/* 런처 창 — "창이 너무 작다" 피드백으로 대형화. 방송 시작 버튼은 없다: 진입은 더블클릭 */
+/* 런처(방송 설명) 창 — 게임 화면처럼 크게: 아이콘 열 오른쪽의 바탕화면을 거의 다 쓴다.
+   방송 시작 버튼은 없다: 진입은 더블클릭 */
 #desktop .deskWin {
-  position: absolute; right: 16px; top: 44px; bottom: auto;
-  width: min(560px, calc(100% - 150px));
+  position: absolute; left: 150px; right: 16px; top: 36px; bottom: auto;
+  width: auto; max-height: calc(100% - 52px);
+  display: flex; flex-direction: column;
 }
-#desktop .deskWin .dwBody { flex-direction: column; gap: 12px; padding: 14px; }
+#desktop .deskWin .dwBody { flex: 1 1 auto; min-height: 0; overflow: auto; flex-direction: column; gap: 12px; padding: 14px; }
 #desktop .deskWin .gthumb { width: 100%; height: auto; }
-#desktop .dwInfo .gd { font-size: 12.5px; }
-#desktop .dwInfo .gf { font-size: 12px; }
+#desktop .dwInfo .gd { font-size: 13px; }
+#desktop .dwInfo .gf { font-size: 12.5px; }
 .deskStat {
   position: fixed; left: 30px; bottom: 60px; font-size: 11.5px; color: #cfc7b8;
   text-shadow: 0 1px 4px #000; letter-spacing: .3px;
@@ -532,9 +534,21 @@ body {
 }
 .winBtns i:hover { background: rgba(255,255,255,.08); }
 .winBtns i.x:hover { background: #c0392b; color: #fff; }
-/* 전체화면 창 안에서 방송 내용은 가운데 정렬 — 초광폭에서 캔버스가 과도하게 커지지 않게 */
-#jgsWin #topbar { max-width: 1080px; width: 100%; }
-#jgsWin #stagewrap { max-width: 1080px; width: 100%; margin: 0 auto; padding: 0 14px 14px; }
+/* AetherAI UI 아이콘 — 크롬의 이모지를 대체한다 (tools/aether-assets.json ui-*).
+   이미지가 아직 없으면 alt 빈 문자열이라 조용히 사라질 뿐 레이아웃은 유지된다 */
+.uiIco { width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; }
+.winIco { display: grid; place-items: center; }
+.winIco .uiIco { width: 15px; height: 15px; }
+.tbApp i .uiIco, .dTray i .uiIco { display: block; width: 14px; height: 14px; }
+#followBtn .uiIco { width: 12px; height: 12px; }
+/* 게임 화면이 창을 최대한 채우게 — 폭을 "세로 여유 × 캔버스 비율(960/430)"로 계산해
+   패널·조작 안내(foot)까지 스크롤 없이 들어가는 최대 크기로 띄운다.
+   385px ≈ 창 크롬+정보줄+패널+foot 높이 (1600x900 실측으로 역산) */
+#jgsWin #topbar { max-width: clamp(960px, calc((100vh - 385px) * 2.233), 1600px); width: 100%; }
+#jgsWin #stagewrap {
+  max-width: clamp(960px, calc((100vh - 385px) * 2.233), 1600px);
+  width: 100%; margin: 0 auto; padding: 0 14px 14px;
+}
 
 /* 작업표시줄 — 페이지 하단 고정 */
 #taskbar {
