@@ -41,6 +41,10 @@
     epoch: 0,     // 방송이 바뀌면 증가 — 예약된 발화를 폐기하는 토큰
     feed: null,
     big: false,   // 대형 방송이면 버스트 +1줄
+    // 채팅 열기 0~1 — 셸이 시청자 규모(로그 스케일)로 갱신한다. 클수록 버스트가 두껍고
+    // 빨라져 "지금 터졌다"가 스크롤 속도로 체감된다. 연출 전용 — C3(수치 무관여) 유지,
+    // 발화는 여전히 전부 아래 게이트(슬롯·비반복)를 통과해야 화면에 나온다.
+    heat: 0,
 
     init: function (feedEl) { this.feed = feedEl; },
 
@@ -52,6 +56,7 @@
       this.history.length = 0;
       this.epoch++;
       this.big = false;
+      this.heat = 0;
     },
 
     sys: function (text) { this.append('<div class="cline csys">' + text + '</div>'); },
@@ -123,9 +128,12 @@
       if (!T) return; // 게임이 어휘에 없는 이벤트를 쏘면 조용히 무시 (셸이 죽지 않게)
       var self = this, token = this.epoch;
       var n = this.BURST[ev] || 1;
-      if (n > 1 && this.big) n = Math.min(4, n + 1); // 대형 방송은 채팅도 두껍다
+      if (n > 1 && this.big) n = Math.min(4, n + 1);       // 대형 방송은 채팅도 두껍다
+      if (n > 1 && this.heat > .55) n = Math.min(5, n + 1); // 열기 높으면 한 줄 더 (도배감)
       var used = {}, usedCount = 0;
-      var delay = 120 + Math.random() * 180; // 첫 반응은 빠르게 (실시간 게임 — 스펙 기본보다 짧다)
+      // 첫 반응은 빠르게 (실시간 게임 — 스펙 기본보다 짧다). 열기가 높을수록 더 빨라진다
+      var hasten = 1 - this.heat * .5;
+      var delay = (120 + Math.random() * 180) * hasten;
       for (var i = 0; i < n; i++) {
         var p;
         do {
@@ -167,7 +175,7 @@
             }
           }, delay);
         })(p, wantFact);
-        delay += 90 + Math.random() * 220;
+        delay += (90 + Math.random() * 220) * hasten;
       }
     },
   };

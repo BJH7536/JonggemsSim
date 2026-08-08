@@ -181,7 +181,8 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'ui-titlebar.png'; Out = 'ui-titlebar.jpg'; W = 512; H = 96;  Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\shell\img'; In = 'ui-taskbar.png';  Out = 'ui-taskbar.jpg';  W = 512; H = 96;  Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\shell\img'; In = 'ui-panelbg.png';  Out = 'ui-panelbg.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 74 },
-  @{ Dir = 'games\shell\img'; In = 'ui-button.png';   Out = 'ui-button.png';   W = 256; H = 256; Fmt = 'png'; Key = $true }
+  @{ Dir = 'games\shell\img'; In = 'ui-button.png';   Out = 'ui-button.png';   W = 256; H = 256; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-coin.png';     Out = 'ui-coin.png';     W = 64;  H = 64;  Fmt = 'png'; Key = $true }
 )
 
 $total = 0

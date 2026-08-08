@@ -83,19 +83,61 @@ body {
 }
 #tally.off { background: #3a332a; color: #9a9184; animation: none; }
 @keyframes tpulse { 0%, 100% { opacity: 1; } 50% { opacity: .75; } }
+/* 시청자 카운터 — 체력바이자 점수(규약 1)라서 크고, 살아 있어야 한다.
+   획득이 멎으면 .cold로 잿빛으로 식는다 (손실 무연출 — 압박은 온도로만, 규약 2) */
 #liveBar {
-  position: absolute; top: 34px; left: 50%; transform: translateX(-50%); z-index: 2;
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 20px;
-  padding: 4px 14px; font-size: 13px; letter-spacing: 1px;
+  position: absolute; top: 32px; left: 50%; transform: translateX(-50%); z-index: 2;
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(18,14,9,.88); border: 1px solid #4a4232; border-radius: 24px;
+  padding: 6px 20px; font-size: 15px; letter-spacing: 1px;
+  transition: border-color .6s, filter .6s;
 }
-#liveBar b { color: var(--amber2); font-variant-numeric: tabular-nums; }
-#sparkCv { display: block; opacity: .9; }
+#liveBar b { color: var(--amber2); font-size: 24px; font-variant-numeric: tabular-nums; transition: color .6s; }
+#liveBar .uiIco { width: 18px; height: 18px; }
+#liveBar.cold { border-color: #3a3f46; filter: saturate(.45) brightness(.88); }
+#liveBar.cold b { color: #9aa0a8; }
+#liveBar b.up { animation: vtick .28s ease-out; }
+#liveBar b.down { animation: vtickd .28s ease-out; }
+@keyframes vtick { 30% { transform: translateY(-3px) scale(1.12); } 100% { transform: none; } }
+@keyframes vtickd { 30% { transform: translateY(2px) scale(.95); } 100% { transform: none; } }
+/* 페이스 칩 — 신기록 추격·마일스톤 임박. 카운터 바로 아래 */
+#paceChip {
+  position: absolute; top: 78px; left: 50%; transform: translateX(-50%); z-index: 2;
+  background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 12px;
+  padding: 3px 12px; font-size: 11.5px; letter-spacing: .5px; color: var(--amber2);
+}
+#paceChip.hidden { display: none; }
+#paceChip.hot { border-color: var(--amber); color: #ffdf9e; box-shadow: 0 0 14px rgba(255,180,71,.5); animation: tpulse 1.6s infinite; }
+/* 도네 배너 — 화면 우상단으로 슬라이드 인 (규약 5: 양념은 화려하게) */
+#donBanner {
+  position: absolute; top: 76px; right: -420px; z-index: 3; max-width: 380px;
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(100deg, rgba(48,36,10,.95), rgba(26,20,8,.95));
+  border: 1px solid var(--amber); border-left-width: 4px; border-radius: 9px;
+  padding: 9px 14px; font-size: 13px; color: #ffedc4;
+  box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(255,180,71,.25);
+  pointer-events: none; opacity: 0;
+}
+#donBanner .uiIco { width: 20px; height: 20px; }
+#donBanner .amt { color: #ffdf9e; font-size: 15px; }
+#donBanner .dmsg { color: #d8cdb4; font-size: 12px; margin-left: 4px; }
+#donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes donin {
+  0% { right: -420px; opacity: 0; }
+  9% { right: 12px; opacity: 1; }
+  84% { right: 12px; opacity: 1; }
+  100% { right: 12px; opacity: 0; transform: translateY(-8px); }
+}
+/* 전폭 실시간 그래프 — 뷰포트 하단에 반투명으로 깔린다 */
+#liveGraph {
+  position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 34px; z-index: 1;
+  pointer-events: none; opacity: .9;
+}
 #tallyUp { font-weight: 400; opacity: .85; margin-left: 6px; font-variant-numeric: tabular-nums; }
 
 /* ---------- 스트리머 캠 — 게임 이벤트에 반응하는 얼굴 (연출 전용) ---------- */
 #camBox {
-  position: absolute; left: 10px; bottom: 12px; z-index: 2; text-align: center;
+  position: absolute; left: 10px; bottom: 40px; z-index: 2; text-align: center;   /* 전폭 그래프 위 */
   background: rgba(12,10,16,.78); border: 1px solid var(--plat); border-radius: 8px;
   padding: 5px 5px 2px; box-shadow: 0 4px 18px rgba(0,0,0,.6);
 }
@@ -131,7 +173,7 @@ body {
 #chainMeter.hot { border-color: var(--amber); box-shadow: 0 0 18px rgba(255,180,71,.45); }
 #chainMeter.hot .val { color: #ffdf9e; text-shadow: 0 0 12px rgba(255,180,71,.8); }
 #ticker {
-  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2;   /* 전폭 그래프 위 */
   font-size: 14px; text-shadow: 0 2px 5px #000; opacity: 0; pointer-events: none; white-space: nowrap;
 }
 #ticker.show { animation: tick 2.2s forwards; }
@@ -602,6 +644,40 @@ body {
 #followBtn {
   background: url('img/ui-button.png') center/100% 100% no-repeat, var(--plat);
   color: #06301e;
+}
+
+/* ---------- 온보딩 — 첫 방문 스플래시 + 코치마크 ---------- */
+#introSplash {
+  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  background: rgba(8,9,10,.88); backdrop-filter: blur(4px);
+}
+#introSplash.hidden { display: none; }
+.isPanel {
+  width: min(560px, 92%); text-align: center; padding: 40px 36px;
+  background: linear-gradient(#1e2023, #141517); border: 1px solid #2e3138; border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,255,163,.12);
+}
+.isLogo { font-family: Georgia, serif; font-size: 30px; color: var(--plat); text-shadow: 0 0 20px rgba(0,255,163,.5); }
+.isLogo span { color: var(--plat2); font-size: 18px; }
+.isPanel h1 { margin: 14px 0 12px; font-size: 24px; color: var(--ink); letter-spacing: 1px; }
+.isPanel p { font-size: 14px; line-height: 1.8; color: #c9cdd2; margin: 0 0 10px; }
+.isPanel p b { color: var(--plat2); }
+.isPanel .isSub { font-size: 12px; color: var(--dim); }
+.isPanel .slab { margin-top: 16px; padding: 12px 34px; font-size: 15px; }
+/* 코치마크 — 첫 방송 전까지 첫 게임 아이콘이 민트 링으로 숨쉰다 */
+.dIcon.coach { position: relative; border-color: var(--plat); animation: coachPulse 1.8s infinite; }
+@keyframes coachPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,163,.45); }
+  55% { box-shadow: 0 0 0 9px rgba(0,255,163,0); }
+}
+.coachTip {
+  position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+  white-space: nowrap; background: var(--plat); color: #06301e; font-size: 11.5px; font-weight: 700;
+  padding: 5px 10px; border-radius: 7px; pointer-events: none;
+}
+.coachTip::before {
+  content: ''; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+  border: 5px solid transparent; border-right-color: var(--plat);
 }
 
 /* ---------- 반응형 — 채팅 독·전체화면 창 (기준 규칙보다 뒤: 캐스케이드에서 이겨야 한다) ---------- */
