@@ -440,6 +440,12 @@
       Chat.load(g.chat.T, g.chat.BURST);
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
+      // file:// 직접 실행 안내 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 녹화가
+      // 막힌다 (클립 영상·리플레이 비활성). 한 번만, 조용히.
+      if (location.protocol === 'file:' && !this._fileWarned) {
+        this._fileWarned = true;
+        Chat.sys('[안내] 파일로 직접 열면 클립 영상·리플레이가 꺼집니다 — 방송-실행.bat 또는 배포 링크로 여세요');
+      }
 
       // 플랫폼 정보줄 — 제목·카테고리·라이브 점등
       $('infoTitle').textContent = this._showTitle || g.tagline;
@@ -778,7 +784,9 @@
       el.innerHTML = '<div class="rwHead"><i class="recDot"></i>' + label +
         '<span class="rwSave">클립 저장됨</span></div>' + media +
         '<div class="rwCap"><b>' + (clip.game ? clip.game + ' · ' : '') + Shell.util.fmtTime(clip.t) +
-        '</b> ' + clip.mood + ' · 흥미도 ' + Math.round(clip.s * 100) + '%</div>';
+        '</b> ' + clip.mood + ' · 흥미도 ' + Math.round(clip.s * 100) + '%' +
+        (!clip.vid && location.protocol === 'file:' ? ' <span class="rwNote">영상은 배포판·로컬 서버에서</span>' : '') +
+        '</div>';
       if (label !== 'INSTANT REPLAY') el.querySelector('.rwSave').style.display = 'none';
       // 하이라이트 지점 직전부터 재생 — 프리롤(세그먼트 앞부분)을 건너뛴다.
       // MediaRecorder WebM은 duration이 Infinity로 나오는 경우가 있어(크롬) 그땐 처음부터.
