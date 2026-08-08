@@ -211,7 +211,9 @@
 
       var recent = this.ch.log.length
         ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
-            return '<div class="rrow"><span>' + r.g + '</span><span><b>' + r.v.toLocaleString() + '</b>명' +
+            return '<div class="rrow"><span>' +
+              (r.c ? '<img class="rclip" src="' + r.c + '" alt="" title="클립 — ' + (r.cm || '') + '">' : '') +
+              r.g + '</span><span><b>' + r.v.toLocaleString() + '</b>명' +
               (r.r ? '<span class="rec">★ 신기록</span>' : '') + '</span></div>';
           }).join('') + '</div>'
         : '';
@@ -415,6 +417,8 @@
       $('paceChip').classList.add('hidden');
       $('donBanner').classList.remove('show');
       this._donQ.length = 0; this._donBusy = false;
+      // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋)
+      this._clips = []; this._evSeen = {}; this._surgeAcc = 0; this._lastClipAt = -99;
 
       // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
       if (!localStorage.getItem('JGS_TUT')) {
@@ -452,6 +456,7 @@
           if (!(n > 0) || self.phase !== 'live') return 0;
           var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id)));
           self.viewers += actual;
+          self._surgeAcc += actual;                          // 흥미도의 급증 신호 (클립)
           self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
           if (actual >= 150) self._marks.push(self._upT);    // 전폭 그래프의 스파이크 마커
           self.renderViewers();
@@ -467,6 +472,7 @@
         emit: function (ev, facts) {
           if (ev === 'donation') self.showDonation(facts);
           self.camReact(ev); Chat.react(ev, facts);
+          self.maybeClip(ev); // 관측 전용 — 흥미도 판정·클립 캡처 (수치 무관여, C3)
         },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
@@ -547,6 +553,49 @@
       setTimeout(function () { self._donBusy = false; self.drainDon(); }, 3400);
     },
 
+    // ---------- 클립 — 흥미도 기반 자동 캡처 (관측 전용, C3) ----------
+    // "어느 포인트가 흥미를 유발했는가"를 셸이 판정해 그 순간을 딴다. 새 저작 테이블 없이
+    // 이미 있는 신호 3개를 합성한다 — 자세한 식은 Shell.interestScore (파일 하단, selftest 검증).
+    //   ① 버스트 무게: 기획이 저작한 "이 순간의 크기" (chat-data BURST)
+    //   ② 방송 내 반복 감쇠: 같은 이벤트는 물린다 (규약 4의 순간판, FRESH_MULT 재사용)
+    //   ③ 시청자 급증: 직전 ~1.4초의 실제 반응 (gain 누적, 지수 감쇠)
+    // v0.2 설계안(§9)의 "spawn 높은 개체가 반응한 순간 = 클립"의 최소 결정론 판 — 100종
+    // 페르소나가 이관되면 ①이 개체 반응으로 승격된다.
+    MOOD_KO: { surprise: '돌발', panic: '위기', aha: '결정적 장면', confusion: '방송사고',
+               thinking: '정적', question: '전환점' },
+    maybeClip: function (ev) {
+      if (this.phase !== 'live') return;
+      var seen = this._evSeen[ev] || 0;
+      this._evSeen[ev] = seen + 1; // 캡처 여부와 무관하게 감쇠는 진행 — 반복은 흥미가 아니다
+      if (ev === 'donation') return; // 규약 5 — 양념(랜덤 도네)은 클립의 뼈대가 될 수 없다
+      var burst = (Chat.BURST && Chat.BURST[ev]) || 1;
+      var surge = clamp(this._surgeAcc / (this.viewers * .12 + 40), 0, 1);
+      var s = Shell.interestScore(burst, seen, surge);
+      if (s < Shell.CLIP.THRESH) return;
+      if (this._upT - this._lastClipAt < Shell.CLIP.GAP) return; // 클립끼리도 간격 (규약 3의 정신)
+      if (this._clips.length >= Shell.CLIP.RAW_MAX) return;
+      this._lastClipAt = this._upT;
+      var why = [];
+      if (burst >= 4) why.push('대형 이벤트');
+      if (seen === 0) why.push('첫 등장');
+      if (surge > .35) why.push('+' + Math.round(this._surgeAcc).toLocaleString() + ' 급증');
+      var mood = '순간';
+      for (var m in this.CAM_MOOD) {
+        if (this.CAM_MOOD[m].indexOf(ev) >= 0) { mood = this.MOOD_KO[m] || '순간'; break; }
+      }
+      // 이벤트의 0.45초 뒤를 캡처 — VFX·플래시·스탬프가 화면에 핀 순간이 클립이 된다
+      var self = this, tAt = this._upT, game = this.game;
+      setTimeout(function () {
+        if (self.phase !== 'live' || self.game !== game) return;
+        try {
+          var cv = document.createElement('canvas'); cv.width = 240; cv.height = 108;
+          cv.getContext('2d').drawImage(self.ctx.canvas, 0, 0, 240, 108);
+          self._clips.push({ t: tAt, ev: ev, s: s, mood: mood, why: why,
+            v: Math.round(self.viewers), img: cv.toDataURL('image/jpeg', .55) });
+        } catch (e) {} // 캡처 실패(오염된 캔버스 등)가 방송을 죽이면 안 된다
+      }, 450);
+    },
+
     // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
     // "남은 시간 3분"과 숫자를 잇는 긴장 장치. 신기록 추격 > 마일스톤 임박 순으로 하나만.
     MILESTONES: [1000, 5000, 15000, 60000, 150000, 500000],
@@ -605,10 +654,20 @@
       var self = this;
       this.ch.fresh = Shell.rotateFresh(this.ch.fresh, g.id, this.games.map(function (o) { return o.id; }));
 
+      // 클립 정산 — 흥미도 상위 KEEP개만 남기고, 표시는 시간순 (방송의 서사 순서)
+      var clips = (this._clips || []).slice().sort(function (a, b) { return b.s - a.s; })
+        .slice(0, Shell.CLIP.KEEP).sort(function (a, b) { return a.t - b.t; });
+      this._repClips = clips;
+      var bestClip = null;
+      for (var bc = 0; bc < clips.length; bc++) if (!bestClip || clips[bc].s > bestClip.s) bestClip = clips[bc];
+
       var newSubs = Math.floor(final / 100); // 최종 시청자의 1%가 채널에 남는다
       this.ch.subs += newSubs;
       this.ch.shows++;
-      this.ch.log.unshift({ g: g.title, v: final, r: isRecord });
+      // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
+      this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
+        c: bestClip ? bestClip.img : 0,
+        cm: bestClip ? bestClip.mood + ' · ' + Shell.util.fmtTime(bestClip.t) : '' });
       if (this.ch.log.length > 4) this.ch.log.length = 4;
       this.saveChannel();
       this.updateTopbar();
@@ -619,6 +678,16 @@
       var stats = [];
       try { if (this.inst && this.inst.summary) stats = this.inst.summary() || []; } catch (e2) {}
       var rows = stats.map(function (r) { return '<span>' + r[0] + '</span><b>' + r[1] + '</b>'; }).join('');
+      var clipHtml = clips.length
+        ? '<div class="clipLab">오늘의 클립 — 흥미 포인트 자동 캡처</div><div class="clipRow">' +
+          clips.map(function (c) {
+            return '<figure class="clipCard"><img src="' + c.img + '" alt="">' +
+              '<figcaption><b>' + Shell.util.fmtTime(c.t) + '</b> ' + c.mood + ' · 흥미도 ' +
+              Math.round(c.s * 100) + '%' +
+              (c.why.length ? '<span class="cwhy">' + c.why.join(' · ') + '</span>' : '') +
+              '</figcaption></figure>';
+          }).join('') + '</div>'
+        : '';
 
       var head = reason === 'dead' ? '송출 끊김' : reason === 'crash' ? '게임 튕김' : '방송 리포트';
       var lead = reason === 'dead' ? '시청자가 전부 떠났다. 검은 화면만 남았다.'
@@ -630,6 +699,7 @@
       $('overlay').innerHTML = '<div class="panel">' +
         '<h2>' + head + '</h2><p>' + lead + '</p>' +
         '<canvas id="repGraph" width="620" height="150"></canvas>' +
+        clipHtml +
         '<div class="statgrid">' +
           '<span>최종 시청자</span><b>' + final.toLocaleString() + '명 ' +
             (isRecord ? '<span class="rec">★ 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
@@ -680,6 +750,7 @@
       if (this.phase === 'live') {
         // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
         this._graphT += dt; this._upT += dt;
+        this._surgeAcc *= Math.exp(-dt / 1.4); // 급증 신호는 ~1.4초 반감 — '방금'만 급증이다
         if (this._graphT >= 1) {
           this._graphT = 0;
           this._graph.push({ t: this._upT, v: this.viewers });
@@ -747,6 +818,15 @@
       c.strokeStyle = '#ffb447'; c.lineWidth = 2; c.beginPath();
       for (var j = 0; j < g.length; j++) j ? c.lineTo(X(j), Y(g[j].v)) : c.moveTo(X(j), Y(g[j].v));
       c.stroke();
+      // 클립 마커 (민트) — "어느 포인트가 흥미를 유발했는가"가 그래프 위에 남는다
+      var clips = this._repClips || [], tMax2 = g[g.length - 1].t || 1;
+      for (var q = 0; q < clips.length; q++) {
+        var ci = Math.min(g.length - 1, Math.round(clips[q].t / tMax2 * (g.length - 1)));
+        c.strokeStyle = 'rgba(0,255,163,.3)'; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(X(ci), Y(g[ci].v) + 4); c.lineTo(X(ci), H2 - 14); c.stroke();
+        c.fillStyle = '#00ffa3';
+        c.beginPath(); c.arc(X(ci), Y(g[ci].v), 3, 0, Math.PI * 2); c.fill();
+      }
       // 피크 마커
       c.fillStyle = '#ffd27a';
       c.beginPath(); c.arc(X(vmaxAt), Y(vmax), 3.5, 0, Math.PI * 2); c.fill();
@@ -831,6 +911,18 @@
       if (allIds[i] !== playedId) out[allIds[i]] = Math.max(0, out[allIds[i]] - 1);
     }
     return out;
+  };
+
+  // 클립 흥미도 — 순수 함수로 떼어 둔 이유: 임계·감쇠가 조용히 틀리면 클립이 도배되거나
+  // 영영 안 잡힌다. 검증: games/shell/selftest.html
+  //   base    = (버스트 무게-1)/3 → 무게 2(도네급 양념)는 급증 만점에도 임계 미달 (규약 5)
+  //   novelty = FRESH_MULT[방송 내 발생 횟수] → 3회째부터는 무엇이어도 클립 불가 (규약 4)
+  //   surge   = 직전 시청자 급증 0~1 → 무게 4의 설계 피크만 급증 없이도 통과
+  Shell.CLIP = { THRESH: .5, GAP: 8, KEEP: 4, RAW_MAX: 10 };
+  Shell.interestScore = function (burst, seen, surge) {
+    var base = (clamp(burst || 1, 1, 4) - 1) / 3;
+    var novelty = FRESH_MULT[Math.min(FRESH_MULT.length - 1, seen)];
+    return base * novelty * (.55 + .45 * clamp(surge, 0, 1));
   };
 
   Shell.FRESH_MULT = FRESH_MULT;

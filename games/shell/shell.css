@@ -275,6 +275,17 @@ body {
 /* ---------- 방송 리포트 그래프 ---------- */
 #repGraph { display: block; width: 100%; height: auto; background: #101214; border: 1px solid #26292e; border-radius: 6px; margin: 8px 0 4px; }
 
+/* 클립 — 흥미도 기반 자동 캡처 (방송 리포트 스트립 + 허브 최근 방송 썸네일) */
+.clipLab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin: 10px 0 5px; }
+.clipRow { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.clipCard { margin: 0; flex: 0 0 148px; }
+.clipCard img { width: 148px; height: 66px; object-fit: cover; border-radius: 5px; border: 1px solid #2c3036; display: block; }
+.clipCard figcaption { font-size: 10px; color: #b8bdc4; margin-top: 3px; line-height: 1.35; }
+.clipCard figcaption b { color: var(--plat); }
+.clipCard .cwhy { display: block; color: var(--dim); }
+.recent .rrow { align-items: center; }
+.recent .rrow .rclip { width: 46px; height: 21px; object-fit: cover; border-radius: 3px; margin-right: 7px; vertical-align: middle; border: 1px solid #2c3036; }
+
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
 .pkmoves { flex: 1 1 420px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
