@@ -321,30 +321,30 @@ body.g-neonsign #viewport { outline-color: rgba(0,255,163,.55); box-shadow: 0 14
 body.g-tallyplat #tally { background: linear-gradient(100deg, #dfe6ee, #9ec8e0 60%, #dfe6ee); color: #1a2430; animation: none; }
 body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 
-/* 클립 저장 배너 — 좌상단, 도네 배너(#donBanner, 우상단)의 미러. 연출 전용.
-   클립은 설계상 8초 간격이라 도네처럼 큐를 둘 필요가 없다 — 단일 배너로 충분 */
-#clipBanner {
-  position: absolute; top: 76px; left: -440px; z-index: 3; max-width: 400px;
-  display: flex; align-items: center; gap: 9px;
-  background: linear-gradient(80deg, rgba(7,34,25,.95), rgba(5,18,14,.95));
-  border: 1px solid rgba(0,255,163,.55); border-left-width: 4px; border-radius: 9px;
-  padding: 8px 13px; font-size: 12.5px; color: #c8ffe8;
-  box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(0,255,163,.18);
+/* 리플레이 창 — 진짜 스트리머의 OBS 리플레이 소스. 게임 위 좌상단에서 클립 영상이
+   실제로 재생된다 (INSTANT REPLAY / 하이라이트 다시보기 공용). 면은 AetherAI 플레이트 */
+#replayWin {
+  position: absolute; top: 76px; left: -460px; z-index: 3; width: 300px;
+  border: 1px solid rgba(0,255,163,.55); border-radius: 9px; overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 26px rgba(0,255,163,.2);
   pointer-events: none; opacity: 0;
+  background: url('img/ui-banner-mint.jpg') center/cover, #071812;
 }
-#clipBanner b { color: #7dffd0; }
-#clipBanner img, #clipBanner video {
-  width: 150px; height: 66px; object-fit: cover; border-radius: 5px;
-  border: 1px solid rgba(0,255,163,.35); background: #000; flex: 0 0 auto;
+.rwHead {
+  display: flex; align-items: center; gap: 6px; padding: 5px 9px;
+  font-size: 10px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
 }
-#clipBanner .replay { display: block; font-style: normal; font-size: 10px; letter-spacing: 2px; color: var(--dim); margin-top: 3px; }
-#clipBanner .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
-/* 리플레이가 실제로 재생될 시간을 준다 — 5.6초 (진입 0.5 + 재생 ~4.4 + 퇴장) */
-#clipBanner.show { animation: clipin 5.6s cubic-bezier(.2,.9,.3,1) forwards; }
-@keyframes clipin {
-  0% { left: -440px; opacity: 0; }
-  6% { left: 12px; opacity: 1; }
-  90% { left: 12px; opacity: 1; }
+.rwHead .rwSave { margin-left: auto; color: #c8ffe8; font-weight: 400; letter-spacing: 0; }
+#replayWin video, #replayWin img { display: block; width: 100%; height: 133px; object-fit: cover; background: #000; }
+.rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
+.rwCap b { color: #7dffd0; }
+#replayWin .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
+/* 리플레이가 실제로 재생될 시간을 준다 — 6.6초 (진입 + 재생 ~5.6 + 퇴장) */
+#replayWin.show { animation: rwin 6.6s cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes rwin {
+  0% { left: -460px; opacity: 0; }
+  5% { left: 12px; opacity: 1; }
+  92% { left: 12px; opacity: 1; }
   100% { left: 12px; opacity: 0; transform: translateY(-8px); }
 }
 @keyframes clipRec { to { opacity: .25; } }
@@ -802,9 +802,6 @@ body {
 .pdnRow b { color: var(--amber2); }
 
 /* ---------- AetherAI 면 오버라이드 — 수제 CSS 그라데이션 금지 방침 (2026-08-08 지시) ---------- */
-#clipBanner {
-  background: url('img/ui-banner-mint.jpg') center/cover, #071812;
-}
 #donBanner {
   background: url('img/ui-banner-gold.jpg') center/cover, #1e1608;
 }
