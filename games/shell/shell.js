@@ -205,20 +205,18 @@
           }).join('') + '</div>'
         : '';
 
-      $('overlay').classList.remove('hidden');
-      $('overlay').innerHTML = '<div class="panel hub deskWrap">' +
-        '<div class="monitor"><div class="screen">' +
-          '<div class="deskIcons">' + icons + '</div>' +
-          '<div class="deskWin" id="deskWin"></div>' +
-          '<div class="deskBar">' +
-            '<span class="dStart"><img src="games/shell/faces/adventurer_silence.png" alt="">종겜러</span>' +
-            '<span class="dBarInfo">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
-              this.ch.shows + '</b>회</span>' +
-            '<span class="dTray"><i id="dRec">● REC</i><i>🔊</i><i>📶</i><i id="dClock"></i></span>' +
-            '<span class="dBarHint">더블클릭 = 바로 방송 · 클릭 = 게임 정보</span>' +
-          '</div>' +
-        '</div><div class="mstand"></div></div>' +
-        recent + '</div>';
+      // 창을 최소화하고 바탕화면을 드러낸다 — 방송 전의 스트리머는 데스크탑에 있다
+      $('jgsWin').classList.add('minimized');
+      $('appJgs').classList.remove('on');
+      $('obsDot').classList.remove('live');
+      $('overlay').classList.add('hidden');
+      $('overlay').innerHTML = '';
+      $('desktop').innerHTML =
+        '<div class="deskIcons">' + icons + '</div>' +
+        '<div class="deskWin" id="deskWin"></div>' +
+        '<div class="deskStat">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
+          this.ch.shows + '</b>회 · 더블클릭 = 바로 방송</div>' +
+        recent;
 
       this.bindHub();
       // 첫 진입에도 창이 비어 보이지 않게 첫 게임을 열어 둔다
@@ -227,7 +225,7 @@
 
     // 아이콘 아트가 없으면(아직 생성 전) CSS 타일로 대체한다 — 이미지 유무가 기능을 막지 않는다
     bindHub: function () {
-      var self = this, root = $('overlay');
+      var self = this, root = $('desktop');
       root.querySelectorAll('.dIcon img').forEach(function (im) {
         im.addEventListener('error', function () { im.closest('.dIcon').classList.add('noimg'); });
         if (im.complete && im.naturalWidth === 0) im.closest('.dIcon').classList.add('noimg');
@@ -252,7 +250,7 @@
       var step = this.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
       var best = this.ch.best[g.id] || 0;
 
-      $('overlay').querySelectorAll('.dIcon').forEach(function (b) {
+      $('desktop').querySelectorAll('.dIcon').forEach(function (b) {
         b.classList.toggle('on', b.getAttribute('data-game') === gameId);
       });
 
@@ -308,6 +306,8 @@
       if (this.phase === 'starting') return; // 카운트다운 중 재진입 방지
       var self = this;
       this.phase = 'starting';
+      $('jgsWin').classList.remove('minimized');   // 창이 열리며 방송 준비 화면이 뜬다
+      $('appJgs').classList.add('on');
       var pool = SHOW_TITLES[g.id];
       this._showTitle = pool ? pool[Math.floor(Math.random() * pool.length)] : g.tagline;
 
@@ -375,6 +375,7 @@
       $('infoTitle').textContent = this._showTitle || g.tagline;
       $('infoCat').textContent = g.title;
       $('infoDot').className = 'on';
+      $('obsDot').classList.add('live');
 
       this.stage = this.makeStage();
       this.inst = g.start(this.stage);

@@ -537,8 +537,10 @@
       var a = Math.atan2(st.tipY - (y - 16), st.tipX - x);
       ctx.save(); ctx.translate(st.tipX, st.tipY); ctx.rotate(a);
       if (imgReady('hammer')) {
+        // 헤드가 팁 '뒤'에 오게 그린다. 팁은 물리 접점이라 그 앞으로 스프라이트가
+        // 길게 나가면 발판 속에 파묻힌 것처럼 보인다(플레이 피드백). 타격면만 8px 남긴다.
         var hi = IMG['hammer'], hw = 30, hh = hw * hi.naturalHeight / hi.naturalWidth;
-        ctx.drawImage(hi, -hw * .3, -hh / 2, hw, hh);
+        ctx.drawImage(hi, -hw * .72, -hh / 2, hw, hh);
         if (st.planted) { // 박힘 표시 — 벡터 시절의 색 변화를 글로우로 대체
           ctx.globalCompositeOperation = 'lighter';
           ctx.fillStyle = 'rgba(255,210,122,.4)';

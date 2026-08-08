@@ -10,6 +10,17 @@
 </head>
 <body>
 
+<!-- 바탕화면 — 페이지 자체가 스트리머의 윈도우 데스크탑이다.
+     허브(방송 준비)에서는 JGS 창이 최소화되고 여기 아이콘이 보인다 -->
+<div id="desktop"></div>
+
+<!-- JGS.tv 플랫폼 = 데스크탑 위에 떠 있는 '창'. 방송 중에만 열려 있다 -->
+<div id="jgsWin" class="minimized">
+<div id="winbar">
+  <span class="winIco">📺</span>
+  <span class="winTitle">JGS.tv — 스트리머 스튜디오</span>
+  <span class="winBtns"><i>─</i><i>□</i><i class="x">×</i></span>
+</div>
 <!-- 플랫폼 크롬 — "방송 플랫폼 안에 있다"는 감각은 여기서 시작된다 -->
 <div id="topbar">
   <div class="tbL">
@@ -59,6 +70,20 @@
   </div>
   <div id="panel"></div>
   <div id="foot"></div>
+</div>
+
+</div><!-- /jgsWin -->
+
+<!-- 윈도우 작업표시줄 — 페이지 하단 고정. 시작 버튼(프로필) · 실행 앱 · 트레이 -->
+<div id="taskbar">
+  <button id="tbStart" type="button">
+    <img src="games/shell/faces/adventurer_silence.png" alt=""><b>종겜러</b>
+  </button>
+  <div id="tbApps">
+    <span class="tbApp" id="appJgs"><i>📺</i>JGS.tv 스튜디오</span>
+    <span class="tbApp dim"><i>🎛</i>송출 프로그램<em id="obsDot">●</em></span>
+  </div>
+  <span class="dTray"><i id="dRec">● REC</i><i>🔊</i><i>📶</i><i id="dClock"></i></span>
 </div>
 
 <!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 -->
