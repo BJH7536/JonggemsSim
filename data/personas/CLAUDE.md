@@ -3,12 +3,20 @@
 이 디렉터리의 주인은 **소윤(기획)**이다. 여기서의 작업 = AI 시청자 페르소나와 반응
 콘텐츠 설계. 코드가 아니라 **데이터와 문서**를 만든다.
 
+> **2026-08-08 — 페르소나 설계가 두 층으로 확장됐다.** 발화층(기존 8종 톤 시스템)에
+> **판정/평가층(PAE)** 이 더해졌다. 지도·모델 관계·평가 플로우·C3 경계는 `README.md`가 정본.
+> 신규 작업 전 `README.md` §1(두 층)·§2(세 모델)를 먼저 읽을 것.
+
 ## 시작 전 필독
 
-1. `../../prototypes/05-hwaryeok-personas.md` — 페르소나 8종 시트·**3축 덮개**·7축 모델·
-   확장 우선순위. 모든 신규 페르소나의 기준 문서
-2. 루트 `CLAUDE.md`의 공통 설계 규약 5종과 AI 시청자 아키텍처
-3. `../../docs/contract.md` — 데이터 형식 계약 (v1 확정 전이면 아래 "형식" 참조)
+1. **`README.md`** — 이 영역의 지도. 발화층↔판정/평가층, 세 페르소나 모델의 관계,
+   평가 플로우(Tier A→B), C3 경계, 크로스도메인 후속, v0.3 백로그
+2. `PAE_설계명세서.md` — **근본 설계.** 6축 Genome·자가복제/분화·흥미도 곡선·편향보정·검증 게이트
+3. `viewer_personas_100_v02.json` — 시청자 100종(2축·4사분면·`speech` 구조). 신규 개체는 이 형식
+4. `시청자_페르소나_평가리포트.md` — 100종 정량 평가 + 런타임 평가 프로토콜(PersonaGym 5과제)
+5. `../../prototypes/05-hwaryeok-personas.md` — 발화층 8종 시트·**3축 덮개**·7축 모델·확장 우선순위
+6. 루트 `CLAUDE.md`의 공통 설계 규약 5종과 AI 시청자 아키텍처
+7. `../../docs/contract.md` — 데이터 형식 계약 (v1 확정 전이면 아래 "형식" 참조)
 
 ## 설계 규칙
 
@@ -25,10 +33,16 @@
 
 ## 형식
 
-- `docs/contract.md` v1 확정 **전**: `05-hwaryeok-personas.md`의 캐릭터 시트 형식
-  (정체성/동기/말투/대표 발화/LLM 프로필 초안/확장 훅)으로 마크다운 작성
-- 확정 **후**: 이 디렉터리에 페르소나별 JSON — 스키마는 contract.md가 진실
-- 미리보기: `tools/persona-booth.html` (정훈 제작 예정) — 게임 없이 반응을 바로 확인
+- **현행 데이터 포맷 (v0.2):** `viewer_personas_100_v02.json`의 개체 형식 —
+  `id/name/q/x/y/triggers/repellents/arrival/patience/donate/spawn/volume` +
+  `speech{register/endings/lexicon/quirks/exemplars/mutation}`. 신규 개체는 이 형식으로.
+  `exemplars`의 null 슬롯은 **의도된 런타임 생성**(고정 문장을 미리 다 쓰면 변이 불가) —
+  채우지 말 것. `line`(고정 문자열) 형식은 폐기됨 (평가 리포트 §2)
+- `05-hwaryeok-personas.md`의 캐릭터 시트 형식(정체성/동기/말투/대표 발화/LLM 프로필 초안/
+  확장 훅)은 **발화층 8종의 설계 서사** 원본으로 유지 — 100종 speech와 상호 보완
+- **contract.md §2와의 정합:** `{nick,color,tones}`+v2 예약 필드(interest/valence/threshold)를
+  `speech`·행동 파라미터로 승격할지는 공동 결정(정훈·현재) — `README.md` §4 참조
+- 미리보기: `tools/persona-booth.html` (정훈 제작) — 게임 없이 반응을 바로 확인
 
 ## PR 규칙
 
