@@ -241,8 +241,9 @@
       });
     },
 
-    // 런처 창 — 아이콘을 고르면 열린다. 방송 시작은 여기서만 누른다.
+    // 런처 창 — 아이콘을 한 번 클릭하면 열리는 게임 정보 창.
     // 기존 카드가 보여주던 정보(썸네일·태그라인·신선도·최고 기록)를 그대로 옮겼다.
+    // 방송 시작 버튼은 없다 — 진입은 실제 데스크탑처럼 더블클릭(아이콘 또는 이 창)이다.
     openLauncher: function (gameId) {
       var self = this;
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
@@ -272,7 +273,7 @@
         '<div class="dwBar"><span class="dwDots"><i></i><i></i><i></i></span>' +
           '<span class="dwTitle">' + g.title + '</span></div>' +
         '<div class="dwBody">' +
-          '<canvas class="gthumb" data-thumb="' + g.id + '" width="228" height="104"></canvas>' +
+          '<canvas class="gthumb" data-thumb="' + g.id + '" width="520" height="230"></canvas>' +
           '<div class="dwInfo">' +
             '<p class="gd">' + g.tagline + '</p>' +
             '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
@@ -282,7 +283,7 @@
             profHtml +
           '</div>' +
         '</div>' +
-        '<button class="dwGo" data-go="' + g.id + '">● 방송 시작</button>';
+        '<div class="dwHint">▶ 아이콘 또는 이 창을 <b>더블클릭</b>하면 방송이 시작됩니다</div>';
 
       // 썸네일은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
       var cv = $('deskWin').querySelector('[data-thumb]');
@@ -290,10 +291,11 @@
       if (g.thumb) g.thumb(c, cv.width, cv.height);
       else {
         c.fillStyle = '#1d1728'; c.fillRect(0, 0, cv.width, cv.height);
-        c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
-        c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
+        c.fillStyle = '#ffd27a'; c.font = 'bold 24px Georgia, serif'; c.textAlign = 'center';
+        c.fillText(g.title, cv.width / 2, cv.height / 2 + 8);
       }
-      $('deskWin').querySelector('.dwGo').addEventListener('click', function () { self.start(gameId); });
+      // 창 어디를 더블클릭해도 방송 시작 — ondblclick 대입이라 게임을 바꿔 열어도 안 쌓인다
+      $('deskWin').ondblclick = function () { self.start(gameId); };
     },
 
     // ---------- 방송 시작 ----------

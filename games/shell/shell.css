@@ -37,19 +37,25 @@ body {
 #tbLive.on { border-color: var(--tally); color: #fff; background: var(--tally); animation: tpulse 2.4s infinite; }
 #stagewrap { max-width: 1280px; margin: 0 auto; padding: 0 10px; }
 
-/* ---------- AI 시청자 채팅 ---------- */
-/* 행 높이는 뷰포트가 정한다 — 채팅을 absolute로 띄워 내용량이 레이아웃을 밀지 못하게 */
+/* ---------- AI 시청자 채팅 (팝아웃 창) ---------- */
+/* 실제 스트리머의 채팅 팝아웃 — 데스크탑에서도, 전체화면 방송 중에도 항상 우측에 떠 있다.
+   방송 창(#jgsWin)과 형제 요소라 창이 닫혀도(minimized) 채팅은 남는다 */
 #showRow { position: relative; }
-#showRow #viewport { margin-right: 282px; }
-#chatCol {
-  position: absolute; top: 0; right: 0; bottom: 0; width: 272px;
-  display: flex; flex-direction: column; min-height: 0;
-  background: linear-gradient(#171221, #0f0c15); border: 1px solid #3a3344; border-radius: 8px;
+#chatDock {
+  position: fixed; top: 0; right: 0; bottom: 44px; width: 300px; z-index: 6;
+  display: flex; flex-direction: column;
+  background: #0f0c15; border-left: 1px solid #3a3344;
+  box-shadow: -14px 0 36px rgba(0,0,0,.5);
 }
-#chatHead {
-  display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  padding: 8px 10px; border-bottom: 1px solid #2a2437;
-  font-size: 11px; color: var(--dim); letter-spacing: 1px; white-space: nowrap;
+#chatWinbar {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+  background: linear-gradient(#221a30, #171126); border-bottom: 1px solid #3a3344;
+  font-size: 12px; color: #cfc7b8; user-select: none;
+}
+#chatWinbar .winTitle { flex: 1; }
+#chatCol {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  background: linear-gradient(#171221, #0f0c15);
 }
 .chatBadge { border: 1px solid var(--plat); color: var(--plat2); font-size: 9.5px; padding: 1px 7px; border-radius: 9px; letter-spacing: 0; }
 .chatBadge.llm { border-color: var(--ok); color: var(--ok); }
@@ -59,10 +65,7 @@ body {
 .cline b { margin-right: 6px; }
 .cline.csys { color: var(--dim); font-size: 11px; text-align: center; margin: 6px 0; }
 .cline.cdon { color: #ffdf9e; background: rgba(255,180,71,.07); border-radius: 4px; padding: 2px 5px; }
-@media (max-width: 900px) {
-  #showRow #viewport { margin-right: 0; }
-  #chatCol { position: static; height: 180px; margin-top: 8px; }
-}
+/* (채팅 독·창의 반응형 오버라이드는 파일 끝에 — 기준 규칙보다 뒤에 와야 이긴다) */
 
 /* ---------- 뷰포트 ---------- */
 #viewport {
@@ -382,12 +385,13 @@ body {
 .dwInfo { flex: 1; min-width: 0; }
 .dwInfo .gd { font-size: 11.5px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }
 .dwInfo .gf { font-size: 11px; margin-top: 6px; color: #cfc7b8; display: flex; justify-content: space-between; }
-.dwGo {
-  display: block; width: calc(100% - 20px); margin: 0 10px 10px; padding: 9px;
-  background: var(--tally); border: 0; border-radius: 7px;
-  color: #fff; font: 700 13px inherit; letter-spacing: 1px; cursor: pointer;
+/* 방송 시작 버튼 대신 — 진입은 실제 데스크탑처럼 더블클릭이다 */
+.dwHint {
+  display: block; margin: 0 14px 14px; padding: 10px; text-align: center;
+  border: 1px dashed rgba(169,112,255,.5); border-radius: 7px;
+  color: var(--plat2); font-size: 12.5px; letter-spacing: .5px;
 }
-.dwGo:hover { filter: brightness(1.12); }
+.dwHint b { color: #fff; }
 
 /* 작업표시줄 */
 .deskBar {
@@ -479,33 +483,39 @@ body {
   padding-bottom: 56px;               /* 작업표시줄 자리 */
 }
 
-/* 바탕화면 레이어 — 허브에서 아이콘·런처·위젯이 여기 렌더된다 */
+/* 바탕화면 레이어 — 허브에서 아이콘·런처·위젯이 여기 렌더된다. 채팅 독 왼쪽까지만 */
 #desktop {
-  position: fixed; inset: 0 0 44px 0; padding: 26px 30px; z-index: 1;
+  position: fixed; inset: 0 300px 44px 0; padding: 26px 30px; z-index: 1;
 }
 #desktop:empty { pointer-events: none; }
 #desktop .deskIcons { flex-direction: column; align-content: flex-start; height: 100%; }
 #desktop .dIcon { width: 96px; }
 #desktop .dIconName { text-shadow: 0 1px 4px #000, 0 0 12px rgba(0,0,0,.8); }
+/* 런처 창 — "창이 너무 작다" 피드백으로 대형화. 방송 시작 버튼은 없다: 진입은 더블클릭 */
 #desktop .deskWin {
-  position: fixed; right: 40px; top: 80px; bottom: auto; width: min(360px, 40vw);
+  position: absolute; right: 16px; top: 44px; bottom: auto;
+  width: min(560px, calc(100% - 150px));
 }
+#desktop .deskWin .dwBody { flex-direction: column; gap: 12px; padding: 14px; }
+#desktop .deskWin .gthumb { width: 100%; height: auto; }
+#desktop .dwInfo .gd { font-size: 12.5px; }
+#desktop .dwInfo .gf { font-size: 12px; }
 .deskStat {
   position: fixed; left: 30px; bottom: 60px; font-size: 11.5px; color: #cfc7b8;
   text-shadow: 0 1px 4px #000; letter-spacing: .3px;
 }
 #desktop .recent {
-  position: fixed; right: 40px; bottom: 60px; width: min(360px, 40vw);
+  position: absolute; left: 24px; bottom: 44px; width: min(320px, 40%);
   background: rgba(18,14,26,.92); border: 1px solid #3a2f4d; border-radius: 10px; padding: 12px 14px;
 }
 
-/* JGS.tv 창 크롬 */
+/* JGS.tv 창 크롬 — 방송 중에만 열리고, 열리면 전체화면(채팅 독 왼쪽 전체)이다.
+   바탕화면을 완전히 덮으므로 방송 중에는 다른 게임 아이콘을 클릭할 수 없다 */
 #jgsWin {
-  position: relative; z-index: 2;
-  max-width: 1300px; margin: 26px auto 0;
-  background: #0f0c15; border: 1px solid #3a3344; border-radius: 10px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(169,112,255,.12);
-  overflow: hidden;
+  position: fixed; inset: 0 300px 44px 0; z-index: 4;
+  display: flex; flex-direction: column;
+  background: #0f0c15; border-right: 1px solid #3a3344;
+  overflow: auto;
 }
 #jgsWin.minimized { display: none; }
 #winbar {
@@ -522,9 +532,9 @@ body {
 }
 .winBtns i:hover { background: rgba(255,255,255,.08); }
 .winBtns i.x:hover { background: #c0392b; color: #fff; }
-/* 창 안 콘텐츠 여백 재조정 — 창 자체가 프레임이므로 바깥 여백 축소 */
-#jgsWin #topbar { max-width: none; }
-#jgsWin #stagewrap { max-width: none; padding: 0 12px 12px; }
+/* 전체화면 창 안에서 방송 내용은 가운데 정렬 — 초광폭에서 캔버스가 과도하게 커지지 않게 */
+#jgsWin #topbar { max-width: 1080px; width: 100%; }
+#jgsWin #stagewrap { max-width: 1080px; width: 100%; margin: 0 auto; padding: 0 14px 14px; }
 
 /* 작업표시줄 — 페이지 하단 고정 */
 #taskbar {
@@ -552,3 +562,16 @@ body {
 .tbApp em { font-style: normal; font-size: 8px; color: #4a4456; margin-left: 2px; }
 .tbApp em.live { color: var(--tally); animation: tpulse 2.4s infinite; }
 #taskbar .dTray { margin-left: auto; }
+
+/* ---------- 반응형 — 채팅 독·전체화면 창 (기준 규칙보다 뒤: 캐스케이드에서 이겨야 한다) ---------- */
+@media (max-width: 900px) {
+  #chatDock { width: 224px; }
+  #desktop { right: 224px; }
+  #jgsWin { right: 224px; }
+}
+@media (max-width: 720px) {
+  /* 좁은 화면 — 채팅 독을 하단 시트로 눕히고 창·바탕화면이 그 위 공간을 쓴다 */
+  #chatDock { top: auto; left: 0; width: auto; height: 170px; }
+  #desktop { right: 0; bottom: 214px; }
+  #jgsWin { right: 0; bottom: 214px; border-right: 0; }
+}
