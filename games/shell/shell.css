@@ -817,3 +817,16 @@ body {
   border: none; color: #06301e; text-shadow: 0 1px 0 rgba(255,255,255,.22);
 }
 .shopItem .siBuy:hover { filter: brightness(1.08); box-shadow: none; color: #000; }
+
+/* ---------- 파트너 등급 (파트너 계약 ③) ---------- */
+.pdTier { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 11.5px; }
+.pdTier .tname { font-weight: 700; letter-spacing: 1px; }
+.pdTier.up .tname { font-size: 14px; text-shadow: 0 0 12px currentColor; }
+.pdTier .tbar { flex: 1; max-width: 180px; height: 6px; background: rgba(0,0,0,.35); border-radius: 3px; overflow: hidden; }
+.pdTier .tbar i { display: block; height: 100%; border-radius: 3px; }
+.pdTier .tpts { color: var(--dim); font-variant-numeric: tabular-nums; }
+#tbTier { font-weight: 700; letter-spacing: 1px; }
+.shopItem.locked { opacity: .55; }
+.shopItem .siLock { font-size: 11.5px; color: var(--dim); padding: 7px 0; }
+/* 다이아 오라 — 등급 한정 장식. 네온 간판과 둘 다 있으면 뒤(다이아)가 이긴다 */
+body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
