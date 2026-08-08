@@ -293,7 +293,15 @@
 
       if (st.planted) {
         var adx = st.anchorX - st.px, ady = st.anchorY - st.py, ad = Math.hypot(adx, ady) || 1;
-        if (dist >= 34 && (aimX * adx + aimY * ady) / ad < .45) { st.planted = false; st.contact = null; }
+        if (dist >= 34 && (aimX * adx + aimY * ady) / ad < .45) {
+          st.planted = false; st.contact = null; // 스윙 릴리스 — 크게 꺾으면 빠진다 (플릭)
+        } else if (st.len > ad + 10) {
+          // 슬랙 릴리스 (GOI 오마주 핵심) — 걸쇠는 "당기는 동안(자루 팽팽)"만 유지된다.
+          // 자루가 앵커 거리보다 길어지면(밀기·끌기·이동) 즉시 풀고 아래의 원본식
+          // 슬라이딩 접촉으로 복귀 — 같은 프레임에 재스윕되므로 밀기는 끊기지 않는다.
+          // 이게 없으면 갈고리가 영구히 걸려 전진 이동 자체가 불가능하다 (플레이 피드백).
+          st.planted = false; st.contact = null;
+        }
       }
 
       if (!st.planted) {
