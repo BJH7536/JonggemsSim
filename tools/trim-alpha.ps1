@@ -40,7 +40,11 @@ $targets = @(
   'games\giving-up\img\pot.png', 'games\giving-up\img\hammer.png',
   'games\hwaryeok\img\pan.png', 'games\hwaryeok\img\cloche.png',
   'games\pocket\img\me-fire.png', 'games\pocket\img\me-water.png', 'games\pocket\img\me-grass.png',
-  'games\pocket\img\foe-fire.png', 'games\pocket\img\foe-water.png', 'games\pocket\img\foe-grass.png'
+  'games\pocket\img\foe-fire.png', 'games\pocket\img\foe-water.png', 'games\pocket\img\foe-grass.png',
+  'games\fishing\img\boat.png',
+  'games\fishing\img\fish-0.png', 'games\fishing\img\fish-1.png', 'games\fishing\img\fish-2.png',
+  'games\fishing\img\fish-3.png', 'games\fishing\img\fish-4.png',
+  'games\bomb\img\bomb-body.png'
 )
 
 foreach ($rel in $targets) {
