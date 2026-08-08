@@ -93,11 +93,21 @@
       });
       this._camMood = 'silence'; this._camAt = 0;
       this._graph = []; this._graphT = 0; this._upT = 0;
+      this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
+      this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
       var self2 = this;
       $('followBtn').addEventListener('click', function () {
         self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
       });
+      // 첫 방문 스플래시 — 목표(시청자=점수=생명)를 말하기 전에는 데스크탑을 보여주지 않는다
+      if (!localStorage.getItem('JGS_INTRO')) {
+        $('introSplash').classList.remove('hidden');
+        $('introGo').addEventListener('click', function () {
+          localStorage.setItem('JGS_INTRO', '1');
+          $('introSplash').classList.add('hidden');
+        });
+      }
       this.showHub();
       requestAnimationFrame(this.loop.bind(this));
     },
@@ -220,6 +230,14 @@
         recent;
 
       this.bindHub();
+      // 아직 한 번도 방송한 적 없으면 첫 게임 아이콘에 코치마크 — 진입까지 헤매지 않게
+      if (!this.ch.shows) {
+        var first = $('desktop').querySelector('.dIcon');
+        if (first) {
+          first.classList.add('coach');
+          first.insertAdjacentHTML('beforeend', '<span class="coachTip">더블클릭 = 방송 시작</span>');
+        }
+      }
     },
 
     // 아이콘 아트가 없으면(아직 생성 전) CSS 타일로 대체한다 — 이미지 유무가 기능을 막지 않는다
@@ -391,6 +409,27 @@
       $('infoDot').className = 'on';
       $('obsDot').classList.add('live');
 
+      this._marks.length = 0; this._shownV = 0;
+      this._recordStamped = false; this._lastGainAt = this.now;
+      $('liveBar').classList.remove('cold');
+      $('paceChip').classList.add('hidden');
+      $('donBanner').classList.remove('show');
+      this._donQ.length = 0; this._donBusy = false;
+
+      // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
+      if (!localStorage.getItem('JGS_TUT')) {
+        localStorage.setItem('JGS_TUT', '1');
+        var self = this, tutGame = g;
+        [[4, '[안내] 목표: 3분 동안 시청자를 최대한 모은다 — 0명이 되면 방송이 강제 종료된다'],
+         [12, '[안내] 잘한 플레이도, 아슬아슬한 사고도 전부 시청자를 부른다. 조작법은 화면 아래 안내 참고'],
+         [24, '[안내] 같은 게임만 파면 시청자가 물린다(신선도) — 방송을 바꿔가며 도는 게 종겜이다'],
+        ].forEach(function (t) {
+          setTimeout(function () {
+            if (self.phase === 'live' && self.game === tutGame) Chat.sys(t[1]);
+          }, t[0] * 1000);
+        });
+      }
+
       this.stage = this.makeStage();
       this.inst = g.start(this.stage);
       this.renderViewers();
@@ -413,14 +452,22 @@
           if (!(n > 0) || self.phase !== 'live') return 0;
           var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id)));
           self.viewers += actual;
+          self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
+          if (actual >= 150) self._marks.push(self._upT);    // 전폭 그래프의 스파이크 마커
           self.renderViewers();
-          if (label) self._fxQueue.push('+' + actual.toLocaleString() + ' · ' + label); // 획득은 과하게 (규약 2)
+          // 획득은 과하게 (규약 2). 단 도네는 전용 배너가 연출을 전담한다 — 중앙 팝업까지
+          // 겹치면 큰 자극 두 개가 서로를 잡아먹는다 (규약 3)
+          if (label && label.indexOf('도네') === -1) self._fxQueue.push('+' + actual.toLocaleString() + ' · ' + label);
           if (self.viewers >= 30000) Chat.big = true;
           return actual;
         },
         lose: function (n) { self.loseViewers(n); },        // 조용히 (규약 2)
-        // C3 — 채팅·캠은 관측만 한다. emit은 단방향이고 반환값이 없다
-        emit: function (ev, facts) { self.camReact(ev); Chat.react(ev, facts); },
+        // C3 — 채팅·캠은 관측만 한다. emit은 단방향이고 반환값이 없다.
+        // 도네만 셸이 옆에서 훔쳐본다 — 화면 배너 연출(수치 무관, 순수 연출)용이다
+        emit: function (ev, facts) {
+          if (ev === 'donation') self.showDonation(facts);
+          self.camReact(ev); Chat.react(ev, facts);
+        },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
         ticker: function (text, muted) { self.showTicker(text, muted); },
@@ -437,9 +484,19 @@
     // ---------- 시청자 (규약 1·2) ----------
     renderViewers: function () {
       // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
-      var v = Math.ceil(this.viewers).toLocaleString();
-      $('viewerCount').textContent = v;
-      $('infoViewers').textContent = v;
+      var v = Math.ceil(this.viewers);
+      var el = $('viewerCount');
+      el.textContent = v.toLocaleString();
+      $('infoViewers').textContent = v.toLocaleString();
+      // 심박 — 숫자가 움직일 때마다 살짝 튄다. 시청자 수가 곧 체력바(규약 1)라는 걸
+      // 눈이 아니라 몸이 알게 하는 장치다
+      if (v !== this._shownV) {
+        var cls = v > this._shownV ? 'up' : 'down';
+        el.classList.remove('up', 'down'); void el.offsetWidth; el.classList.add(cls);
+        this._shownV = v;
+      }
+      // 채팅 열기 — 시청자 규모를 0~1로 눌러 관객 엔진에 넘긴다 (연출 전용, C3 무관)
+      Chat.heat = Math.max(0, Math.min(1, Math.log10(Math.max(v, 1) / 150) / 2.3));
     },
     loseViewers: function (n) {
       if (this.phase !== 'live' || !(n > 0)) return;
@@ -462,6 +519,58 @@
       clearTimeout(this._stampTimer); // 연속 스탬프의 조기 소멸 방지 (L-2)
       this._stampTimer = setTimeout(function () { st.classList.remove('show'); }, 1600);
     },
+    // ---------- 도네 배너 (연출 전용) ----------
+    // 수치는 게임이 이미 gain으로 반영했다 — 여기는 화면 위 배너만 맡는다 (규약 5: 도네는
+    // 양념이니 연출은 화려하게, 수치 관여는 없음). 배너끼리는 큐로 3.4초 간격 방출 (규약 3).
+    // 닉네임은 채팅 페르소나를 빌려 쓴다 — 후원자가 관객석에 실재하는 인물로 읽히게.
+    DON_MSG: ['오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
+              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁'],
+    showDonation: function (facts) {
+      this._donQ.push({
+        amt: (facts && facts.d) ? String(facts.d) : '1,000',
+        who: Chat.personas[Math.floor(Math.random() * Chat.personas.length)],
+        msg: this.DON_MSG[Math.floor(Math.random() * this.DON_MSG.length)],
+      });
+      this.drainDon();
+    },
+    drainDon: function () {
+      if (this._donBusy || !this._donQ.length) return;
+      var self = this, d = this._donQ.shift();
+      this._donBusy = true;
+      var el = $('donBanner');
+      // 금액 단위는 '코인'(플랫폼 화폐) — 게임이 넘기는 값이 시청자 환산 수치라
+      // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법)
+      el.innerHTML = '<img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
+        '<b style="color:' + d.who.color + '">' + d.who.nick + '</b>님이 <b class="amt">' +
+        d.amt + ' 코인</b> 후원! <span class="dmsg">' + d.msg + '</span>';
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      setTimeout(function () { self._donBusy = false; self.drainDon(); }, 3400);
+    },
+
+    // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
+    // "남은 시간 3분"과 숫자를 잇는 긴장 장치. 신기록 추격 > 마일스톤 임박 순으로 하나만.
+    MILESTONES: [1000, 5000, 15000, 60000, 150000, 500000],
+    updatePace: function () {
+      var chip = $('paceChip'), v = Math.ceil(this.viewers);
+      var best = this.ch.best[this.game.id] || 0;
+      var txt = '', hot = false;
+      if (best > 0 && v > best) {
+        txt = '★ 신기록 갱신 중'; hot = true;
+        if (!this._recordStamped) { this._recordStamped = true; this.showStamp('★ 신기록'); }
+      } else if (best > 0 && v > best * 0.8) {
+        txt = '신기록 페이스 — 기록 ' + best.toLocaleString();
+      } else {
+        for (var i = 0; i < this.MILESTONES.length; i++) {
+          var m = this.MILESTONES[i];
+          if (v < m && v >= m * 0.85) { txt = m.toLocaleString() + '명까지 -' + (m - v).toLocaleString(); break; }
+          if (v < m) break;
+        }
+      }
+      chip.textContent = txt;
+      chip.classList.toggle('hidden', !txt);
+      chip.classList.toggle('hot', hot);
+    },
+
     showTicker: function (text, muted) {
       var t = $('ticker');
       t.textContent = text;
@@ -553,6 +662,10 @@
         if (this.phase === 'live' && this.game) {
           var up = Math.max(0, this.game.duration - this.timeLeft) | 0;
           $('infoUptime').textContent = '업타임 ' + ('0' + ((up / 60) | 0)).slice(-2) + ':' + ('0' + (up % 60)).slice(-2);
+          // 카운터 식음 — 2.5초 넘게 획득이 없으면 잿빛으로 식는다. 손실 무연출 원칙(규약 2)을
+          // 지키면서 "새고 있다"는 압박만 온도로 전달한다
+          $('liveBar').classList.toggle('cold', this.now - this._lastGainAt > 2.5);
+          this.updatePace();
         }
       }
       this._shake *= .88; this._flash *= .88;
@@ -587,19 +700,33 @@
       requestAnimationFrame(this.loop.bind(this));
     },
 
+    // 방송 화면 전폭의 실시간 그래프 — "플레이하면서 그래프가 보여야 압박이 온다"(피드백).
+    // 시청자 추이 + 큰 획득의 스파이크 마커. 반투명이라 게임 화면을 가리지 않는다.
     drawSpark: function () {
-      var cv = $('sparkCv'); if (!cv) return;
+      var cv = $('liveGraph'); if (!cv) return;
       var c = cv.getContext('2d'), W2 = cv.width, H2 = cv.height;
       c.clearRect(0, 0, W2, H2);
       var g = this._graph; if (g.length < 2) return;
       var vmax = 1; for (var i = 0; i < g.length; i++) vmax = Math.max(vmax, g[i].v);
-      c.strokeStyle = '#ffd27a'; c.lineWidth = 1.5; c.beginPath();
-      for (var k = 0; k < g.length; k++) {
-        var x = k / (g.length - 1) * (W2 - 2) + 1;
-        var y = H2 - 2 - (g[k].v / vmax) * (H2 - 5);
-        k ? c.lineTo(x, y) : c.moveTo(x, y);
-      }
+      var X = function (k) { return k / (g.length - 1) * W2; };
+      var Y = function (v) { return H2 - 2 - (v / vmax) * (H2 - 7); };
+      var fill = c.createLinearGradient(0, 0, 0, H2);
+      fill.addColorStop(0, 'rgba(255,180,71,.26)'); fill.addColorStop(1, 'rgba(255,180,71,0)');
+      c.beginPath(); c.moveTo(0, H2);
+      for (var k = 0; k < g.length; k++) c.lineTo(X(k), Y(g[k].v));
+      c.lineTo(X(g.length - 1), H2); c.closePath();
+      c.fillStyle = fill; c.fill();
+      c.strokeStyle = 'rgba(255,210,122,.85)'; c.lineWidth = 1.5; c.beginPath();
+      for (var j = 0; j < g.length; j++) j ? c.lineTo(X(j), Y(g[j].v)) : c.moveTo(X(j), Y(g[j].v));
       c.stroke();
+      // 스파이크 마커 — 큰 획득(+150 이상)의 순간이 점으로 남는다
+      c.fillStyle = '#ffd27a';
+      var tMax = g[g.length - 1].t || 1;
+      for (var m = 0; m < this._marks.length; m++) {
+        var xt = this._marks[m] / tMax; if (xt > 1) continue;
+        var idx = Math.min(g.length - 1, Math.round(xt * (g.length - 1)));
+        c.beginPath(); c.arc(X(idx), Y(g[idx].v), 2.5, 0, Math.PI * 2); c.fill();
+      }
     },
 
     // 방송 리포트의 시청자 추이 그래프 — "숫자가 아니라 방송의 서사"를 보여준다

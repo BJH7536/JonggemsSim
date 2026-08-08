@@ -369,6 +369,12 @@
       "out": "games/shell/img/ui-button.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Game UI button plate, single wide rounded rectangle with softly beveled edges, vivid mint green gradient (#00ffa3 to #00c47e) with a subtle top highlight and darker bottom edge, slight dark outline, designed so dark text on top stays readable. Flat clean vector game UI style, no text, no icons, centered. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background."
+    },
+    {
+      "id": "ui-coin",
+      "out": "games/shell/img/ui-coin.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a shiny gold coin seen head-on with a simple star emboss, warm gold (#ffd24a) main color with amber (#ffb447) shading. Extremely simple bold shape with thick rounded strokes, readable at 16 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
     }
   ]
 }
