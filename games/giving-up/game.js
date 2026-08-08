@@ -101,6 +101,17 @@
   var CLUTCH_V = 550;      // 이 속도 이상으로 떨어지던 중이어야
   var CLUTCH_MIN_H = 3;    // 이 높이 위에서 붙잡아야 (바닥에 처박힌 건 clutch가 아니다)
 
+  // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
+  // 항아리·망치 헤드. 없거나 로드 전이면 기존 벡터로 폴백 — 아트는 얹는 층이다.
+  // 지형·먼지·사거리 링은 계속 절차적으로: 접점 하이라이트가 곧 조작 피드백이라서다.
+  var IMG = {};
+  ['pot', 'hammer'].forEach(function (n) {
+    var im = new Image();
+    im.src = 'games/giving-up/img/' + n + '.png';
+    IMG[n] = im;
+  });
+  function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
+
   var sfxTick  = function () { if (!sfx.gate('gu_k')) return; sfx.tone(210, .04, 'square', .035); };
   var sfxHit   = function () { if (!sfx.gate('gu_h')) return; sfx.noise(.09, .06, 260); };
   var sfxSlide = function () { if (!sfx.gate('gu_s')) return; sfx.noise(.1, .035, 520); };
@@ -525,9 +536,19 @@
       ctx.beginPath(); ctx.moveTo(x, y - 16); ctx.lineTo(st.tipX, st.tipY); ctx.stroke();
       var a = Math.atan2(st.tipY - (y - 16), st.tipX - x);
       ctx.save(); ctx.translate(st.tipX, st.tipY); ctx.rotate(a);
+      if (imgReady('hammer')) {
+        var hi = IMG['hammer'], hw = 30, hh = hw * hi.naturalHeight / hi.naturalWidth;
+        ctx.drawImage(hi, -hw * .3, -hh / 2, hw, hh);
+        if (st.planted) { // 박힘 표시 — 벡터 시절의 색 변화를 글로우로 대체
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = 'rgba(255,210,122,.4)';
+          ctx.beginPath(); ctx.arc(4, 0, 14, 0, TAU); ctx.fill();
+        }
+      } else {
       ctx.fillStyle = st.planted ? '#ffd27a' : '#9aa0a8';
       ctx.fillRect(-6, -9, 18, 18);
       ctx.strokeStyle = '#14161a'; ctx.lineWidth = 2; ctx.strokeRect(-6, -9, 18, 18);
+      }
       ctx.restore();
       ctx.fillStyle = '#d8c6a8';
       ctx.beginPath(); ctx.arc(x, y - 26, 8, 0, TAU); ctx.fill();
@@ -535,6 +556,11 @@
       ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 8); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x, y - 16);
       ctx.lineTo(x + Math.cos(a) * 26, y - 16 + Math.sin(a) * 26); ctx.stroke();
+      if (imgReady('pot')) {
+        var poi = IMG['pot'], pow2 = 46, poh = pow2 * poi.naturalHeight / poi.naturalWidth;
+        // 항아리 입이 벡터 시절의 림(y-14)과 같은 높이에 오도록 바닥을 y+18에 앵커
+        ctx.drawImage(poi, x - pow2 / 2, y + 18 - poh, pow2, poh);
+      } else {
       var pg = ctx.createLinearGradient(x - PR, y - PR, x + PR, y + PR);
       pg.addColorStop(0, '#8a5a3a'); pg.addColorStop(1, '#4a2e1c');
       ctx.fillStyle = pg;
@@ -547,6 +573,7 @@
       ctx.strokeStyle = '#2a180e'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = 'rgba(255,220,180,.18)';
       ctx.beginPath(); ctx.ellipse(x - 5, y - 2, 4, 9, -.3, 0, TAU); ctx.fill();
+      }
     }
 
     function drawRuler(ctx) {

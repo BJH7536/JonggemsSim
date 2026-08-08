@@ -31,8 +31,9 @@
       "ai_model": "GPT Image 1.5",
       "prompt": "Square game launcher icon, flat vector style, dark background (#12101a) with green and orange accents. Subject: two round cartoon monster creatures facing each other in a versus standoff, simple blob shapes with big eyes. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding. Original creature design, not resembling any existing franchise."
     },
-
-    { "_": "── 주머니 괴수 몬스터 6종 — 플레이어(등 3/4 뒤태) + 적(정면 3/4). 스타일 공통 문구를 지켜 세대 간 일관성을 최대화한다. 전부 오리지널 디자인 명시 (IP 리스크 차단)" },
+    {
+      "_": "── 주머니 괴수 몬스터 6종 — 플레이어(등 3/4 뒤태) + 적(정면 3/4). 스타일 공통 문구를 지켜 세대 간 일관성을 최대화한다. 전부 오리지널 디자인 명시 (IP 리스크 차단)"
+    },
     {
       "id": "pocket-me-fire",
       "out": "games/pocket/img/me-fire.png",
@@ -69,49 +70,147 @@
       "ai_model": "GPT Image 1.5",
       "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild thorn cub creature, round mossy-green body (#6fd98f) with bramble tufts and two big leaf ears, sharp playful eyes and a smirking mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
     },
-
-    { "_": "── 스킬 VFX 7종 — generate/effect/v2, frame=16(4x4 시트). 검은 배경으로 생성해 게임에서 'screen' 블렌드로 얹는다 (검정=투명 효과, JPEG 저장 가능해 용량도 준다)" },
+    {
+      "_": "── 스킬 VFX 7종 — generate/effect/v2, frame=16(4x4 시트). 검은 배경으로 생성해 게임에서 'screen' 블렌드로 얹는다 (검정=투명 효과, JPEG 저장 가능해 용량도 준다)"
+    },
     {
       "id": "vfx-tackle",
       "out": "games/pocket/img/vfx-tackle.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon impact burst game VFX animation on a pure black background: a white and pale-yellow star-shaped smash impact with short radiating speed lines and a small shockwave ring, punchy and quick, growing then fading. Flat 2D game style, thick shapes, no text."
     },
     {
       "id": "vfx-fire",
       "out": "games/pocket/img/vfx-fire.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon fire burst game VFX animation on a pure black background: orange (#ff6a3d) and amber (#ffb447) flames erupting outward with sparks, blooming then dissolving into embers. Flat 2D game style, thick shapes, no text."
     },
     {
       "id": "vfx-water",
       "out": "games/pocket/img/vfx-water.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon water splash game VFX animation on a pure black background: blue (#4aa0ff) swirling water jets and pale (#b0d8ff) droplets bursting outward in a spiral, splashing then raining down. Flat 2D game style, thick shapes, no text."
     },
     {
       "id": "vfx-grass",
       "out": "games/pocket/img/vfx-grass.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon leaf slash game VFX animation on a pure black background: sharp green (#6fd98f) leaf blades and petals slicing across in crossing arcs with light-green (#c8f0b8) trails, scattering then fading. Flat 2D game style, thick shapes, no text."
     },
     {
       "id": "vfx-ult-fire",
       "out": "games/pocket/img/vfx-ult-fire.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon massive explosion game VFX animation on a pure black background: a huge orange-red fireball detonation with a bright white core, expanding shockwave ring, flying embers and smoke puffs, dramatic finisher feel. Flat 2D game style, thick shapes, no text."
     },
     {
       "id": "vfx-ult-water",
       "out": "games/pocket/img/vfx-ult-water.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon tidal wave game VFX animation on a pure black background: a towering deep-blue wave curling and crashing across the frame with white foam and spray, overwhelming finisher feel. Flat 2D game style, thick shapes, no text."
     },
     {
       "id": "vfx-ult-grass",
       "out": "games/pocket/img/vfx-ult-grass.png",
-      "endpoint": "effect2", "frame": 16,
+      "endpoint": "effect2",
+      "frame": 16,
       "prompt": "Cartoon nature judgment game VFX animation on a pure black background: giant green thorned vines bursting upward wrapped in swirling glowing leaves and light-green energy, mighty finisher feel. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "cam-silence",
+      "out": "games/shell/faces/adventurer_silence.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person. Neutral calm expression."
+    },
+    {
+      "id": "cam-surprise",
+      "out": "games/shell/faces/adventurer_surprise.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: eyes wide open and mouth slightly open in surprise. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-panic",
+      "out": "games/shell/faces/adventurer_panic.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: panicking with wide shaky eyes, sweat drops and open mouth. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-aha",
+      "out": "games/shell/faces/adventurer_aha.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: delighted eureka face, sparkling eyes and a big grin. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-confusion",
+      "out": "games/shell/faces/adventurer_confusion.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: confused tilted expression with a wavy mouth and a question-like frown. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-thinking",
+      "out": "games/shell/faces/adventurer_thinking.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: pensive thinking face, eyes looking up, a finger on chin. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-question",
+      "out": "games/shell/faces/adventurer_question.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: curious questioning face with one raised eyebrow. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "_": "── 배경 플레이트 2종 — 조명 콘·군중·플랫폼 같은 살아있는 연출은 벡터로 위에 얹으므로 배경은 정적이고 중앙 수평 밴드에 내용이 있어야 한다 (가로로 크롭됨)"
+    },
+    {
+      "id": "bg-hwaryeok",
+      "out": "games/hwaryeok/img/studio-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark cooking studio back wall for a game background, wide horizontal composition with all content in the central horizontal band: shelves with pots, pans, jars and hanging kitchen utensils in silhouette, warm dim amber rim lighting from above, deep charcoal brown palette (#12100c to #1e1a14). Flat 2D game style, muted, no text, no people, bottom third kept simple and dark."
+    },
+    {
+      "id": "bg-pocket",
+      "out": "games/pocket/img/arena-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark battle arena interior for a game background, wide horizontal composition: blurred crowd silhouettes in dark stands at the top, cool navy palette (#141a2a to #0e1219), subtle spotlights from above, the center and lower half kept as clean simple dark floor with a faint glow. Flat 2D game style, muted, no text, no characters in the foreground."
+    },
+    {
+      "_": "── 액터 스프라이트 4종 — 마젠타 배경으로 뽑아 크로마키 (몬스터와 같은 파이프라인)"
+    },
+    {
+      "id": "hw-pan",
+      "out": "games/hwaryeok/img/pan.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a dark steel frying pan seen from the side at a slight top angle, wide shallow pan with the long handle pointing to the right, empty inside. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "hw-cloche",
+      "out": "games/hwaryeok/img/cloche.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a stainless steel dome food cloche cover seen from the side, rounded dome with a small ball knob on top, soft metallic sheen. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "guoi-pot",
+      "out": "games/giving-up/img/pot.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a round earthen clay pot jar seen from the side, warm brown ceramic with a darker base and a simple rim, the kind a climbing character would sit inside. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "guoi-hammer",
+      "out": "games/giving-up/img/hammer.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a sledgehammer HEAD only without any handle, rectangular forged steel block seen from the side, slightly worn edges, oriented horizontally. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
     }
   ]
 }

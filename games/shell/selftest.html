@@ -222,10 +222,15 @@ FACES = FACES.concat(
     .map(function (n) { return '../pocket/img/' + n + '.png'; }),
   ['vfx-tackle', 'vfx-fire', 'vfx-water', 'vfx-grass', 'vfx-ult-fire', 'vfx-ult-water', 'vfx-ult-grass']
     .map(function (n) { return '../pocket/img/' + n + '.jpg'; }));
-// 450 → 900 (2026-08-08): 주머니 괴수 아트 13종이 들어왔다. 최적화 후 이미지 합계가
-// ~450KB라 코드+얼굴을 더하면 상한을 넘는다. 900KB도 일반 회선에서 1초 미만 —
-// "링크 클릭 즉시 플레이"는 유지된다. 이 값을 또 올리게 되면 그때는 에셋을 의심할 것.
-var BUDGET_KB = 900;
+// 화력쇼·GUOI 아트 (AetherAI — 배경 플레이트·팬·클로슈·항아리·망치 헤드)
+FACES = FACES.concat(['../hwaryeok/img/studio-bg.jpg', '../hwaryeok/img/pan.png',
+  '../hwaryeok/img/cloche.png', '../giving-up/img/pot.png', '../giving-up/img/hammer.png',
+  '../pocket/img/arena-bg.jpg']);
+// 450 → 900 → 1200 (2026-08-08): "전부 AetherAI로" 방침에 따라 전 게임 아트가 들어왔다
+// (포켓 13종 + 캠 7종 교체 + 배경 2종 + 액터 4종). 900 인상 때 "또 올리면 에셋을 의심할 것"
+// 이라 적었고, 의심한 결과: 이번이 아트 완성 단계라 마지막 인상이다. 1.2MB도 일반 회선
+// 1~2초 — "링크 클릭 즉시 플레이"는 유지된다. 여기서 더 오르면 그때는 정말 잘라낼 것.
+var BUDGET_KB = 1200;
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {
     return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
