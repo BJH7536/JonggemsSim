@@ -310,6 +310,9 @@
       $('appJgs').classList.add('on');
       var pool = SHOW_TITLES[g.id];
       this._showTitle = pool ? pool[Math.floor(Math.random() * pool.length)] : g.tagline;
+      // 게임별 아트는 여기서부터 내려받는다 (지연 로드) — 카운트다운 ~2.4초가 로드를 가리고,
+      // 그래도 늦은 이미지는 각 게임의 imgReady 벡터 폴백이 받는다. 첫 화면 payload 절약.
+      if (g.preload) { try { g.preload(); } catch (e) {} }
 
       $('overlay').classList.remove('hidden');
       $('overlay').innerHTML = '<div class="startSoon">' +
@@ -455,13 +458,23 @@
       t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
     },
 
+    // ---------- 방송 사고 ----------
+    // 게임 한 판의 예외가 rAF 루프(=방송 전체)를 죽이면 안 된다. step/draw에서 잡아
+    // 여기로 보낸다 — 정산까지 마친 뒤 죽은 게임은 버린다 (더 밟지도, 그리지도 않는다).
+    _crash: function (e) {
+      console.error('[shell] 게임 예외 — 방송사고로 정산:', e);
+      if (this.phase === 'live') this.endShow('crash');
+      this.inst = null;
+    },
+
     // ---------- 방송 종료·정산 ----------
     endShow: function (reason) {
       if (this.phase !== 'live') return; // 이중 종료 방지 (H-2)
       this.phase = 'result';
       var g = this.game, final = Math.round(this.viewers);
 
-      Chat.sys(reason === 'dead' ? '— 방송 강제 종료 —' : '— 방송 종료 —');
+      Chat.sys(reason === 'dead' ? '— 방송 강제 종료 —'
+        : reason === 'crash' ? '— 게임이 응답하지 않아 방송을 종료합니다 —' : '— 방송 종료 —');
       Chat.react('end');
 
       var prevBest = this.ch.best[g.id] || 0;
@@ -482,11 +495,14 @@
 
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
-      var stats = (this.inst && this.inst.summary) ? this.inst.summary() : [];
+      // 사고 난 게임은 summary도 못 믿는다 — 실패하면 통계 없이 정산한다
+      var stats = [];
+      try { if (this.inst && this.inst.summary) stats = this.inst.summary() || []; } catch (e2) {}
       var rows = stats.map(function (r) { return '<span>' + r[0] + '</span><b>' + r[1] + '</b>'; }).join('');
 
-      var head = reason === 'dead' ? '송출 끊김' : '방송 리포트';
+      var head = reason === 'dead' ? '송출 끊김' : reason === 'crash' ? '게임 튕김' : '방송 리포트';
       var lead = reason === 'dead' ? '시청자가 전부 떠났다. 검은 화면만 남았다.'
+        : reason === 'crash' ? '게임이 뻗었다. 급하게 정산하고 방송을 접었다 — 이것도 방송사고다.'
         : reason === 'clear' ? '오늘 방송, 잘 뽑혔다.'
         : g.title + ' 방송이 끝났다. 오늘의 그래프:';
 
@@ -534,7 +550,9 @@
         this.timeLeft -= dt;
         if (this.timeLeft <= 0) { this.timeLeft = 0; this.endShow('time'); }
       }
-      if (this.phase === 'live' && this.inst) this.inst.step(dt);
+      if (this.phase === 'live' && this.inst) {
+        try { this.inst.step(dt); } catch (e) { this._crash(e); }
+      }
       if (this.phase === 'live') {
         // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
         this._graphT += dt; this._upT += dt;
@@ -607,7 +625,9 @@
       ctx.fillStyle = '#0b0908'; ctx.fillRect(0, 0, W, H);
       ctx.save();
       ctx.translate((Math.random() - .5) * this._shake, (Math.random() - .5) * this._shake);
-      if (this.inst) this.inst.draw(ctx, dt);
+      if (this.inst) {
+        try { this.inst.draw(ctx, dt); } catch (e) { this._crash(e); }
+      }
       ctx.restore();
       // 방송 화면 공통 룩 — 비네트 + 화이트 플래시
       var g = ctx.createRadialGradient(480, 210, 190, 480, 210, 580);
