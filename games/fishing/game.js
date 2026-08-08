@@ -31,12 +31,19 @@
     { n: '심해',   top: 310, bot: 420, bite: [7, 12], drain: 0.007, tiers: [.05, .10, .30, .45, .10] },
   ];
   // 어종 티어 — reel: 초당 끌어올림, surgeP: 저항 시 텐션 상승/초, pull: 저항 시 되끌림/초
+  // 어종 — 티어당 6종 (스프라이트 AetherAI, tools/aether-assets.json의 sp-*).
+  // 이름·스프라이트 쌍은 사실 슬롯(name)으로 채팅에 그대로 흘러간다.
   var TIERS = [
-    { n: '잡어', names: ['잿빛피라미', '흙탕주둥이', '거품송사리'], gain: [15, 30],     reel: 80, surgeP: 0,   surgeIv: 99,  pull: 0,  r: 9,  c: '#8a8478' },
-    { n: '소형', names: ['은비늘잉어', '달빛정어리', '유리멸치'],   gain: [60, 60],     reel: 52, surgeP: 35,  surgeIv: 2.2, pull: 8,  r: 13, c: '#9ec8e0' },
-    { n: '중형', names: ['먹구름메기', '청동가물치', '칼지느러미'], gain: [200, 200],   reel: 36, surgeP: 55,  surgeIv: 1.7, pull: 14, r: 19, c: '#6fa0c0' },
-    { n: '대형', names: ['심해왕눈이', '가시등롱어', '강철아가미'], gain: [650, 650],   reel: 25, surgeP: 85,  surgeIv: 1.3, pull: 22, r: 28, c: '#c08a4a' },
-    { n: '전설', names: ['나락의군주', '심연의어미'],               gain: [1800, 1800], reel: 17, surgeP: 110, surgeIv: 1.0, pull: 30, r: 40, c: '#ff6a3d' },
+    { n: '잡어', sp: [{ n: '잿빛피라미', img: 'sp-minnow' }, { n: '거품송사리', img: 'sp-guppy' }, { n: '진주조개', img: 'sp-clam' }, { n: '뿔소라', img: 'sp-conch' }, { n: '별불가사리', img: 'sp-starfish' }, { n: '유리새우', img: 'sp-shrimp' }],
+      gain: [15, 30],     reel: 80, surgeP: 0,   surgeIv: 99,  pull: 0,  r: 9,  c: '#8a8478' },
+    { n: '소형', sp: [{ n: '은비늘잉어', img: 'sp-carp' }, { n: '달빛정어리', img: 'sp-sardine' }, { n: '유리멸치', img: 'sp-anchovy' }, { n: '흰꼬마오징어', img: 'sp-squid' }, { n: '방울해파리', img: 'sp-jelly' }, { n: '아기바다거북', img: 'sp-babyturtle' }],
+      gain: [60, 60],     reel: 52, surgeP: 35,  surgeIv: 2.2, pull: 8,  r: 13, c: '#9ec8e0' },
+    { n: '중형', sp: [{ n: '먹구름메기', img: 'sp-catfish' }, { n: '청동가물치', img: 'sp-snakehead' }, { n: '칼지느러미', img: 'sp-sailfin' }, { n: '웃는돌고래', img: 'sp-dolphin' }, { n: '멍한개복치', img: 'sp-sunfish' }, { n: '이끼바다거북', img: 'sp-seaturtle' }],
+      gain: [200, 200],   reel: 36, surgeP: 55,  surgeIv: 1.7, pull: 14, r: 19, c: '#6fa0c0' },
+    { n: '대형', sp: [{ n: '심해왕눈이', img: 'sp-bigeye' }, { n: '가시등롱어', img: 'sp-lantern' }, { n: '강철아가미', img: 'sp-steelgill' }, { n: '잿빛상어', img: 'sp-shark' }, { n: '대왕오징어', img: 'sp-giantsquid' }, { n: '못난이아귀', img: 'sp-monkfish' }],
+      gain: [650, 650],   reel: 25, surgeP: 85,  surgeIv: 1.3, pull: 22, r: 28, c: '#c08a4a' },
+    { n: '전설', sp: [{ n: '나락의군주', img: 'sp-abysslord' }, { n: '심연의어미', img: 'sp-abyssmother' }, { n: '흰수염고래', img: 'sp-whale' }, { n: '옛바다의그림자', img: 'sp-leviathan' }, { n: '유령해파리', img: 'sp-ghostjelly' }, { n: '황금개복치', img: 'sp-goldsunfish' }],
+      gain: [1800, 1800], reel: 17, surgeP: 110, surgeIv: 1.0, pull: 30, r: 40, c: '#ff6a3d' },
   ];
   var SNAP_AT = 100, EDGE_AT = 90;   // 줄 끊김 / 클러치 임계 (텐션 %)
   var SNAP_GAIN = [400, 900];        // 대형·전설 줄 끊김 구경값
@@ -59,10 +66,10 @@
   var IMG = {};
   function loadArt() {
     if (IMG['sea-bg']) return;
-    [['sea-bg', 'jpg'], ['boat', 'png'],
-     ['fish-0', 'png'], ['fish-1', 'png'], ['fish-2', 'png'], ['fish-3', 'png'], ['fish-4', 'png'],
-     ['vfx-splash', 'jpg'],
-    ].forEach(function (e) {
+    var arts = [['sea-bg', 'jpg'], ['boat', 'png'], ['vfx-splash', 'jpg']];
+    // 어종 30 스프라이트 — 티어 정의에서 수집 (지연 로드라 첫 화면 payload 무관)
+    TIERS.forEach(function (t) { t.sp.forEach(function (o) { arts.push([o.img, 'png']); }); });
+    arts.forEach(function (e) {
       var im = new Image();
       im.src = 'games/fishing/img/' + e[0] + '.' + e[1];
       IMG[e[0]] = im;
@@ -181,7 +188,8 @@
       var roll = Math.random(), acc = 0, tier = 0, tp = zone().tiers;
       for (var i = 0; i < tp.length; i++) { acc += tp[i]; if (roll < acc) { tier = i; break; } }
       var T = TIERS[tier];
-      st.fish = { tier: tier, name: T.names[rnd(0, T.names.length - 1)], prog: 0 };
+      var sp = T.sp[rnd(0, T.sp.length - 1)];
+      st.fish = { tier: tier, name: sp.n, img: sp.img, prog: 0 };
       st.phase = 'reel'; st.biteT = 0;
       st.tension = 35; st.slackT = 0; st.edgeT = 0; st.edgeDone = false;
       st.surging = 0; st.surgeT = .8 + Math.random();
@@ -496,9 +504,9 @@
             var F = TIERS[st.fish.tier], fr = F.r;
             ctx.save(); ctx.translate(lx, ly + fr * .6);
             ctx.rotate(Math.sin(t * (st.surging > 0 ? 22 : 6)) * (st.surging > 0 ? .5 : .18));
-            if (imgReady('fish-' + st.fish.tier)) {
+            if (st.fish.img && imgReady(st.fish.img)) {
               // 스프라이트도 벡터처럼 왼쪽을 본다 — 회전(몸부림)은 그대로 태운다
-              var fim = IMG['fish-' + st.fish.tier], fw2 = fr * 3.8, fh2 = fw2 * fim.naturalHeight / fim.naturalWidth;
+              var fim = IMG[st.fish.img], fw2 = fr * 3.8, fh2 = fw2 * fim.naturalHeight / fim.naturalWidth;
               ctx.drawImage(fim, -fw2 / 2, -fh2 / 2, fw2, fh2);
             } else {
               ctx.fillStyle = F.c;

@@ -11,7 +11,7 @@
       "id": "desktop-wallpaper",
       "out": "games/shell/img/desktop-wallpaper.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Dark clean desktop wallpaper for a game streamer's PC, inspired by modern streaming platform branding: deep charcoal (#141517) background with vivid mint green (#00ffa3) neon accent lighting. Abstract cozy streaming room silhouette at night: a desk, a monitor glow, a soft mint neon sign strip, faint smoke. Minimal, low contrast, no text, no logos, no characters. Wide 16:9 composition with the center kept empty and uncluttered so desktop icons placed on top stay readable."
+      "prompt": "Dark cozy desktop wallpaper for a variety-game streamer PC, smooth clean digital painting: deep charcoal (#141517) room with vivid mint green (#00ffa3) neon accent lighting. A multi-monitor streaming desk silhouette at the bottom edge, and on wall shelves the subtle silhouettes of many different game props — a frying pan, a hooked pickaxe, a fishing rod, a round monster plush, wire cutters — hinting that this streamer plays every genre. Soft smooth gradients only: absolutely no horizontal stripes, no banding, no slat-light patterns. Minimal, low contrast, no text, no logos, no people. Wide 16:9 composition with the center kept empty and uncluttered so desktop icons placed on top stay readable."
     },
     {
       "id": "icon-hwaryeok",
@@ -243,6 +243,189 @@
       "_": "── 심연낚시 — 배경 플레이트 + 배 + 어종 5티어. 물결·수심 라벨·낚싯줄·기포·낚싯대는 살아있는 연출이라 벡터로 위에 얹는다. 물고기는 게임 좌표계상 왼쪽을 본다"
     },
     {
+      "_": "-- 심연낚시 어종 30 (티어 0~4 x 6종). 전신 무크롭 조항 + 최적화 contain. 왼쪽을 본다"
+    },
+    {
+      "id": "sp-minnow",
+      "out": "games/fishing/img/sp-minnow.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small dull grey minnow fish, plain drab body (#9a948a), simple fins, bored expression, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-guppy",
+      "out": "games/fishing/img/sp-guppy.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single tiny cheerful guppy fish with a big fan tail, pastel blue body and orange tail, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-clam",
+      "out": "games/fishing/img/sp-clam.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small closed clam seashell with a tiny pearl peeking out, cream and lavender shell, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-conch",
+      "out": "games/fishing/img/sp-conch.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small spiral conch sea snail shell with little horns, warm coral and cream colors, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-starfish",
+      "out": "games/fishing/img/sp-starfish.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single plump orange starfish with a happy face and dotted texture, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-shrimp",
+      "out": "games/fishing/img/sp-shrimp.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single tiny translucent glass shrimp with a curled body and long antennae, pale pink, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-carp",
+      "out": "games/fishing/img/sp-carp.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single sleek silver-blue carp fish with glossy pale blue scales and a white belly, elegant fins, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-sardine",
+      "out": "games/fishing/img/sp-sardine.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single slim silver sardine fish with a moonlit sheen and a big round eye, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-anchovy",
+      "out": "games/fishing/img/sp-anchovy.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small translucent anchovy fish with a silvery stripe and delicate fins, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-squid",
+      "out": "games/fishing/img/sp-squid.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small cute white squid with short tentacles and big curious eyes, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-jelly",
+      "out": "games/fishing/img/sp-jelly.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small round jellyfish with a translucent pastel bell and short wavy tentacles, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-babyturtle",
+      "out": "games/fishing/img/sp-babyturtle.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single tiny baby sea turtle with a green shell and big sparkling eyes, flippers spread, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-catfish",
+      "out": "games/fishing/img/sp-catfish.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single stocky bronze-blue catfish with long whisker barbels and a wide flat head, grumpy look, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-snakehead",
+      "out": "games/fishing/img/sp-snakehead.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single long bronze snakehead fish with a dark green mottled pattern and a determined face, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-sailfin",
+      "out": "games/fishing/img/sp-sailfin.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single swift blue fish with a tall blade-like dorsal fin and a pointed snout, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-dolphin",
+      "out": "games/fishing/img/sp-dolphin.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single friendly smiling dolphin, sleek grey body with a pale belly, mid-swim pose, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-sunfish",
+      "out": "games/fishing/img/sp-sunfish.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single big round ocean sunfish (mola mola) with a blunt body, tall fins and a dazed blank expression, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-seaturtle",
+      "out": "games/fishing/img/sp-seaturtle.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single adult sea turtle with a mossy green patterned shell and calm wise eyes, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-bigeye",
+      "out": "games/fishing/img/sp-bigeye.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single large deep-sea fish with one huge glassy eye, bronze-amber armored body and spiny fins, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-lantern",
+      "out": "games/fishing/img/sp-lantern.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single spiny deep-sea lanternfish with glowing dots along its side and thorny dorsal spikes, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-steelgill",
+      "out": "games/fishing/img/sp-steelgill.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single armored steel-grey fish with metallic plated gills and a strong jaw, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-shark",
+      "out": "games/fishing/img/sp-shark.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single grey reef shark with a white belly, a sharp dorsal fin and a toothy grin, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-giantsquid",
+      "out": "games/fishing/img/sp-giantsquid.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single big red-orange giant squid with long trailing tentacles and large round eyes, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-monkfish",
+      "out": "games/fishing/img/sp-monkfish.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single lumpy brown anglerfish (monkfish) with a huge wide mouth, tiny teeth and a glowing lure on its head, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-abysslord",
+      "out": "games/fishing/img/sp-abysslord.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single huge ancient abyssal monster fish, near-black scarred body with glowing ember-orange fin edges and one baleful glowing eye, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-abyssmother",
+      "out": "games/fishing/img/sp-abyssmother.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single massive ancient pale deep-sea fish with flowing ragged fins, faint blue bioluminescent spots and a serene eerie face, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-whale",
+      "out": "games/fishing/img/sp-whale.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single majestic blue whale with a pale ribbed belly, a small kind eye and a gentle smile, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-leviathan",
+      "out": "games/fishing/img/sp-leviathan.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single colossal shadowy sea serpent leviathan, deep teal body with ancient glowing runes along its side, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-ghostjelly",
+      "out": "games/fishing/img/sp-ghostjelly.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single giant ghostly jellyfish with a translucent glowing pale-green bell and long ethereal tentacles, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
+      "id": "sp-goldsunfish",
+      "out": "games/fishing/img/sp-goldsunfish.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single legendary golden ocean sunfish (mola mola) shining like a gold coin with a sparkling aura, seen exactly from the side, facing LEFT. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text. Original design."
+    },
+    {
       "id": "bg-fishing",
       "out": "games/fishing/img/sea-bg.png",
       "ai_model": "GPT Image 1.5",
@@ -253,36 +436,6 @@
       "out": "games/fishing/img/boat.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Game sprite of a small wooden rowboat seen exactly from the side, warm honey-brown planks (#c08a52, #e0b078), with a small chibi streamer character in a bright coral hoodie and a little sun hat sitting toward the RIGHT end of the boat facing right, hands together in front as if holding something invisible. NO fishing rod, NO fishing line. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, bright cheerful colors, no text."
-    },
-    {
-      "id": "fish-0",
-      "out": "games/fishing/img/fish-0.png",
-      "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a single small dull grey minnow fish seen exactly from the side, facing LEFT, plain drab body (#8a8478), simple fins, slightly bored expression. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
-    },
-    {
-      "id": "fish-1",
-      "out": "games/fishing/img/fish-1.png",
-      "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a single sleek silver-blue carp fish seen exactly from the side, facing LEFT, glossy pale blue scales (#9ec8e0) with a white belly, elegant fins. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
-    },
-    {
-      "id": "fish-2",
-      "out": "games/fishing/img/fish-2.png",
-      "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a single stocky bronze-blue catfish seen exactly from the side, facing LEFT, muted steel-blue body (#6fa0c0) with long whisker barbels and a wide flat head, grumpy look. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
-    },
-    {
-      "id": "fish-3",
-      "out": "games/fishing/img/fish-3.png",
-      "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a single large deep-sea predator fish seen exactly from the side, facing LEFT, bronze-amber armored body (#c08a4a) with spiny dorsal fins, one big glassy eye and small fangs, deep-sea anglerfish vibe without a lure stalk. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
-    },
-    {
-      "id": "fish-4",
-      "out": "games/fishing/img/fish-4.png",
-      "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a single huge ancient abyssal monster fish seen exactly from the side, facing LEFT, near-black scarred body with glowing ember-orange (#ff6a3d) fin edges, gill slits and one baleful glowing eye, ragged ancient fins, terrifying legendary boss vibe. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
     },
     {
       "_": "── 해체쇼 — 작업실 배경 + 폭탄 몸통. 와이어·타이머·판독 게이지·스파크는 인터랙션 그 자체라 벡터 유지"
@@ -297,7 +450,7 @@
       "id": "bomb-body",
       "out": "games/bomb/img/bomb-body.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Game sprite of a rectangular gunmetal bomb casing front panel with rounded corners, seen exactly head-on, dark blue-grey steel (#2b2f3a, #3c4150) with four corner bolts, worn scratches, and a completely EMPTY smooth center area with no wires, no display, no buttons (game draws those on top). Wider than tall. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+      "prompt": "Game sprite of a rectangular gunmetal bomb casing front panel with rounded corners, seen exactly head-on, dark blue-grey steel (#2b2f3a, #3c4150) with four corner bolts, worn scratches, and a completely EMPTY smooth center area with no wires, no display, no buttons (game draws those on top). Wider than tall. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text. The whole subject is fully inside the frame with clear margin on all sides - no part cropped by the edges."
     },
     {
       "id": "vfx-boom",

@@ -332,7 +332,7 @@ FACES = FACES.concat(['img/comic-1.jpg', 'img/comic-2.jpg', 'img/comic-3.jpg', '
   'img/ui-lock.png', 'img/ui-wrench.png', 'img/ui-star.png', '../giving-up/img/head.png']);
 // 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)
 FACES = FACES.concat(
-  ['boat', 'fish-0', 'fish-1', 'fish-2', 'fish-3', 'fish-4']
+  ['boat'].concat(['sp-minnow', 'sp-guppy', 'sp-clam', 'sp-conch', 'sp-starfish', 'sp-shrimp', 'sp-carp', 'sp-sardine', 'sp-anchovy', 'sp-squid', 'sp-jelly', 'sp-babyturtle', 'sp-catfish', 'sp-snakehead', 'sp-sailfin', 'sp-dolphin', 'sp-sunfish', 'sp-seaturtle', 'sp-bigeye', 'sp-lantern', 'sp-steelgill', 'sp-shark', 'sp-giantsquid', 'sp-monkfish', 'sp-abysslord', 'sp-abyssmother', 'sp-whale', 'sp-leviathan', 'sp-ghostjelly', 'sp-goldsunfish'])
     .map(function (n) { return '../fishing/img/' + n + '.png'; }),
   ['../fishing/img/sea-bg.jpg', '../fishing/img/vfx-splash.jpg',
    '../bomb/img/bench-bg.jpg', '../bomb/img/bomb-body.png', '../bomb/img/vfx-boom.jpg']);
@@ -349,7 +349,9 @@ FACES = FACES.concat(
 //   첫 화면(~150KB)은 불변 — 이 예산은 총량 상한(회선 부담 가드)이다.
 // → 2200 → 2300 (2026-08-09): 전체화면 방송 + 클립 채팅 합성 코드(약 6KB)로 상한 터치.
 //   이번 인상분은 이미지가 아니라 코드다 — 에셋 총량은 동결 상태.
-var BUDGET_KB = 2300;
+// → 2300 → 2700 (2026-08-09): 심연낚시 어종 30종(사용자 요청 — 거북·개복치·상어·고래 등).
+//   전부 방송 준비 때 지연 로드 — 첫 화면 불변. 이미지 인상분 약 350KB.
+var BUDGET_KB = 2700;
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {
     return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
