@@ -36,6 +36,7 @@
   var GROUND_Y = 1520;        // 높이 0m 기준선
   var PX_PER_M = 20;
   var SUMMIT_Y = 195;         // 정상 발판 상단 → 약 66m
+  var WALL_LIP = 14;          // 가장자리 벽이 화면 안쪽으로 드러나는 폭 — 망치가 박히는 면
 
   // 고정 지형. 매 방송 같은 산이어야 최고 기록이 의미를 가진다 (절차 생성 금지).
   // 발판(rect)과 바위(circle)를 섞는다 — 발판만 있으면 실수가 "못 올라감"으로만 끝나지만,
@@ -47,6 +48,33 @@
   // 미로가 아니다 — 주 루트는 좌우 지그재그 사다리(수직 40~70px, 망치 사거리 118의
   // 절반 수준)로 항상 읽히게 하고, 바위는 루트 밖 가장자리로 빼서 "미끄러지면 만나는
   // 위험"으로만 쓴다. ROUTE는 selftest가 기하로 등반 가능성을 검증한다.
+  // 바위 — 루트 밖 가장자리. 주 루트를 막지 않고, 미끄러진 몸이 굴러떨어지는 경로에 있다.
+  // (벽 홀드 배치가 이 목록을 참조하므로 TERRAIN 조립보다 먼저 선언한다)
+  // 4개(1240·1150·700·420)는 벽 홀드 신설 때 안쪽으로 30px쯤 옮겼다 — 서는 공간과의
+  // 간섭을 배치 회피 로직 없이 원천 제거하기 위해서다. 가장자리 위험이라는 역할은 유지.
+  var ROCKS = [
+    C(120, 1470, 40), C(700, 1390, 44), C(112, 1240, 40), C(850, 1150, 38),
+    C(90, 1000, 38),  C(860, 900, 42),  C(108, 700, 36),  C(870, 560, 40),
+    C(104, 420, 34),  C(870, 300, 38),
+  ];
+
+  // 벽 홀드 — 가장자리 벽을 '오를 수 있게' 하는 작은 돌출 선반. 매끈한 수직 벽면은
+  // 장대 기하상 순수 상승이 안 나온다(자루-벽 교차점을 사거리로 재산정하면 몸이 제자리
+  // 평형 — 2026-08-08 실측). 그래서 수평면을 가진 선반을 성기게 박아 "밀기·저항은
+  // 벽면, 상승은 선반"으로 나눈다. 간격 88px은 주 루트 기준(사거리×0.75 = 96px) 이내
+  // 이되 주 루트(수직 40~70px)보다 성겨서, 벽 루트는 어렵지만 가능한 보조 루트다.
+  // 가장자리 바위와 서는 공간이 겹치는 자리는 위로 비켜 배치한다 (selftest가 검증).
+  // 균일 88px 간격 — 주 루트 기준(사거리×0.75 = 96px) 이내. 지면에서 첫 홀드는 120px
+  // (사거리 128 이내)라 바닥에서 벽 루트로 진입할 수 있다. 바위 회피 로직은 없다 —
+  // 간섭하던 바위 쪽을 옮겨 원천 제거했고, selftest가 간격·간섭을 상시 검증한다.
+  var WALL_HOLDS = [];
+  (function () {
+    for (var wy = GROUND_Y - 120; wy > SUMMIT_Y + 40; wy -= 88) {
+      WALL_HOLDS.push({ t: 'r', x: WALL_LIP, y: wy, w: 34, h: 12 });
+      WALL_HOLDS.push({ t: 'r', x: W - WALL_LIP - 34, y: wy, w: 34, h: 12 });
+    }
+  })();
+
   var ROUTE = [
     R(360, 1450, 240, 22), R(150, 1385, 190, 22), R(420, 1322, 200, 22), R(660, 1262, 190, 22),
     R(430, 1205, 170, 22), R(180, 1150, 180, 22), R(420, 1096, 170, 22), R(670, 1042, 180, 22),
@@ -56,16 +84,14 @@
     R(360, 412, 140, 22),  R(120, 368, 150, 22),  R(370, 326, 140, 22),  R(610, 284, 150, 22),
     R(360, 244, 140, 22),
   ];
-  var TERRAIN = [R(0, GROUND_Y, 960, 80)].concat(ROUTE, [
+  var TERRAIN = [R(0, GROUND_Y, 960, 80)].concat(ROUTE, ROCKS, [
     R(340, SUMMIT_Y, 220, 28),
-    // 바위 — 루트 밖 가장자리. 주 루트를 막지 않고, 미끄러진 몸이 굴러떨어지는 경로에 있다
-    C(120, 1470, 40), C(700, 1390, 44), C(80, 1240, 40), C(885, 1150, 38),
-    C(90, 1000, 38),  C(860, 900, 42),  C(80, 700, 36),  C(870, 560, 40),
-    C(80, 420, 34),   C(870, 300, 38),
-    // 보이지 않는 양옆 벽 — 화면 밖으로 빠지지 않게
-    { t: 'r', x: -60, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
-    { t: 'r', x: 960, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
-  ]);
+    // 화면 가장자리 벽 — 안쪽 WALL_LIP만큼 드러나고 망치가 박힌다 (밀기·매달리기·저항).
+    // 이전엔 면이 정확히 x=0/960인 숨은 벽이었는데, 커서 좌표가 캔버스 안(0~960)으로
+    // 제한돼 자루 스윕이 벽 내부에 절대 못 들어갔다 — "가장자리 벽 판정이 없다"의 원인.
+    { t: 'r', x: -60, y: -400, w: 60 + WALL_LIP, h: WORLD_H + 400, wall: true },
+    { t: 'r', x: W - WALL_LIP, y: -400, w: 60 + WALL_LIP, h: WORLD_H + 400, wall: true },
+  ], WALL_HOLDS);
 
   // 출발 지점 — 자동 플레이 A/B 실측으로 확정 (2026-08-08, 하네스는 ?guoidebug 훅 참고).
   //   480(초판): 첫 발판 바로 밑 16px 틈에 갇힘. 시작 즉시 조작 불능 (플레이 피드백)
@@ -100,6 +126,22 @@
   // 이벤트가 영원히 안 터졌다. 아래 tuning으로 노출해 selftest가 도달 가능성을 검사한다.
   var CLUTCH_V = 550;      // 이 속도 이상으로 떨어지던 중이어야
   var CLUTCH_MIN_H = 3;    // 이 높이 위에서 붙잡아야 (바닥에 처박힌 건 clutch가 아니다)
+
+  // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
+  // 항아리·망치 헤드. 없거나 로드 전이면 기존 벡터로 폴백 — 아트는 얹는 층이다.
+  // 지형·먼지·사거리 링은 계속 절차적으로: 접점 하이라이트가 곧 조작 피드백이라서다.
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약.
+  // 그래도 늦은 프레임은 imgReady 폴백(벡터)이 그대로 받는다. 재호출은 no-op.
+  var IMG = {};
+  function loadArt() {
+    if (IMG.pot) return;
+    ['pot', 'hammer'].forEach(function (n) {
+      var im = new Image();
+      im.src = 'games/giving-up/img/' + n + '.png';
+      IMG[n] = im;
+    });
+  }
+  function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
 
   var sfxTick  = function () { if (!sfx.gate('gu_k')) return; sfx.tone(210, .04, 'square', .035); };
   var sfxHit   = function () { if (!sfx.gate('gu_h')) return; sfx.noise(.09, .06, 260); };
@@ -154,6 +196,7 @@
   }
 
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
       px: START_X, py: GROUND_Y - PR, vx: 0, vy: 0,
       len: HAMMER_MAX, tipX: 560, tipY: GROUND_Y - 90,
@@ -280,7 +323,7 @@
         st.airVy = 0;
       }
       st.wasContact = !!touching;
-      st.px = clamp(st.px, PR, W - PR);
+      st.px = clamp(st.px, WALL_LIP + PR, W - WALL_LIP - PR);
       st.py = Math.min(st.py, GROUND_Y - PR + 40);
 
       // 몸이 밀린 뒤 망치 끝을 다시 잡는다. 접점을 몸이 움직이기 전 좌표로 그려두면
@@ -478,11 +521,19 @@
 
     function drawTerrain(ctx, cam) {
       TERRAIN.forEach(function (s) {
-        if (s.hidden) return;
         var top = s.t === 'c' ? s.y - s.r : s.y;
         var bot = s.t === 'c' ? s.y + s.r : s.y + s.h;
         if (top > cam + VH || bot < cam) return;
         var lit = s === st.contact;
+        if (s.wall) {
+          // 가장자리 벽 — 화면 안쪽 립만 세로 스트립으로. 접점이면 면이 밝아진다 (조작 피드백)
+          var x0 = s.x < 0 ? 0 : s.x;
+          ctx.fillStyle = '#332d27';
+          ctx.fillRect(x0, cam, WALL_LIP, VH);
+          ctx.fillStyle = lit ? 'rgba(255,200,120,.6)' : 'rgba(220,210,190,.18)';
+          ctx.fillRect(s.x < 0 ? WALL_LIP - 2 : s.x, cam, 2, VH);
+          return;
+        }
         if (s.t === 'c') {
           var rg = ctx.createRadialGradient(s.x - s.r * .35, s.y - s.r * .4, s.r * .15, s.x, s.y, s.r);
           rg.addColorStop(0, lit ? '#8b7f6d' : '#6b6155'); rg.addColorStop(1, '#2b2621');
@@ -525,9 +576,21 @@
       ctx.beginPath(); ctx.moveTo(x, y - 16); ctx.lineTo(st.tipX, st.tipY); ctx.stroke();
       var a = Math.atan2(st.tipY - (y - 16), st.tipX - x);
       ctx.save(); ctx.translate(st.tipX, st.tipY); ctx.rotate(a);
+      if (imgReady('hammer')) {
+        // 헤드가 팁 '뒤'에 오게 그린다. 팁은 물리 접점이라 그 앞으로 스프라이트가
+        // 길게 나가면 발판 속에 파묻힌 것처럼 보인다(플레이 피드백). 타격면만 8px 남긴다.
+        var hi = IMG['hammer'], hw = 30, hh = hw * hi.naturalHeight / hi.naturalWidth;
+        ctx.drawImage(hi, -hw * .72, -hh / 2, hw, hh);
+        if (st.planted) { // 박힘 표시 — 벡터 시절의 색 변화를 글로우로 대체
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = 'rgba(255,210,122,.4)';
+          ctx.beginPath(); ctx.arc(4, 0, 14, 0, TAU); ctx.fill();
+        }
+      } else {
       ctx.fillStyle = st.planted ? '#ffd27a' : '#9aa0a8';
       ctx.fillRect(-6, -9, 18, 18);
       ctx.strokeStyle = '#14161a'; ctx.lineWidth = 2; ctx.strokeRect(-6, -9, 18, 18);
+      }
       ctx.restore();
       ctx.fillStyle = '#d8c6a8';
       ctx.beginPath(); ctx.arc(x, y - 26, 8, 0, TAU); ctx.fill();
@@ -535,6 +598,11 @@
       ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 8); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x, y - 16);
       ctx.lineTo(x + Math.cos(a) * 26, y - 16 + Math.sin(a) * 26); ctx.stroke();
+      if (imgReady('pot')) {
+        var poi = IMG['pot'], pow2 = 46, poh = pow2 * poi.naturalHeight / poi.naturalWidth;
+        // 항아리 입이 벡터 시절의 림(y-14)과 같은 높이에 오도록 바닥을 y+18에 앵커
+        ctx.drawImage(poi, x - pow2 / 2, y + 18 - poh, pow2, poh);
+      } else {
       var pg = ctx.createLinearGradient(x - PR, y - PR, x + PR, y + PR);
       pg.addColorStop(0, '#8a5a3a'); pg.addColorStop(1, '#4a2e1c');
       ctx.fillStyle = pg;
@@ -547,6 +615,7 @@
       ctx.strokeStyle = '#2a180e'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = 'rgba(255,220,180,.18)';
       ctx.beginPath(); ctx.ellipse(x - 5, y - 2, 4, 9, -.3, 0, TAU); ctx.fill();
+      }
     }
 
     function drawRuler(ctx) {
@@ -581,12 +650,14 @@
     startViewers: START_VIEWERS,
     usesChain: false,
     chat: window.GIVINGUP_CHAT,
+    preload: loadArt,
     // selftest가 물리 상수끼리 모순되지 않는지 검사한다 (games/shell/selftest.html)
     tuning: {
       GRAV: GRAV, PX_PER_M: PX_PER_M, GROUND_Y: GROUND_Y, SUMMIT_Y: SUMMIT_Y,
       CLUTCH_V: CLUTCH_V, CLUTCH_MIN_H: CLUTCH_MIN_H,
       HAMMER_MAX: HAMMER_MAX, HAMMER_MIN: HAMMER_MIN, FALL_FRESH: FALL_FRESH,
       ROUTE: ROUTE, TERRAIN: TERRAIN,
+      WALL_HOLDS: WALL_HOLDS, WALL_LIP: WALL_LIP,
       START_X: START_X, PR: PR, HEAD_ROOM_MIN: HEAD_ROOM_MIN, FIRST_HOOK_MAX: FIRST_HOOK_MAX,
     },
     foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +

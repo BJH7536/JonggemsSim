@@ -11,7 +11,7 @@
       "id": "desktop-wallpaper",
       "out": "games/shell/img/desktop-wallpaper.png",
       "ai_model": "GPT Image 1.5",
-      "prompt": "Dark moody desktop wallpaper for a game streamer's PC. Deep charcoal black background (#0b0908) with subtle warm amber (#ffb447) rim lighting. Abstract cozy streaming room silhouette at night: a desk, a monitor glow, a soft neon sign, faint smoke. Minimal, low contrast, no text, no logos, no characters. Wide 16:9 composition with the center kept empty and uncluttered so desktop icons placed on top stay readable."
+      "prompt": "Dark clean desktop wallpaper for a game streamer's PC, inspired by modern streaming platform branding: deep charcoal (#141517) background with vivid mint green (#00ffa3) neon accent lighting. Abstract cozy streaming room silhouette at night: a desk, a monitor glow, a soft mint neon sign strip, faint smoke. Minimal, low contrast, no text, no logos, no characters. Wide 16:9 composition with the center kept empty and uncluttered so desktop icons placed on top stay readable."
     },
     {
       "id": "icon-hwaryeok",
@@ -30,6 +30,351 @@
       "out": "games/shell/img/icon-pocket.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Square game launcher icon, flat vector style, dark background (#12101a) with green and orange accents. Subject: two round cartoon monster creatures facing each other in a versus standoff, simple blob shapes with big eyes. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding. Original creature design, not resembling any existing franchise."
+    },
+    {
+      "id": "icon-fishing",
+      "out": "games/shell/img/icon-fishing.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#0e1420) with deep teal and amber accents. Subject: a fishing rod bending hard over dark abyssal water, a glowing lure sinking into the deep with a huge shadowy fish silhouette below. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "id": "icon-bomb",
+      "out": "games/shell/img/icon-bomb.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#141014) with red and amber accents. Subject: a cartoon time bomb with a digital countdown display and three colored wires (red, blue, yellow), one wire cut with small sparks, wire cutters nearby. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "_": "── 주머니 괴수 몬스터 6종 — 플레이어(등 3/4 뒤태) + 적(정면 3/4). 스타일 공통 문구를 지켜 세대 간 일관성을 최대화한다. 전부 오리지널 디자인 명시 (IP 리스크 차단)"
+    },
+    {
+      "id": "pocket-me-fire",
+      "out": "games/pocket/img/me-fire.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small fire hedgehog creature, round orange body (#ff6a3d) with amber (#ffb447) flame-shaped spikes along its back. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+    },
+    {
+      "id": "pocket-me-water",
+      "out": "games/pocket/img/me-water.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small water droplet creature, round glossy blue body (#4aa0ff) with a pale (#b0d8ff) belly, a wave-shaped fin on its head and a small tail fin. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+    },
+    {
+      "id": "pocket-me-grass",
+      "out": "games/pocket/img/me-grass.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small grass kitten creature, round green body (#6fd98f) with two big leaf ears and a sprout on its head, pale leaf-green (#c8f0b8) belly. Seen from BEHIND at a three-quarter angle, facing away toward the upper right as if confronting an opponent. No text. Original creature design, must not resemble any existing franchise character."
+    },
+    {
+      "id": "pocket-foe-fire",
+      "out": "games/pocket/img/foe-fire.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild fire imp creature, round ember-orange body (#ff6a3d) with jagged amber (#ffb447) flame crest, mischievous glowing eyes and a grinning mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+    },
+    {
+      "id": "pocket-foe-water",
+      "out": "games/pocket/img/foe-water.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild puddle beast creature, round deep-blue body (#4aa0ff) with droplet horns and pale (#b0d8ff) fins, narrow determined eyes and a small fanged mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+    },
+    {
+      "id": "pocket-foe-grass",
+      "out": "games/pocket/img/foe-grass.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game battle sprite, single chibi round monster, thick dark outline, flat cel shading, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject: a small wild thorn cub creature, round mossy-green body (#6fd98f) with bramble tufts and two big leaf ears, sharp playful eyes and a smirking mouth. Front three-quarter view, facing toward the lower left as if challenging the viewer. No text. Original creature design, must not resemble any existing franchise character."
+    },
+    {
+      "_": "── 스킬 VFX 7종 — generate/effect/v2, frame=16(4x4 시트). 검은 배경으로 생성해 게임에서 'screen' 블렌드로 얹는다 (검정=투명 효과, JPEG 저장 가능해 용량도 준다)"
+    },
+    {
+      "id": "vfx-tackle",
+      "out": "games/pocket/img/vfx-tackle.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon impact burst game VFX animation on a pure black background: a white and pale-yellow star-shaped smash impact with short radiating speed lines and a small shockwave ring, punchy and quick, growing then fading. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-fire",
+      "out": "games/pocket/img/vfx-fire.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon fire burst game VFX animation on a pure black background: orange (#ff6a3d) and amber (#ffb447) flames erupting outward with sparks, blooming then dissolving into embers. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-water",
+      "out": "games/pocket/img/vfx-water.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon water splash game VFX animation on a pure black background: blue (#4aa0ff) swirling water jets and pale (#b0d8ff) droplets bursting outward in a spiral, splashing then raining down. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-grass",
+      "out": "games/pocket/img/vfx-grass.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon leaf slash game VFX animation on a pure black background: sharp green (#6fd98f) leaf blades and petals slicing across in crossing arcs with light-green (#c8f0b8) trails, scattering then fading. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-ult-fire",
+      "out": "games/pocket/img/vfx-ult-fire.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon massive explosion game VFX animation on a pure black background: a huge orange-red fireball detonation with a bright white core, expanding shockwave ring, flying embers and smoke puffs, dramatic finisher feel. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-ult-water",
+      "out": "games/pocket/img/vfx-ult-water.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon tidal wave game VFX animation on a pure black background: a towering deep-blue wave curling and crashing across the frame with white foam and spray, overwhelming finisher feel. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-ult-grass",
+      "out": "games/pocket/img/vfx-ult-grass.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon nature judgment game VFX animation on a pure black background: giant green thorned vines bursting upward wrapped in swirling glowing leaves and light-green energy, mighty finisher feel. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "cam-silence",
+      "out": "games/shell/faces/adventurer_silence.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person. Neutral calm expression."
+    },
+    {
+      "id": "cam-surprise",
+      "out": "games/shell/faces/adventurer_surprise.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: eyes wide open and mouth slightly open in surprise. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-panic",
+      "out": "games/shell/faces/adventurer_panic.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: panicking with wide shaky eyes, sweat drops and open mouth. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-aha",
+      "out": "games/shell/faces/adventurer_aha.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: delighted eureka face, sparkling eyes and a big grin. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-confusion",
+      "out": "games/shell/faces/adventurer_confusion.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: confused tilted expression with a wavy mouth and a question-like frown. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-thinking",
+      "out": "games/shell/faces/adventurer_thinking.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: pensive thinking face, eyes looking up, a finger on chin. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "id": "cam-question",
+      "out": "games/shell/faces/adventurer_question.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Use the reference image as the exact same character, identical style, framing, colors and outfit. Change ONLY the facial expression: curious questioning face with one raised eyebrow. Chibi bust portrait of an original young game streamer character: silver messy hair, big expressive eyes, black gaming headphones, dark navy hoodie. Flat cel shading, thick clean dark outline, plain very dark purple-tinted (#16121f) background, square composition, head and shoulders centered. No text. Original character, must not resemble any existing franchise or real person.",
+      "ref": "games/shell/faces/adventurer_silence.png"
+    },
+    {
+      "_": "── 배경 플레이트 2종 — 조명 콘·군중·플랫폼 같은 살아있는 연출은 벡터로 위에 얹으므로 배경은 정적이고 중앙 수평 밴드에 내용이 있어야 한다 (가로로 크롭됨)"
+    },
+    {
+      "id": "bg-hwaryeok",
+      "out": "games/hwaryeok/img/studio-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark cooking studio back wall for a game background, wide horizontal composition with all content in the central horizontal band: shelves with pots, pans, jars and hanging kitchen utensils in silhouette, warm dim amber rim lighting from above, deep charcoal brown palette (#12100c to #1e1a14). Flat 2D game style, muted, no text, no people, bottom third kept simple and dark."
+    },
+    {
+      "id": "bg-pocket",
+      "out": "games/pocket/img/arena-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark battle arena interior for a game background, wide horizontal composition: blurred crowd silhouettes in dark stands at the top, cool navy palette (#141a2a to #0e1219), subtle spotlights from above, the center and lower half kept as clean simple dark floor with a faint glow. Flat 2D game style, muted, no text, no characters in the foreground."
+    },
+    {
+      "_": "── 액터 스프라이트 4종 — 마젠타 배경으로 뽑아 크로마키 (몬스터와 같은 파이프라인)"
+    },
+    {
+      "id": "hw-pan",
+      "out": "games/hwaryeok/img/pan.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a dark steel frying pan seen from the side at a slight top angle, wide shallow pan with the long handle pointing to the right, empty inside. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "hw-cloche",
+      "out": "games/hwaryeok/img/cloche.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a stainless steel dome food cloche cover seen from the side, rounded dome with a small ball knob on top, soft metallic sheen. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "guoi-pot",
+      "out": "games/giving-up/img/pot.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a round earthen clay pot jar seen from the side, warm brown ceramic with a darker base and a simple rim, the kind a climbing character would sit inside. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "guoi-hammer",
+      "out": "games/giving-up/img/hammer.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a sledgehammer HEAD only without any handle, rectangular forged steel block seen from the side, slightly worn edges, oriented horizontally. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "_": "── 심연낚시 — 배경 플레이트 + 배 + 어종 5티어. 물결·수심 라벨·낚싯줄·기포·낚싯대는 살아있는 연출이라 벡터로 위에 얹는다. 물고기는 게임 좌표계상 왼쪽을 본다"
+    },
+    {
+      "id": "bg-fishing",
+      "out": "games/fishing/img/sea-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark night sea for a game background, wide horizontal composition: a thin band of deep night sky along the very top with a small pale moon in the upper right and faint stars, a calm horizontal water surface line near the top edge, and below it deep abyssal water fading darker toward the bottom (#17394f down to #03070d). Flat 2D game style, muted, very dark, no text, no boats, no fish, no characters, the lower two thirds kept as clean simple dark water."
+    },
+    {
+      "id": "fishing-boat",
+      "out": "games/fishing/img/boat.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a small wooden rowboat seen exactly from the side, dark worn brown planks (#3a2c1e, #54402c), with a small chibi streamer character in a dark hoodie sitting toward the RIGHT end of the boat facing right, hands together in front as if holding something invisible. NO fishing rod, NO fishing line. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, muted dark colors, no text."
+    },
+    {
+      "id": "fish-0",
+      "out": "games/fishing/img/fish-0.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small dull grey minnow fish seen exactly from the side, facing LEFT, plain drab body (#8a8478), simple fins, slightly bored expression. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-1",
+      "out": "games/fishing/img/fish-1.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single sleek silver-blue carp fish seen exactly from the side, facing LEFT, glossy pale blue scales (#9ec8e0) with a white belly, elegant fins. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-2",
+      "out": "games/fishing/img/fish-2.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single stocky bronze-blue catfish seen exactly from the side, facing LEFT, muted steel-blue body (#6fa0c0) with long whisker barbels and a wide flat head, grumpy look. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-3",
+      "out": "games/fishing/img/fish-3.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single large deep-sea predator fish seen exactly from the side, facing LEFT, bronze-amber armored body (#c08a4a) with spiny dorsal fins, one big glassy eye and small fangs, deep-sea anglerfish vibe without a lure stalk. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-4",
+      "out": "games/fishing/img/fish-4.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single huge ancient abyssal monster fish seen exactly from the side, facing LEFT, near-black scarred body with glowing ember-orange (#ff6a3d) fin edges, gill slits and one baleful glowing eye, ragged ancient fins, terrifying legendary boss vibe. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "_": "── 해체쇼 — 작업실 배경 + 폭탄 몸통. 와이어·타이머·판독 게이지·스파크는 인터랙션 그 자체라 벡터 유지"
+    },
+    {
+      "id": "bg-bomb",
+      "out": "games/bomb/img/bench-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark bomb-disposal workshop back wall for a game background, wide horizontal composition with content in the central horizontal band: pegboard wall with hanging tool silhouettes (wire cutters, pliers, screwdrivers), a shelf with toolboxes, cold slate palette (#12141c to #0c0d12) with a faint warm work-light glow from above center. Flat 2D game style, muted, very dark, no text, no people, bottom third kept as a simple dark workbench surface."
+    },
+    {
+      "id": "bomb-body",
+      "out": "games/bomb/img/bomb-body.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a rectangular gunmetal bomb casing front panel with rounded corners, seen exactly head-on, dark blue-grey steel (#2b2f3a, #3c4150) with four corner bolts, worn scratches, and a completely EMPTY smooth center area with no wires, no display, no buttons (game draws those on top). Wider than tall. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "vfx-boom",
+      "out": "games/bomb/img/vfx-boom.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon massive bomb detonation game VFX animation on a pure black background: a blinding white core flash bursting into an orange-red fireball with a fast expanding shockwave ring, flying metal debris silhouettes and thick smoke puffs, catastrophic finisher feel. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-splash",
+      "out": "games/fishing/img/vfx-splash.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon water surface splash game VFX animation on a pure black background: a vertical column of dark blue (#4aa0ff) water bursting upward through a surface line with white foam crown and pale droplets scattering outward then falling back, punchy and quick. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "_": "── UI 크롬 아이콘 7종 — 창·작업표시줄·트레이의 이모지를 대체한다. 스타일 공통 문구를 지켜 한 세트로 보이게. 표시 12~15px이라 극단적으로 단순해야 한다"
+    },
+    {
+      "id": "ui-logo",
+      "out": "games/shell/img/ui-logo.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a rounded retro TV screen shape with a small play triangle inside, vivid mint green (#00ffa3) main color with a pale mint (#7dffd0) highlight. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-chat",
+      "out": "games/shell/img/ui-chat.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a rounded speech bubble with two small dots inside, vivid mint green (#00ffa3) main color with a pale mint (#7dffd0) highlight. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-obs",
+      "out": "games/shell/img/ui-obs.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a broadcast antenna tower emitting two small signal arcs, muted grey-lavender (#9a92a8) color. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-sound",
+      "out": "games/shell/img/ui-sound.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark system tray: a speaker cone with two small sound arcs, muted grey-lavender (#9a92a8) color. Extremely simple bold shape with thick rounded strokes, readable at 13 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-net",
+      "out": "games/shell/img/ui-net.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark system tray: a wifi signal symbol of three stacked arcs above a dot, muted grey-lavender (#9a92a8) color. Extremely simple bold shape with thick rounded strokes, readable at 13 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-eye",
+      "out": "games/shell/img/ui-eye.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a wide open eye shape with a round pupil, warm amber (#ffd27a) main color. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-heart",
+      "out": "games/shell/img/ui-heart.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a plump rounded heart shape, deep charcoal (#17191c) fill with a mint green (#00ffa3) outline and tiny shine. Extremely simple bold shape with thick rounded strokes, readable at 12 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "_": "── UI 면 텍스처 4종 — 타이틀바·작업표시줄·패널·버튼. 아이콘만으론 'UI가 AetherAI'라는 인상이 안 남아 면까지 생성물로 채운다. 글자는 HTML이 얹으므로 텍스처는 어둡고 저대비여야 한다"
+    },
+    {
+      "id": "ui-titlebar",
+      "out": "games/shell/img/ui-titlebar.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Seamless dark UI texture for a window title bar, wide horizontal feel: dark neutral charcoal (#202327 to #17191c) brushed surface with an extremely subtle horizontal grain and a faint mint green (#00ffa3) sheen along the top edge. Very low contrast, no text, no icons, no borders, fills the entire frame edge to edge."
+    },
+    {
+      "id": "ui-taskbar",
+      "out": "games/shell/img/ui-taskbar.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Seamless dark UI texture for an operating system taskbar: near-black charcoal (#101214) smoked glass with an extremely subtle fine noise and a faint cool mint glow along the top edge. Very low contrast, no text, no icons, no borders, fills the entire frame edge to edge."
+    },
+    {
+      "id": "ui-panelbg",
+      "out": "games/shell/img/ui-panelbg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Seamless dark UI panel background texture: deep neutral charcoal (#17191c) soft slate surface with an extremely subtle diagonal weave and very faint vignette toward the edges. Very low contrast, readable as almost solid dark, no text, no icons, no borders, fills the entire frame edge to edge."
+    },
+    {
+      "id": "ui-button",
+      "out": "games/shell/img/ui-button.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game UI button plate, single wide rounded rectangle with softly beveled edges, vivid mint green gradient (#00ffa3 to #00c47e) with a subtle top highlight and darker bottom edge, slight dark outline, designed so dark text on top stays readable. Flat clean vector game UI style, no text, no icons, centered. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background."
+    },
+    {
+      "id": "ui-coin",
+      "out": "games/shell/img/ui-coin.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a shiny gold coin seen head-on with a simple star emboss, warm gold (#ffd24a) main color with amber (#ffb447) shading. Extremely simple bold shape with thick rounded strokes, readable at 16 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
     }
   ]
 }

@@ -26,6 +26,10 @@
 <script src="../giving-up/game.js"></script>
 <script src="../pocket/chat-data.js"></script>
 <script src="../pocket/game.js"></script>
+<script src="../bomb/chat-data.js"></script>
+<script src="../bomb/game.js"></script>
+<script src="../fishing/chat-data.js"></script>
+<script src="../fishing/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
 function eq(label, got, want) {
@@ -90,10 +94,18 @@ var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', 
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
 
 // ---- 등록된 게임이 계약을 지키는가 ----
-eq('게임 3종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket']);
+eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket', 'bomb', 'fishing']);
 Shell.games.forEach(function (g) {
   ok(g.title + ': 필수 필드가 있다',
      g.title && g.tagline && g.duration > 0 && g.startViewers > 0 && typeof g.start === 'function');
+  // 아트 지연 로드 (contract 4.1) — 전 게임이 이미지를 쓰므로 전 게임에 요구한다.
+  // 두 번 불러도 안전해야 한다 (셸이 방송 준비마다 부른다) — 여기서 실제로 두 번 부른다.
+  // 게임의 이미지 경로는 index.html 기준이라 이 페이지에선 404가 콘솔에 찍힌다 — 예상 노이즈.
+  // 파일 존재 자체는 아래 배포 payload 검사(FACES 목록)가 절대 경로로 따로 검증한다.
+  ok(g.title + ': preload 훅이 있고 재호출이 안전하다', (function () {
+    if (typeof g.preload !== 'function') return false;
+    try { g.preload(); g.preload(); return true; } catch (e) { return false; }
+  })());
   ok(g.title + ': 채팅 어휘에 start/end가 있다', !!(g.chat.T.start && g.chat.T.end));
   var thin = Object.keys(g.chat.T).filter(function (k) { return g.chat.T[k].flavor.length < 6; });
   eq(g.title + ': 모든 이벤트가 flavor 6개 이상 (비반복 게이트 전제)', thin, []);
@@ -196,6 +208,36 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
   var firstHook = Math.hypot(nx - spawn.x, r0.y - spawn.y);
   ok('출발 지점에서 첫 발판까지 ' + Math.round(firstHook) + 'px — 한 번에 걸린다 (기준 ' +
      T.FIRST_HOOK_MAX + 'px)', firstHook <= T.FIRST_HOOK_MAX);
+
+  // 가장자리 벽 홀드 — "화면 가장자리에 벽 판정 + 벽으로 오르기" (사용자 피드백).
+  // 주 루트와 같은 기하 기준을 적용한다: 같은 벽의 연속 홀드 수직 간격 ≤ 사거리×0.75.
+  // 홀드는 바위 회피로 y가 밀릴 수 있으므로 생성 결과를 그대로 검사한다.
+  (function () {
+    var sides = { L: [], R: [] };
+    T.WALL_HOLDS.forEach(function (h) { (h.x < 480 ? sides.L : sides.R).push(h); });
+    var bad = [];
+    ['L', 'R'].forEach(function (k) {
+      var hs = sides[k].slice().sort(function (a, b) { return b.y - a.y; }); // 아래→위
+      // 바닥에서 첫 홀드도 사거리 안이어야 벽 루트에 진입할 수 있다
+      if (T.GROUND_Y - hs[0].y > T.HAMMER_MAX) bad.push(k + ':ground(' + (T.GROUND_Y - hs[0].y) + ')');
+      for (var i = 1; i < hs.length; i++) {
+        var vGap = hs[i - 1].y - hs[i].y;
+        if (vGap <= 0 || vGap > T.HAMMER_MAX * 0.75) bad.push(k + i + ':(v' + vGap + ')');
+      }
+    });
+    eq('벽 홀드 ' + T.WALL_HOLDS.length + '개가 좌우 각각 사거리 안에서 이어진다', bad, []);
+    // 바위 회피 배치 검증 — 서는 공간(상단 40px)이 바위와 겹치지 않는다
+    var blocked = [];
+    T.TERRAIN.forEach(function (s) {
+      if (s.t !== 'c') return;
+      T.WALL_HOLDS.forEach(function (h, hi) {
+        var cx = Math.max(h.x, Math.min(s.x, h.x + h.w));
+        var cy = Math.max(h.y - 40, Math.min(s.y, h.y + h.h));
+        if (Math.hypot(s.x - cx, s.y - cy) < s.r) blocked.push(hi);
+      });
+    });
+    eq('바위가 벽 홀드의 발 디딜 공간을 막지 않는다', blocked, []);
+  })();
 })();
 
 // ---- 배포 payload 예산 ----
@@ -207,6 +249,8 @@ var SHIPPED = [
   '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
   '../giving-up/chat-data.js', '../giving-up/game.js',
   '../pocket/chat-data.js', '../pocket/game.js',
+  '../bomb/chat-data.js', '../bomb/game.js',
+  '../fishing/chat-data.js', '../fishing/game.js',
 ];
 // 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
 var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']
@@ -215,8 +259,38 @@ var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'qu
 // 생성 원본은 합계 2.9MB였다. tools/optimize-images.ps1 를 거치지 않고 커밋하면
 // 여기서 예산이 터진다 — 그게 이 목록에 넣는 이유다.
 FACES = FACES.concat(['img/desktop-wallpaper.jpg', 'img/icon-hwaryeok.png',
-  'img/icon-giving-up.png', 'img/icon-pocket.png']);
-var BUDGET_KB = 450; // 코드 ~140KB + 얼굴 ~100KB + 여유. "링크 클릭 즉시 플레이" 가드
+  'img/icon-giving-up.png', 'img/icon-pocket.png',
+  'img/icon-fishing.png', 'img/icon-bomb.png']);
+// 주머니 괴수 아트 (AetherAI — 몬스터 6종 알파 PNG, 스킬 VFX 시트 7종 JPEG)
+FACES = FACES.concat(
+  ['me-fire', 'me-water', 'me-grass', 'foe-fire', 'foe-water', 'foe-grass']
+    .map(function (n) { return '../pocket/img/' + n + '.png'; }),
+  ['vfx-tackle', 'vfx-fire', 'vfx-water', 'vfx-grass', 'vfx-ult-fire', 'vfx-ult-water', 'vfx-ult-grass']
+    .map(function (n) { return '../pocket/img/' + n + '.jpg'; }));
+// 화력쇼·GUOI 아트 (AetherAI — 배경 플레이트·팬·클로슈·항아리·망치 헤드)
+FACES = FACES.concat(['../hwaryeok/img/studio-bg.jpg', '../hwaryeok/img/pan.png',
+  '../hwaryeok/img/cloche.png', '../giving-up/img/pot.png', '../giving-up/img/hammer.png',
+  '../pocket/img/arena-bg.jpg']);
+// UI 크롬 아이콘 + 면 텍스처 (AetherAI — 이모지·CSS 단색면 대체)
+FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-eye', 'ui-heart']
+  .map(function (n) { return 'img/' + n + '.png'; }),
+  ['img/ui-titlebar.jpg', 'img/ui-taskbar.jpg', 'img/ui-panelbg.jpg', 'img/ui-button.png',
+   'img/ui-coin.png']);
+// 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)
+FACES = FACES.concat(
+  ['boat', 'fish-0', 'fish-1', 'fish-2', 'fish-3', 'fish-4']
+    .map(function (n) { return '../fishing/img/' + n + '.png'; }),
+  ['../fishing/img/sea-bg.jpg', '../fishing/img/vfx-splash.jpg',
+   '../bomb/img/bench-bg.jpg', '../bomb/img/bomb-body.png', '../bomb/img/vfx-boom.jpg']);
+// 450 → 900 → 1200 (2026-08-08): "전부 AetherAI로" 방침에 따라 전 게임 아트가 들어왔다
+// (포켓 13종 + 캠 7종 교체 + 배경 2종 + 액터 4종). 900 인상 때 "또 올리면 에셋을 의심할 것"
+// 이라 적었고, 의심한 결과: 이번이 아트 완성 단계라 마지막 인상이다. 1.2MB도 일반 회선
+// 1~2초 — "링크 클릭 즉시 플레이"는 유지된다. 여기서 더 오르면 그때는 정말 잘라낼 것.
+// → 1200 → 2000 (2026-08-08 오후): 게임 2종(심연낚시·해체쇼)에도 아트가 들어와 총량이
+//   늘었다. 대신 같은 PR에서 게임 아트 전부를 지연 로드로 돌렸다 — 첫 화면은 이제
+//   바탕화면+아이콘 ~150KB만 내려받는다. "링크 클릭 즉시 플레이"의 실체는 첫 화면이고,
+//   이 예산은 총량 상한(회선 부담 가드)으로 남는다.
+var BUDGET_KB = 2000;
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {
     return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });

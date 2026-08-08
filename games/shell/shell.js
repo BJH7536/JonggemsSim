@@ -24,6 +24,16 @@
   // 감쇠가 편도가 되어 종겜 플레이를 오히려 벌준다. 번갈아 방송하면 100%가 유지되는 게 의도다.
   var FRESH_MULT = [1, .7, .45, .25, .1];
 
+  // 방송 제목 풀 — 순수 연출. 실제 종겜 스트리머의 "오늘의 각오" 제목 감성.
+  // 게임 id 로 찾고, 없으면 태그라인을 쓴다 (새 게임이 등록돼도 깨지지 않는다).
+  var SHOW_TITLES = {
+    hwaryeok: ['불 좀 끄고 올게요', '오늘 대참사 0회 도전', '4구 풀가동 각입니다'],
+    'giving-up': ['오늘 정상 못 가면 삭발', '항아리 유산소 하는 날', '떨어질수록 커집니다'],
+    pocket: ['빈사 역전만 노립니다', '연승 끊기면 바로 자야죠', '명중 38%를 믿습니다'],
+    fishing: ['오늘 나락의군주 잡습니다', '심해만 팝니다 얕은물 금지', '줄 끊기면 낚싯대 삽니다'],
+    bomb: ['판독 없이 갑니다', '오늘 폭발 0회 도전(안 지킴)', '감으로 자르는 남자'],
+  };
+
   var Shell = {
     games: [],
     game: null,     // 현재 방송 중인 게임 정의
@@ -83,7 +93,21 @@
       });
       this._camMood = 'silence'; this._camAt = 0;
       this._graph = []; this._graphT = 0; this._upT = 0;
+      this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
+      this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
+      var self2 = this;
+      $('followBtn').addEventListener('click', function () {
+        self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
+      });
+      // 첫 방문 스플래시 — 목표(시청자=점수=생명)를 말하기 전에는 데스크탑을 보여주지 않는다
+      if (!localStorage.getItem('JGS_INTRO')) {
+        $('introSplash').classList.remove('hidden');
+        $('introGo').addEventListener('click', function () {
+          localStorage.setItem('JGS_INTRO', '1');
+          $('introSplash').classList.add('hidden');
+        });
+      }
       this.showHub();
       requestAnimationFrame(this.loop.bind(this));
     },
@@ -92,12 +116,16 @@
     // 게임이 emit하는 이벤트 이름을 표정으로 번역한다. 새 게임이 기존 이름을 재사용하면
     // 캠은 공짜로 따라온다 — 목록에 없는 이벤트는 무표정 유지 (contract 4.2 참고).
     CAM_MOOD: {
-      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall'],
-      panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death'],
+      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall',
+                 'bite', 'hook', 'new_bomb'],
+      panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death',
+              'line_snap', 'boom'],
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
-            'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done'],
-      confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam'],
-      thinking: ['nag', 'stuck', 'idle'],
+            'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
+            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up'],
+      confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
+                  'strike_miss', 'escape', 'trash', 'timeout_boom'],
+      thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
       question: ['milestone'],
     },
     camReact: function (ev) {
@@ -119,6 +147,7 @@
         if (self.phase !== 'live') {
           if ((e.key === 'r' || e.key === 'R') && self.phase === 'result' && self.game) self.start(self.game.id);
           if (e.key === 'Escape' && self.phase === 'result') self.showHub();
+          if (e.key === 'Escape' && self.phase === 'hub') self.hideTip();
           return;
         }
         if (e.key === 'Escape') { self.endShow('quit'); return; }
@@ -159,6 +188,12 @@
 
       $('camBox').classList.add('hidden');
       $('tallyUp').textContent = '';
+      $('infoTitle').textContent = '방송 준비 중…';
+      $('infoCat').textContent = '대기 화면';
+      $('infoDot').className = 'off';
+      $('infoUptime').textContent = '';
+      $('infoViewers').textContent = '0';
+      clearTimeout(this._startTimer);
       this.updateTopbar();
 
       var self = this;
@@ -181,50 +216,70 @@
           }).join('') + '</div>'
         : '';
 
-      $('overlay').classList.remove('hidden');
-      $('overlay').innerHTML = '<div class="panel hub deskWrap">' +
-        '<div class="monitor"><div class="screen">' +
-          '<div class="deskIcons">' + icons + '</div>' +
-          '<div class="deskWin" id="deskWin"></div>' +
-          '<div class="deskBar">' +
-            '<span class="dStart"><img src="games/shell/faces/adventurer_silence.png" alt="">종겜러</span>' +
-            '<span class="dBarInfo">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
-              this.ch.shows + '</b>회</span>' +
-            '<span class="dBarHint">아이콘을 눌러 방송할 게임을 고른다</span>' +
-          '</div>' +
-        '</div><div class="mstand"></div></div>' +
-        recent + '</div>';
+      // 창을 최소화하고 바탕화면을 드러낸다 — 방송 전의 스트리머는 데스크탑에 있다
+      $('jgsWin').classList.add('minimized');
+      $('appJgs').classList.remove('on');
+      $('obsDot').classList.remove('live');
+      $('overlay').classList.add('hidden');
+      $('overlay').innerHTML = '';
+      $('desktop').innerHTML =
+        '<div class="deskIcons">' + icons + '</div>' +
+        '<div id="dTip"></div>' +
+        '<div class="deskStat">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
+          this.ch.shows + '</b>회 · 더블클릭 = 바로 방송</div>' +
+        recent;
 
       this.bindHub();
-      // 첫 진입에도 창이 비어 보이지 않게 첫 게임을 열어 둔다
-      if (this.games.length) this.openLauncher(this.games[0].id);
+      // 아직 한 번도 방송한 적 없으면 첫 게임 아이콘에 코치마크 — 진입까지 헤매지 않게
+      if (!this.ch.shows) {
+        var first = $('desktop').querySelector('.dIcon');
+        if (first) {
+          first.classList.add('coach');
+          first.insertAdjacentHTML('beforeend', '<span class="coachTip">더블클릭 = 방송 시작</span>');
+        }
+      }
     },
 
     // 아이콘 아트가 없으면(아직 생성 전) CSS 타일로 대체한다 — 이미지 유무가 기능을 막지 않는다
     bindHub: function () {
-      var self = this, root = $('overlay');
+      var self = this, root = $('desktop');
       root.querySelectorAll('.dIcon img').forEach(function (im) {
         im.addEventListener('error', function () { im.closest('.dIcon').classList.add('noimg'); });
         if (im.complete && im.naturalWidth === 0) im.closest('.dIcon').classList.add('noimg');
       });
-      root.querySelector('.deskIcons').addEventListener('click', function (e) {
+      var icons = root.querySelector('.deskIcons');
+      icons.addEventListener('click', function (e) {
         var btn = e.target.closest('[data-game]');
-        if (btn) self.openLauncher(btn.getAttribute('data-game'));
+        if (!btn) return;
+        root.querySelectorAll('.dIcon').forEach(function (b) { b.classList.toggle('on', b === btn); });
+        self.showTip(btn); // 터치 환경 대비 — 클릭으로도 뜬다
+      });
+      // 설명은 창이 아니라 호버 툴팁이다 — 아이콘에 올리면 옆에 뜨고, 벗어나면 사라진다.
+      // 창처럼 화면을 덮지 않으므로 다른 아이콘 클릭을 막지 않는다 (사용자 피드백).
+      icons.addEventListener('mouseover', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (btn) self.showTip(btn);
+      });
+      icons.addEventListener('mouseout', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (btn && !(e.relatedTarget && btn.contains(e.relatedTarget))) self.hideTip();
+      });
+      // 실제 데스크탑처럼 더블클릭은 곧장 실행이다 — 카운트다운을 거쳐 방송이 켜진다
+      icons.addEventListener('dblclick', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (btn) self.start(btn.getAttribute('data-game'));
       });
     },
 
-    // 런처 창 — 아이콘을 고르면 열린다. 방송 시작은 여기서만 누른다.
+    // 게임 설명 툴팁 — 창이 아니라 아이콘 옆 팝업이다 (사용자 피드백: 창은 다른 아이콘을
+    // 가린다). 호버로 열리고 벗어나면 닫힌다. pointer-events가 없어 클릭을 막지 않는다.
     // 기존 카드가 보여주던 정보(썸네일·태그라인·신선도·최고 기록)를 그대로 옮겼다.
-    openLauncher: function (gameId) {
-      var self = this;
+    showTip: function (btn) {
+      var gameId = btn.getAttribute('data-game');
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
       if (!g) return;
       var step = this.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
       var best = this.ch.best[g.id] || 0;
-
-      $('overlay').querySelectorAll('.dIcon').forEach(function (b) {
-        b.classList.toggle('on', b.getAttribute('data-game') === gameId);
-      });
 
       // 관객 프로필 — 공명 모델(PR #4)이 머지되면 자동으로 붙는다. 아직 없으면 조용히 빈칸이다.
       // 두 브랜치가 같은 파일을 건드리지 않도록 존재 여부만 보고 분기한다.
@@ -240,36 +295,84 @@
         }
       }
 
-      $('deskWin').innerHTML =
-        '<div class="dwBar"><span class="dwDots"><i></i><i></i><i></i></span>' +
-          '<span class="dwTitle">' + g.title + '</span></div>' +
-        '<div class="dwBody">' +
-          '<canvas class="gthumb" data-thumb="' + g.id + '" width="228" height="104"></canvas>' +
-          '<div class="dwInfo">' +
-            '<p class="gd">' + g.tagline + '</p>' +
-            '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
-            '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
-            '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
-              (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
-            profHtml +
-          '</div>' +
+      var tip = $('dTip');
+      tip.innerHTML =
+        '<canvas class="gthumb" data-thumb width="280" height="126"></canvas>' +
+        '<div class="dwInfo">' +
+          '<b class="tipTitle">' + g.title + '</b>' +
+          '<p class="gd">' + g.tagline + '</p>' +
+          '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
+          '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
+          '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
+            (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
+          profHtml +
         '</div>' +
-        '<button class="dwGo" data-go="' + g.id + '">● 방송 시작</button>';
+        '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>';
 
       // 썸네일은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
-      var cv = $('deskWin').querySelector('[data-thumb]');
+      var cv = tip.querySelector('[data-thumb]');
       var c = cv.getContext('2d');
       if (g.thumb) g.thumb(c, cv.width, cv.height);
       else {
-        c.fillStyle = '#1d1728'; c.fillRect(0, 0, cv.width, cv.height);
+        c.fillStyle = '#1e2023'; c.fillRect(0, 0, cv.width, cv.height);
         c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
         c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
       }
-      $('deskWin').querySelector('.dwGo').addEventListener('click', function () { self.start(gameId); });
+      // 위치 — 아이콘 오른쪽. 렌더된 실제 높이로 화면 아래 잘림을 보정한다
+      var r = btn.getBoundingClientRect();
+      tip.style.left = (r.right + 14) + 'px';
+      tip.style.top = Math.max(10, Math.min(r.top, innerHeight - 54 - tip.offsetHeight)) + 'px';
     },
+    hideTip: function () { var t = $('dTip'); if (t) t.innerHTML = ''; },
 
     // ---------- 방송 시작 ----------
+    // 실제 스트리머의 진입 흐름: 게임을 켠다고 바로 화면이 바뀌지 않는다 —
+    // "잠시 후 시작합니다" 대기 화면 → 카운트다운 → 장면 전환(스팅어) → 게임.
+    // 경제·게임 로직은 _launch 그대로다. 이 함수는 연출만 얹는다.
     start: function (gameId) {
+      var g = this.games.filter(function (x) { return x.id === gameId; })[0];
+      if (!g) return;
+      if (this.phase === 'starting') return; // 카운트다운 중 재진입 방지
+      var self = this;
+      this.phase = 'starting';
+      $('jgsWin').classList.remove('minimized');   // 창이 열리며 방송 준비 화면이 뜬다
+      $('appJgs').classList.add('on');
+      var pool = SHOW_TITLES[g.id];
+      this._showTitle = pool ? pool[Math.floor(Math.random() * pool.length)] : g.tagline;
+      // 게임별 아트는 여기서부터 내려받는다 (지연 로드) — 카운트다운 ~2.4초가 로드를 가리고,
+      // 그래도 늦은 이미지는 각 게임의 imgReady 벡터 폴백이 받는다. 첫 화면 payload 절약.
+      if (g.preload) { try { g.preload(); } catch (e) {} }
+
+      $('overlay').classList.remove('hidden');
+      $('overlay').innerHTML = '<div class="startSoon">' +
+        '<div class="ssTop">STARTING SOON</div>' +
+        '<h2>잠시 후 방송이 시작됩니다</h2>' +
+        '<div class="ssGame"><span class="cat">' + g.title + '</span> ' + this._showTitle + '</div>' +
+        '<div class="ssCount" id="ssCount">3</div>' +
+        '<div class="ssHint">방송 준비 중 — 마이크·송출 확인</div>' +
+        '</div><div id="stinger"></div>';
+      Chat.reset();
+      Chat.sys('— 방송 대기 화면 —');
+      $('tallyR').textContent = '준비 중';
+
+      var n = 3;
+      var tick = function () {
+        if (n <= 0) {
+          // OBS 장면 전환 — 보라 와이프가 화면을 훑고 지나가며 게임이 드러난다
+          var st = $('stinger');
+          if (st) { st.classList.add('go'); }
+          setTimeout(function () { self._launch(gameId); }, 340);
+          return;
+        }
+        var el = $('ssCount');
+        if (el) { el.textContent = n; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+        n--;
+        self._startTimer = setTimeout(tick, 700);
+      };
+      tick();
+    },
+
+    _launch: function (gameId) {
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
       if (!g) return;
       if (this.inst && this.inst.dispose) this.inst.dispose();
@@ -300,6 +403,33 @@
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
 
+      // 플랫폼 정보줄 — 제목·카테고리·라이브 점등
+      $('infoTitle').textContent = this._showTitle || g.tagline;
+      $('infoCat').textContent = g.title;
+      $('infoDot').className = 'on';
+      $('obsDot').classList.add('live');
+
+      this._marks.length = 0; this._shownV = 0;
+      this._recordStamped = false; this._lastGainAt = this.now;
+      $('liveBar').classList.remove('cold');
+      $('paceChip').classList.add('hidden');
+      $('donBanner').classList.remove('show');
+      this._donQ.length = 0; this._donBusy = false;
+
+      // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
+      if (!localStorage.getItem('JGS_TUT')) {
+        localStorage.setItem('JGS_TUT', '1');
+        var self = this, tutGame = g;
+        [[4, '[안내] 목표: 3분 동안 시청자를 최대한 모은다 — 0명이 되면 방송이 강제 종료된다'],
+         [12, '[안내] 잘한 플레이도, 아슬아슬한 사고도 전부 시청자를 부른다. 조작법은 화면 아래 안내 참고'],
+         [24, '[안내] 같은 게임만 파면 시청자가 물린다(신선도) — 방송을 바꿔가며 도는 게 종겜이다'],
+        ].forEach(function (t) {
+          setTimeout(function () {
+            if (self.phase === 'live' && self.game === tutGame) Chat.sys(t[1]);
+          }, t[0] * 1000);
+        });
+      }
+
       this.stage = this.makeStage();
       this.inst = g.start(this.stage);
       this.renderViewers();
@@ -322,14 +452,22 @@
           if (!(n > 0) || self.phase !== 'live') return 0;
           var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id)));
           self.viewers += actual;
+          self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
+          if (actual >= 150) self._marks.push(self._upT);    // 전폭 그래프의 스파이크 마커
           self.renderViewers();
-          if (label) self._fxQueue.push('+' + actual.toLocaleString() + ' · ' + label); // 획득은 과하게 (규약 2)
+          // 획득은 과하게 (규약 2). 단 도네는 전용 배너가 연출을 전담한다 — 중앙 팝업까지
+          // 겹치면 큰 자극 두 개가 서로를 잡아먹는다 (규약 3)
+          if (label && label.indexOf('도네') === -1) self._fxQueue.push('+' + actual.toLocaleString() + ' · ' + label);
           if (self.viewers >= 30000) Chat.big = true;
           return actual;
         },
         lose: function (n) { self.loseViewers(n); },        // 조용히 (규약 2)
-        // C3 — 채팅·캠은 관측만 한다. emit은 단방향이고 반환값이 없다
-        emit: function (ev, facts) { self.camReact(ev); Chat.react(ev, facts); },
+        // C3 — 채팅·캠은 관측만 한다. emit은 단방향이고 반환값이 없다.
+        // 도네만 셸이 옆에서 훔쳐본다 — 화면 배너 연출(수치 무관, 순수 연출)용이다
+        emit: function (ev, facts) {
+          if (ev === 'donation') self.showDonation(facts);
+          self.camReact(ev); Chat.react(ev, facts);
+        },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
         ticker: function (text, muted) { self.showTicker(text, muted); },
@@ -346,7 +484,19 @@
     // ---------- 시청자 (규약 1·2) ----------
     renderViewers: function () {
       // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
-      $('viewerCount').textContent = Math.ceil(this.viewers).toLocaleString();
+      var v = Math.ceil(this.viewers);
+      var el = $('viewerCount');
+      el.textContent = v.toLocaleString();
+      $('infoViewers').textContent = v.toLocaleString();
+      // 심박 — 숫자가 움직일 때마다 살짝 튄다. 시청자 수가 곧 체력바(규약 1)라는 걸
+      // 눈이 아니라 몸이 알게 하는 장치다
+      if (v !== this._shownV) {
+        var cls = v > this._shownV ? 'up' : 'down';
+        el.classList.remove('up', 'down'); void el.offsetWidth; el.classList.add(cls);
+        this._shownV = v;
+      }
+      // 채팅 열기 — 시청자 규모를 0~1로 눌러 관객 엔진에 넘긴다 (연출 전용, C3 무관)
+      Chat.heat = Math.max(0, Math.min(1, Math.log10(Math.max(v, 1) / 150) / 2.3));
     },
     loseViewers: function (n) {
       if (this.phase !== 'live' || !(n > 0)) return;
@@ -369,11 +519,72 @@
       clearTimeout(this._stampTimer); // 연속 스탬프의 조기 소멸 방지 (L-2)
       this._stampTimer = setTimeout(function () { st.classList.remove('show'); }, 1600);
     },
+    // ---------- 도네 배너 (연출 전용) ----------
+    // 수치는 게임이 이미 gain으로 반영했다 — 여기는 화면 위 배너만 맡는다 (규약 5: 도네는
+    // 양념이니 연출은 화려하게, 수치 관여는 없음). 배너끼리는 큐로 3.4초 간격 방출 (규약 3).
+    // 닉네임은 채팅 페르소나를 빌려 쓴다 — 후원자가 관객석에 실재하는 인물로 읽히게.
+    DON_MSG: ['오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
+              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁'],
+    showDonation: function (facts) {
+      this._donQ.push({
+        amt: (facts && facts.d) ? String(facts.d) : '1,000',
+        who: Chat.personas[Math.floor(Math.random() * Chat.personas.length)],
+        msg: this.DON_MSG[Math.floor(Math.random() * this.DON_MSG.length)],
+      });
+      this.drainDon();
+    },
+    drainDon: function () {
+      if (this._donBusy || !this._donQ.length) return;
+      var self = this, d = this._donQ.shift();
+      this._donBusy = true;
+      var el = $('donBanner');
+      // 금액 단위는 '코인'(플랫폼 화폐) — 게임이 넘기는 값이 시청자 환산 수치라
+      // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법)
+      el.innerHTML = '<img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
+        '<b style="color:' + d.who.color + '">' + d.who.nick + '</b>님이 <b class="amt">' +
+        d.amt + ' 코인</b> 후원! <span class="dmsg">' + d.msg + '</span>';
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      setTimeout(function () { self._donBusy = false; self.drainDon(); }, 3400);
+    },
+
+    // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
+    // "남은 시간 3분"과 숫자를 잇는 긴장 장치. 신기록 추격 > 마일스톤 임박 순으로 하나만.
+    MILESTONES: [1000, 5000, 15000, 60000, 150000, 500000],
+    updatePace: function () {
+      var chip = $('paceChip'), v = Math.ceil(this.viewers);
+      var best = this.ch.best[this.game.id] || 0;
+      var txt = '', hot = false;
+      if (best > 0 && v > best) {
+        txt = '★ 신기록 갱신 중'; hot = true;
+        if (!this._recordStamped) { this._recordStamped = true; this.showStamp('★ 신기록'); }
+      } else if (best > 0 && v > best * 0.8) {
+        txt = '신기록 페이스 — 기록 ' + best.toLocaleString();
+      } else {
+        for (var i = 0; i < this.MILESTONES.length; i++) {
+          var m = this.MILESTONES[i];
+          if (v < m && v >= m * 0.85) { txt = m.toLocaleString() + '명까지 -' + (m - v).toLocaleString(); break; }
+          if (v < m) break;
+        }
+      }
+      chip.textContent = txt;
+      chip.classList.toggle('hidden', !txt);
+      chip.classList.toggle('hot', hot);
+    },
+
     showTicker: function (text, muted) {
       var t = $('ticker');
       t.textContent = text;
       t.className = muted ? 'muted' : '';
       t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    },
+
+    // ---------- 방송 사고 ----------
+    // 게임 한 판의 예외가 rAF 루프(=방송 전체)를 죽이면 안 된다. step/draw에서 잡아
+    // 여기로 보낸다 — 정산까지 마친 뒤 죽은 게임은 버린다 (더 밟지도, 그리지도 않는다).
+    _crash: function (e) {
+      console.error('[shell] 게임 예외 — 방송사고로 정산:', e);
+      if (this.phase === 'live') this.endShow('crash');
+      this.inst = null;
     },
 
     // ---------- 방송 종료·정산 ----------
@@ -382,7 +593,8 @@
       this.phase = 'result';
       var g = this.game, final = Math.round(this.viewers);
 
-      Chat.sys(reason === 'dead' ? '— 방송 강제 종료 —' : '— 방송 종료 —');
+      Chat.sys(reason === 'dead' ? '— 방송 강제 종료 —'
+        : reason === 'crash' ? '— 게임이 응답하지 않아 방송을 종료합니다 —' : '— 방송 종료 —');
       Chat.react('end');
 
       var prevBest = this.ch.best[g.id] || 0;
@@ -403,11 +615,14 @@
 
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
-      var stats = (this.inst && this.inst.summary) ? this.inst.summary() : [];
+      // 사고 난 게임은 summary도 못 믿는다 — 실패하면 통계 없이 정산한다
+      var stats = [];
+      try { if (this.inst && this.inst.summary) stats = this.inst.summary() || []; } catch (e2) {}
       var rows = stats.map(function (r) { return '<span>' + r[0] + '</span><b>' + r[1] + '</b>'; }).join('');
 
-      var head = reason === 'dead' ? '송출 끊김' : '방송 리포트';
+      var head = reason === 'dead' ? '송출 끊김' : reason === 'crash' ? '게임 튕김' : '방송 리포트';
       var lead = reason === 'dead' ? '시청자가 전부 떠났다. 검은 화면만 남았다.'
+        : reason === 'crash' ? '게임이 뻗었다. 급하게 정산하고 방송을 접었다 — 이것도 방송사고다.'
         : reason === 'clear' ? '오늘 방송, 잘 뽑혔다.'
         : g.title + ' 방송이 끝났다. 오늘의 그래프:';
 
@@ -426,7 +641,7 @@
         '</p>' +
         '<div class="btnrow">' +
           '<button class="slab primary" id="btnAgain">다시 방송 (R)</button>' +
-          '<button class="slab" id="btnHub">게임 고르러 가기 (Esc)</button>' +
+          '<button class="slab" id="btnHub">데스크탑으로 (Esc)</button>' +
         '</div></div>';
       $('btnAgain').onclick = function () { self.start(g.id); };
       $('btnHub').onclick = function () { self.showHub(); };
@@ -439,13 +654,29 @@
       var t = ms / 1000;
       var dt = Math.min(.05, t - this._prevFrame || .016);
       this._prevFrame = t; this.now = t;
+      // 데스크탑 시계·정보줄 업타임 — 1초에 한 번이면 충분하다
+      if (!this._clockT || t - this._clockT > 1) {
+        this._clockT = t;
+        var ck = $('dClock');
+        if (ck) { var d = new Date(); ck.textContent = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+        if (this.phase === 'live' && this.game) {
+          var up = Math.max(0, this.game.duration - this.timeLeft) | 0;
+          $('infoUptime').textContent = '업타임 ' + ('0' + ((up / 60) | 0)).slice(-2) + ':' + ('0' + (up % 60)).slice(-2);
+          // 카운터 식음 — 2.5초 넘게 획득이 없으면 잿빛으로 식는다. 손실 무연출 원칙(규약 2)을
+          // 지키면서 "새고 있다"는 압박만 온도로 전달한다
+          $('liveBar').classList.toggle('cold', this.now - this._lastGainAt > 2.5);
+          this.updatePace();
+        }
+      }
       this._shake *= .88; this._flash *= .88;
 
       if (this.phase === 'live') {
         this.timeLeft -= dt;
         if (this.timeLeft <= 0) { this.timeLeft = 0; this.endShow('time'); }
       }
-      if (this.phase === 'live' && this.inst) this.inst.step(dt);
+      if (this.phase === 'live' && this.inst) {
+        try { this.inst.step(dt); } catch (e) { this._crash(e); }
+      }
       if (this.phase === 'live') {
         // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
         this._graphT += dt; this._upT += dt;
@@ -469,19 +700,33 @@
       requestAnimationFrame(this.loop.bind(this));
     },
 
+    // 방송 화면 전폭의 실시간 그래프 — "플레이하면서 그래프가 보여야 압박이 온다"(피드백).
+    // 시청자 추이 + 큰 획득의 스파이크 마커. 반투명이라 게임 화면을 가리지 않는다.
     drawSpark: function () {
-      var cv = $('sparkCv'); if (!cv) return;
+      var cv = $('liveGraph'); if (!cv) return;
       var c = cv.getContext('2d'), W2 = cv.width, H2 = cv.height;
       c.clearRect(0, 0, W2, H2);
       var g = this._graph; if (g.length < 2) return;
       var vmax = 1; for (var i = 0; i < g.length; i++) vmax = Math.max(vmax, g[i].v);
-      c.strokeStyle = '#ffd27a'; c.lineWidth = 1.5; c.beginPath();
-      for (var k = 0; k < g.length; k++) {
-        var x = k / (g.length - 1) * (W2 - 2) + 1;
-        var y = H2 - 2 - (g[k].v / vmax) * (H2 - 5);
-        k ? c.lineTo(x, y) : c.moveTo(x, y);
-      }
+      var X = function (k) { return k / (g.length - 1) * W2; };
+      var Y = function (v) { return H2 - 2 - (v / vmax) * (H2 - 7); };
+      var fill = c.createLinearGradient(0, 0, 0, H2);
+      fill.addColorStop(0, 'rgba(255,180,71,.26)'); fill.addColorStop(1, 'rgba(255,180,71,0)');
+      c.beginPath(); c.moveTo(0, H2);
+      for (var k = 0; k < g.length; k++) c.lineTo(X(k), Y(g[k].v));
+      c.lineTo(X(g.length - 1), H2); c.closePath();
+      c.fillStyle = fill; c.fill();
+      c.strokeStyle = 'rgba(255,210,122,.85)'; c.lineWidth = 1.5; c.beginPath();
+      for (var j = 0; j < g.length; j++) j ? c.lineTo(X(j), Y(g[j].v)) : c.moveTo(X(j), Y(g[j].v));
       c.stroke();
+      // 스파이크 마커 — 큰 획득(+150 이상)의 순간이 점으로 남는다
+      c.fillStyle = '#ffd27a';
+      var tMax = g[g.length - 1].t || 1;
+      for (var m = 0; m < this._marks.length; m++) {
+        var xt = this._marks[m] / tMax; if (xt > 1) continue;
+        var idx = Math.min(g.length - 1, Math.round(xt * (g.length - 1)));
+        c.beginPath(); c.arc(X(idx), Y(g[idx].v), 2.5, 0, Math.PI * 2); c.fill();
+      }
     },
 
     // 방송 리포트의 시청자 추이 그래프 — "숫자가 아니라 방송의 서사"를 보여준다
@@ -518,7 +763,9 @@
       ctx.fillStyle = '#0b0908'; ctx.fillRect(0, 0, W, H);
       ctx.save();
       ctx.translate((Math.random() - .5) * this._shake, (Math.random() - .5) * this._shake);
-      if (this.inst) this.inst.draw(ctx, dt);
+      if (this.inst) {
+        try { this.inst.draw(ctx, dt); } catch (e) { this._crash(e); }
+      }
       ctx.restore();
       // 방송 화면 공통 룩 — 비네트 + 화이트 플래시
       var g = ctx.createRadialGradient(480, 210, 190, 480, 210, 580);

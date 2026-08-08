@@ -5,11 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>종겜스 시뮬레이터</title>
 <meta name="description" content="종합게임 스트리머가 되어 AI 시청자를 만족시키는 시뮬레이터">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>📺</text></svg>">
+<link rel="icon" href="games/shell/img/ui-logo.png">
 <link rel="stylesheet" href="games/shell/shell.css">
 </head>
 <body>
 
+<!-- 바탕화면 — 페이지 자체가 스트리머의 윈도우 데스크탑이다.
+     허브(방송 준비)에서는 JGS 창이 최소화되고 여기 아이콘이 보인다 -->
+<div id="desktop"></div>
+
+<!-- 첫 방문 스플래시 — "링크를 열자마자 맨 데스크탑"이라는 불친절함의 해소.
+     목표(시청자 = 점수 = 생명)와 조작(더블클릭)을 한 화면으로 말하고 사라진다 -->
+<div id="introSplash" class="hidden">
+  <div class="isPanel">
+    <b class="isLogo">JGS<span>.tv</span></b>
+    <h1>당신은 종합게임 스트리머다</h1>
+    <p>게임을 골라 <b>3분 방송</b>에서 시청자를 최대한 모아라.<br>
+      잘한 플레이도, 아슬아슬한 대참사도 전부 구경거리다 —<br>
+      다만 <b>시청자가 0명이 되면 방송은 강제 종료</b>된다.</p>
+    <p class="isSub">같은 게임만 파면 시청자가 물린다(신선도) — 방송을 바꿔가며 도는 게 종겜이다.</p>
+    <button id="introGo" type="button" class="slab primary">방송국 입장 →</button>
+  </div>
+</div>
+
+<!-- JGS.tv 플랫폼 = 데스크탑 위에 떠 있는 '창'. 방송 중에만 열려 있다 -->
+<div id="jgsWin" class="minimized">
+<div id="winbar">
+  <span class="winIco"><img class="uiIco" src="games/shell/img/ui-logo.png" alt=""></span>
+  <span class="winTitle">JGS.tv — 스트리머 스튜디오</span>
+  <span class="winBtns"><i>─</i><i>□</i><i class="x">×</i></span>
+</div>
 <!-- 플랫폼 크롬 — "방송 플랫폼 안에 있다"는 감각은 여기서 시작된다 -->
 <div id="topbar">
   <div class="tbL">
@@ -28,7 +53,10 @@
   <div id="viewport">
     <canvas id="scene" width="960" height="430"></canvas>
     <div id="tally"><span>● ON AIR <b id="tallyUp"></b></span><span id="tallyR">—</span></div>
-    <div id="liveBar">👁 <b id="viewerCount">0</b>명 <canvas id="sparkCv" width="92" height="20"></canvas></div>
+    <div id="liveBar"><img class="uiIco" src="games/shell/img/ui-eye.png" alt="시청자"> <b id="viewerCount">0</b>명</div>
+    <div id="paceChip" class="hidden"></div>
+    <div id="donBanner"></div>
+    <canvas id="liveGraph" width="960" height="34"></canvas>
     <div id="plaque"></div>
     <div id="chainMeter"><div class="lab">연쇄 배수</div><div class="val" id="chainVal">×1.0</div></div>
     <div class="vpopup" id="vpopup"></div>
@@ -37,13 +65,46 @@
     <div id="bigStamp"><div id="bigStampText"></div></div>
     <div id="overlay" class="hidden"></div>
   </div>
-  <div id="chatCol">
-    <div id="chatHead"><span>💬 실시간 채팅</span><span class="chatBadge" id="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
-    <div id="chatFeed"></div>
   </div>
+  <!-- 플랫폼식 방송 정보줄 — 실제 스트리밍 페이지의 제목·카테고리·시청자 행 -->
+  <div id="infoRow">
+    <span id="infoDot" class="off">●</span>
+    <div class="infoMain">
+      <b id="infoTitle">방송 준비 중…</b>
+      <div class="infoSub">
+        <span class="cat" id="infoCat">대기 화면</span>
+        <span id="infoUptime"></span>
+      </div>
+    </div>
+    <div class="infoR">
+      <span class="infoViewers"><img class="uiIco" src="games/shell/img/ui-eye.png" alt="시청자"> <b id="infoViewers">0</b></span>
+      <button id="followBtn" type="button"><img class="uiIco" src="games/shell/img/ui-heart.png" alt=""> 팔로우</button>
+    </div>
   </div>
   <div id="panel"></div>
   <div id="foot"></div>
+</div>
+
+</div><!-- /jgsWin -->
+
+<!-- 채팅 팝아웃 창 — 실제 스트리머처럼 채팅을 항상 우측에 띄워 둔다.
+     데스크탑(방송 전)에도, 전체화면 방송 중에도 이 창만은 계속 보인다 -->
+<div id="chatDock">
+  <div id="chatWinbar"><span class="winIco"><img class="uiIco" src="games/shell/img/ui-chat.png" alt=""></span><span class="winTitle">실시간 채팅</span>
+    <span class="chatBadge" id="chatBadge">AI 시청자 — 로컬 시뮬레이션</span></div>
+  <div id="chatCol"><div id="chatFeed"></div></div>
+</div>
+
+<!-- 윈도우 작업표시줄 — 페이지 하단 고정. 시작 버튼(프로필) · 실행 앱 · 트레이 -->
+<div id="taskbar">
+  <button id="tbStart" type="button">
+    <img src="games/shell/faces/adventurer_silence.png" alt=""><b>종겜러</b>
+  </button>
+  <div id="tbApps">
+    <span class="tbApp" id="appJgs"><i><img class="uiIco" src="games/shell/img/ui-logo.png" alt=""></i>JGS.tv 스튜디오</span>
+    <span class="tbApp dim"><i><img class="uiIco" src="games/shell/img/ui-obs.png" alt=""></i>송출 프로그램<em id="obsDot">●</em></span>
+  </div>
+  <span class="dTray"><i id="dRec">● REC</i><i><img class="uiIco" src="games/shell/img/ui-sound.png" alt="소리"></i><i><img class="uiIco" src="games/shell/img/ui-net.png" alt="네트워크"></i><i id="dClock"></i></span>
 </div>
 
 <!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 -->
@@ -58,6 +119,10 @@
 <script src="games/giving-up/game.js"></script>
 <script src="games/pocket/chat-data.js"></script>
 <script src="games/pocket/game.js"></script>
+<script src="games/bomb/chat-data.js"></script>
+<script src="games/bomb/game.js"></script>
+<script src="games/fishing/chat-data.js"></script>
+<script src="games/fishing/game.js"></script>
 <script>Shell.boot();</script>
 
 </body>
