@@ -827,3 +827,4 @@ body {
 .shopItem .siLock { font-size: 11.5px; color: var(--dim); padding: 7px 0; }
 /* 다이아 오라 — 등급 한정 장식. 네온 간판과 둘 다 있으면 뒤(다이아)가 이긴다 */
 body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
+.rwCap .rwNote { color: var(--dim); font-size: 10px; }
