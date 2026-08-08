@@ -137,6 +137,7 @@
         if (self.phase !== 'live') {
           if ((e.key === 'r' || e.key === 'R') && self.phase === 'result' && self.game) self.start(self.game.id);
           if (e.key === 'Escape' && self.phase === 'result') self.showHub();
+          if (e.key === 'Escape' && self.phase === 'hub') self.hideTip();
           return;
         }
         if (e.key === 'Escape') { self.endShow('quit'); return; }
@@ -213,14 +214,12 @@
       $('overlay').innerHTML = '';
       $('desktop').innerHTML =
         '<div class="deskIcons">' + icons + '</div>' +
-        '<div class="deskWin" id="deskWin"></div>' +
+        '<div id="dTip"></div>' +
         '<div class="deskStat">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
           this.ch.shows + '</b>회 · 더블클릭 = 바로 방송</div>' +
         recent;
 
       this.bindHub();
-      // 첫 진입에도 창이 비어 보이지 않게 첫 게임을 열어 둔다
-      if (this.games.length) this.openLauncher(this.games[0].id);
     },
 
     // 아이콘 아트가 없으면(아직 생성 전) CSS 타일로 대체한다 — 이미지 유무가 기능을 막지 않는다
@@ -230,30 +229,39 @@
         im.addEventListener('error', function () { im.closest('.dIcon').classList.add('noimg'); });
         if (im.complete && im.naturalWidth === 0) im.closest('.dIcon').classList.add('noimg');
       });
-      root.querySelector('.deskIcons').addEventListener('click', function (e) {
+      var icons = root.querySelector('.deskIcons');
+      icons.addEventListener('click', function (e) {
         var btn = e.target.closest('[data-game]');
-        if (btn) self.openLauncher(btn.getAttribute('data-game'));
+        if (!btn) return;
+        root.querySelectorAll('.dIcon').forEach(function (b) { b.classList.toggle('on', b === btn); });
+        self.showTip(btn); // 터치 환경 대비 — 클릭으로도 뜬다
+      });
+      // 설명은 창이 아니라 호버 툴팁이다 — 아이콘에 올리면 옆에 뜨고, 벗어나면 사라진다.
+      // 창처럼 화면을 덮지 않으므로 다른 아이콘 클릭을 막지 않는다 (사용자 피드백).
+      icons.addEventListener('mouseover', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (btn) self.showTip(btn);
+      });
+      icons.addEventListener('mouseout', function (e) {
+        var btn = e.target.closest('[data-game]');
+        if (btn && !(e.relatedTarget && btn.contains(e.relatedTarget))) self.hideTip();
       });
       // 실제 데스크탑처럼 더블클릭은 곧장 실행이다 — 카운트다운을 거쳐 방송이 켜진다
-      root.querySelector('.deskIcons').addEventListener('dblclick', function (e) {
+      icons.addEventListener('dblclick', function (e) {
         var btn = e.target.closest('[data-game]');
         if (btn) self.start(btn.getAttribute('data-game'));
       });
     },
 
-    // 런처 창 — 아이콘을 한 번 클릭하면 열리는 게임 정보 창.
+    // 게임 설명 툴팁 — 창이 아니라 아이콘 옆 팝업이다 (사용자 피드백: 창은 다른 아이콘을
+    // 가린다). 호버로 열리고 벗어나면 닫힌다. pointer-events가 없어 클릭을 막지 않는다.
     // 기존 카드가 보여주던 정보(썸네일·태그라인·신선도·최고 기록)를 그대로 옮겼다.
-    // 방송 시작 버튼은 없다 — 진입은 실제 데스크탑처럼 더블클릭(아이콘 또는 이 창)이다.
-    openLauncher: function (gameId) {
-      var self = this;
+    showTip: function (btn) {
+      var gameId = btn.getAttribute('data-game');
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
       if (!g) return;
       var step = this.freshStep(g.id), fm = FRESH_MULT[step], pct = Math.round(fm * 100);
       var best = this.ch.best[g.id] || 0;
-
-      $('desktop').querySelectorAll('.dIcon').forEach(function (b) {
-        b.classList.toggle('on', b.getAttribute('data-game') === gameId);
-      });
 
       // 관객 프로필 — 공명 모델(PR #4)이 머지되면 자동으로 붙는다. 아직 없으면 조용히 빈칸이다.
       // 두 브랜치가 같은 파일을 건드리지 않도록 존재 여부만 보고 분기한다.
@@ -269,34 +277,35 @@
         }
       }
 
-      $('deskWin').innerHTML =
-        '<div class="dwBar"><span class="dwDots"><i></i><i></i><i></i></span>' +
-          '<span class="dwTitle">' + g.title + '</span></div>' +
-        '<div class="dwBody">' +
-          '<canvas class="gthumb" data-thumb="' + g.id + '" width="960" height="430"></canvas>' +
-          '<div class="dwInfo">' +
-            '<p class="gd">' + g.tagline + '</p>' +
-            '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
-            '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
-            '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
-              (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
-            profHtml +
-          '</div>' +
+      var tip = $('dTip');
+      tip.innerHTML =
+        '<canvas class="gthumb" data-thumb width="280" height="126"></canvas>' +
+        '<div class="dwInfo">' +
+          '<b class="tipTitle">' + g.title + '</b>' +
+          '<p class="gd">' + g.tagline + '</p>' +
+          '<div class="gf' + (fm < 1 ? ' warn' : '') + '"><span>시청자 신선도</span><b>' + pct + '%</b></div>' +
+          '<div class="freshbar"><i class="' + (fm < 1 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>' +
+          '<div class="gf"><span>' + (fm < 1 ? '물렸다 — 다른 게임이 회복시킨다' : '지금이 방송 적기') + '</span>' +
+            (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
+          profHtml +
         '</div>' +
-        '<div class="dwHint">▶ 아이콘 또는 이 창을 <b>더블클릭</b>하면 방송이 시작됩니다</div>';
+        '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>';
 
       // 썸네일은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
-      var cv = $('deskWin').querySelector('[data-thumb]');
+      var cv = tip.querySelector('[data-thumb]');
       var c = cv.getContext('2d');
       if (g.thumb) g.thumb(c, cv.width, cv.height);
       else {
-        c.fillStyle = '#1d1728'; c.fillRect(0, 0, cv.width, cv.height);
-        c.fillStyle = '#ffd27a'; c.font = 'bold 24px Georgia, serif'; c.textAlign = 'center';
-        c.fillText(g.title, cv.width / 2, cv.height / 2 + 8);
+        c.fillStyle = '#1e2023'; c.fillRect(0, 0, cv.width, cv.height);
+        c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
+        c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
       }
-      // 창 어디를 더블클릭해도 방송 시작 — ondblclick 대입이라 게임을 바꿔 열어도 안 쌓인다
-      $('deskWin').ondblclick = function () { self.start(gameId); };
+      // 위치 — 아이콘 오른쪽. 렌더된 실제 높이로 화면 아래 잘림을 보정한다
+      var r = btn.getBoundingClientRect();
+      tip.style.left = (r.right + 14) + 'px';
+      tip.style.top = Math.max(10, Math.min(r.top, innerHeight - 54 - tip.offsetHeight)) + 'px';
     },
+    hideTip: function () { var t = $('dTip'); if (t) t.innerHTML = ''; },
 
     // ---------- 방송 시작 ----------
     // 실제 스트리머의 진입 흐름: 게임을 켠다고 바로 화면이 바뀌지 않는다 —
