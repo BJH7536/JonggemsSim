@@ -449,6 +449,12 @@
       "prompt": "Square item icon for a game shop, flat vector style, dark background (#0f1016) with iridescent holographic gradient accents (cyan #66e0ff, magenta #ff7ad9, mint #7dffd0). Subject: a hexagonal holographic chip badge with a subtle prism shine sweeping across it. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
     },
     {
+      "id": "shop-diaaura",
+      "out": "games/shell/img/shop-diaaura.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square item icon for a game shop, flat vector style, dark background (#0c1218) with brilliant ice-blue (#7de8ff) and white accents. Subject: a large cut diamond gemstone radiating a soft circular aura ring of light with tiny sparkles around it. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
+    },
+    {
       "id": "ui-coin",
       "out": "games/shell/img/ui-coin.png",
       "ai_model": "GPT Image 1.5",

@@ -64,12 +64,20 @@
         log: d.log || [],           // 최근 방송 기록 [{g, v, r}] 최신순 4개
         coins: d.coins || 0,        // 도네 코인 잔액 — 방송 정산 때 적립, 상점에서 소비
         gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
+        tier: d.tier || 0,          // 파트너 등급 0~4 (브론즈~다이아) — 내려가지 않는다
+        tierPts: d.tierPts || 0,    // 등급 게이지 — C/D가 조용히 깎는 유일한 수치 (규약 2)
       };
     },
     updateTopbar: function () {
       $('tbSubs').textContent = this.ch.subs.toLocaleString();
       $('tbShows').textContent = this.ch.shows;
       var tc = $('tbCoins'); if (tc) tc.textContent = this.ch.coins.toLocaleString();
+      var tt = $('tbTier');
+      if (tt) {
+        var T = Shell.TIERS[this.ch.tier || 0];
+        tt.textContent = T.n + ' 파트너';
+        tt.style.color = T.c;
+      }
       var live = this.phase === 'live';
       $('tbLive').textContent = live ? '● LIVE' : 'OFFLINE';
       $('tbLive').className = live ? 'on' : 'off';
@@ -243,7 +251,9 @@
       var mis = Shell.makeMissions(this.ch);
       var pdNote = '<div class="pdNote">' +
         '<img src="games/shell/img/kim-pd.png" alt="" onerror="this.style.display=\'none\'">' +
-        '<div><div class="rlab">김 피디의 오늘 미션</div>' + mis.map(function (m) {
+        '<div><div class="rlab">김 피디의 오늘 미션 — <span style="color:' +
+        Shell.TIERS[this.ch.tier || 0].c + '">' + Shell.TIERS[this.ch.tier || 0].n + ' 파트너</span></div>' +
+        mis.map(function (m) {
           return '<div class="pdnRow">' + m.label + ' <b>' + m.target.toLocaleString() + '</b> · 보상 ' +
             m.reward.toLocaleString() + '코인</div>';
         }).join('') + '</div></div>';
@@ -603,6 +613,8 @@
       { id: 'fanfare',   n: '도네 팡파레',      d: '도네 배너에 반짝임 + 팡파레 효과음', price: 3000 },
       { id: 'neonsign',  n: '스튜디오 네온 간판', d: '방송 화면 테두리에 민트 네온', price: 6000 },
       { id: 'tallyplat', n: '플래티넘 ON AIR',  d: 'ON AIR 바가 플래티넘으로 바뀐다', price: 12000 },
+      // 등급 한정 — 파트너 계약 ③의 칭호 외 보상. minTier 미달이면 구매 잠금 (장식일 뿐)
+      { id: 'diaaura',   n: '다이아 오라',      d: '방송 화면에 다이아 오라 — 다이아 파트너 한정', price: 20000, minTier: 4 },
     ],
     applyGear: function () {
       var ch = this.ch;
@@ -622,12 +634,15 @@
         ' <span class="fine">— 도네가 정산되면 쌓인다. 용품은 전부 장식이다 (방송이 세지진 않는다)</span></p>' +
         '<div class="shopGrid">' + this.SHOP_ITEMS.map(function (it) {
           var owned = !!self.ch.gear[it.id];
-          return '<div class="shopItem' + (owned ? ' owned' : '') + '">' +
+          var locked = (it.minTier || 0) > (self.ch.tier || 0);
+          return '<div class="shopItem' + (owned ? ' owned' : '') + (locked ? ' locked' : '') + '">' +
             '<img src="games/shell/img/shop-' + it.id + '.png" alt="" onerror="this.style.visibility=\'hidden\'">' +
             '<div class="siName">' + it.n + '</div><div class="siDesc">' + it.d + '</div>' +
             (owned
               ? '<div class="siOwned">보유 중 — 적용됨</div>'
-              : '<button class="siBuy" data-buy="' + it.id + '">' + it.price.toLocaleString() + ' 코인</button>') +
+              : locked
+                ? '<div class="siLock">🔒 ' + Shell.TIERS[it.minTier].n + ' 파트너 해금</div>'
+                : '<button class="siBuy" data-buy="' + it.id + '">' + it.price.toLocaleString() + ' 코인</button>') +
             '</div>';
         }).join('') + '</div>' +
         '<div class="btnrow"><button class="slab" id="shopClose">데스크탑으로 (Esc)</button></div></div>';
@@ -883,8 +898,11 @@
         return { m: m, hit: hit, got: got[m.k] };
       });
       this.ch.coins += mBonus; // 미션 보상도 코인 — 장식 재원일 뿐, 룰 수치 무관
-      // 승급급 성적은 과하게, 낮은 성적은 조용히 (규약 2)
-      if (!isDead && (evGrade.grade === 'S' || evGrade.grade === 'A')) this.showStamp('파트너 평가 ' + evGrade.grade);
+      // 파트너 등급 게이지 — 승급은 과하게, 하락(게이지 감소)은 숫자만 조용히 (규약 2)
+      var ts = Shell.tierStep(this.ch.tier || 0, this.ch.tierPts || 0, evGrade.grade);
+      this.ch.tier = ts.tier; this.ch.tierPts = ts.pts;
+      if (ts.promoted) this.showStamp('★ ' + Shell.TIERS[ts.tier].n + ' 파트너 승급!');
+      else if (!isDead && (evGrade.grade === 'S' || evGrade.grade === 'A')) this.showStamp('파트너 평가 ' + evGrade.grade);
       // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
         c: bestClip ? bestClip.img : 0,
@@ -937,7 +955,19 @@
         '<span class="pdGrade g' + evGrade.grade + '">' + evGrade.grade + '</span>' +
         '<span class="pdScore">' + evGrade.score + '점 · 성장 ' + evGrade.parts.growth + ' · 유지 ' + evGrade.parts.hold +
         ' · 클립 ' + evGrade.parts.clips + ' · 도네 ' + evGrade.parts.don + ' · 종겜 ' + evGrade.parts.vari + '</span></div>' +
-        '<div class="pdLine">"' + pdLine + '"</div>' + tip + mHtml + '</div></div>';
+        '<div class="pdLine">"' + pdLine + '"</div>' + tip + mHtml +
+        (function () { // 등급 게이지 — 다음 등급까지의 진행. 승급은 크게, 감소는 숫자만
+          var T = Shell.TIERS[ts.tier], need = Shell.TIER_NEED[ts.tier];
+          var bar = need
+            ? '<div class="tbar"><i style="width:' + Math.round(ts.pts / need * 100) + '%;background:' + T.c + '"></i></div>' +
+              '<span class="tpts">' + ts.pts + '/' + need +
+              (ts.delta ? ' (' + (ts.delta > 0 ? '+' : '') + ts.delta + ')' : '') + '</span>'
+            : '<span class="tpts">최고 등급</span>';
+          return '<div class="pdTier' + (ts.promoted ? ' up' : '') + '">' +
+            '<span class="tname" style="color:' + T.c + '">' + (ts.promoted ? '★ ' : '') + T.n + ' 파트너</span>' +
+            bar + '</div>';
+        })() +
+        '</div></div>';
 
       var head = reason === 'dead' ? '송출 끊김' : reason === 'crash' ? '게임 튕김' : '방송 리포트';
       var lead = reason === 'dead' ? '시청자가 전부 떠났다. 검은 화면만 남았다.'
@@ -1170,6 +1200,25 @@
   //   base    = (버스트 무게-1)/3 → 무게 2(도네급 양념)는 급증 만점에도 임계 미달 (규약 5)
   //   novelty = FRESH_MULT[방송 내 발생 횟수] → 3회째부터는 무엇이어도 클립 불가 (규약 4)
   //   surge   = 직전 시청자 급증 0~1 → 무게 4의 설계 피크만 급증 없이도 통과
+  // ---------- 파트너 등급 — "JGS.tv 파트너 계약"의 상설 압박 (기획안 ③) ----------
+  // 평가 등급이 게이지를 채우고, C/D는 게이지만 조용히 깎는다 (규약 2 — 벌은 성장 속도에만).
+  // 등급 자체는 내려가지 않고, 구독자·코인·시청자도 절대 깎지 않는다. 검증: selftest.
+  Shell.TIERS = [
+    { n: '브론즈',   c: '#c08a52' }, { n: '실버', c: '#c8d0d8' }, { n: '골드', c: '#ffd24a' },
+    { n: '플래티넘', c: '#9ec8e0' }, { n: '다이아', c: '#7de8ff' },
+  ];
+  Shell.TIER_NEED = [6, 10, 14, 18];            // i등급 → i+1등급에 필요한 게이지
+  Shell.TIER_PTS = { S: 3, A: 2, B: 1, C: -1, D: -2 };
+  Shell.tierStep = function (tier, pts, grade) {
+    var d = Shell.TIER_PTS[grade] || 0;
+    pts = Math.max(0, pts + d);                  // 바닥 0 — 게이지가 음수로 빚지지 않는다
+    var promoted = false;
+    while (tier < Shell.TIER_NEED.length && pts >= Shell.TIER_NEED[tier]) {
+      pts -= Shell.TIER_NEED[tier]; tier++; promoted = true;
+    }
+    return { tier: tier, pts: pts, promoted: promoted, delta: d };
+  };
+
   // ---------- 파트너 평가 (김 피디) — "JGS.tv 파트너 계약" 스토리의 평가 장치 ----------
   // 결정론 공식 · 관측 산물(시청자·클립·코인)만 읽는다 (C3). 검증: selftest.
   //   성장(40) 최종/시작 로그 스케일 · 유지(20) 최종/피크 · 클립(18) · 도네(12) · 종겜(10)
@@ -1206,6 +1255,7 @@
   Shell.shopBuy = function (ch, item) {
     if (!item) return 'bad';
     if (ch.gear[item.id]) return 'owned';
+    if ((item.minTier || 0) > (ch.tier || 0)) return 'locked'; // 등급 한정 (파트너 계약 ③)
     if (ch.coins < item.price) return 'poor';
     ch.coins -= item.price;
     ch.gear[item.id] = true;

@@ -106,6 +106,18 @@ ok('미션은 2개, 목표·보상은 양수', M0.length === 2 && M0.every(funct
 ok('회차마다 구성이 회전한다', M0[0].k !== M1[0].k);
 ok('같은 채널 상태 → 같은 미션 (결정론)', JSON.stringify(M0) === JSON.stringify(Shell.makeMissions({ shows: 0, best: {} })));
 
+// ---- 파트너 등급 게이지 (파트너 계약 ③) — 틀리면 서사가 거꾸로 간다 ----
+var TS = Shell.tierStep;
+ok('S 2회 → 브론즈 게이지 6 도달, 실버 승급', (function () {
+  var r = TS(0, 0, 'S'); r = TS(r.tier, r.pts, 'S'); return r.tier === 1 && r.promoted;
+})());
+ok('C/D는 게이지만 깎는다 — 0 밑 없음·강등 없음', (function () {
+  var r = TS(1, 0, 'D'); return r.tier === 1 && r.pts === 0 && !r.promoted;
+})());
+ok('승급 초과분은 다음 게이지로 이월', TS(0, 5, 'S').tier === 1 && TS(0, 5, 'S').pts === 2);
+ok('다이아(최고 등급)에선 더 오르지 않는다', TS(4, 99, 'S').tier === 4);
+ok('등급 미달 상품은 구매 잠금', Shell.shopBuy({ coins: 99999, gear: {}, tier: 0 }, { id: 'z', price: 1, minTier: 4 }) === 'locked');
+
 // ---- 채팅 검증 게이트 ----
 Chat.init(document.createElement('div'));
 Chat.load({
@@ -312,7 +324,7 @@ FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-
    'img/ui-coin.png']);
 // 상점 아이콘 (AetherAI — 데스크탑 앱 1종 + 상품 5종)
 FACES = FACES.concat(['icon-shop', 'shop-camgold', 'shop-neonsign', 'shop-fanfare',
-  'shop-tallyplat', 'shop-holobadge'].map(function (n) { return 'img/' + n + '.png'; }));
+  'shop-tallyplat', 'shop-holobadge', 'shop-diaaura'].map(function (n) { return 'img/' + n + '.png'; }));
 // 김 피디 초상 + 알림 배너 플레이트 (AetherAI)
 FACES = FACES.concat(['img/kim-pd.png', 'img/ui-banner-mint.jpg', 'img/ui-banner-gold.jpg']);
 // 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)

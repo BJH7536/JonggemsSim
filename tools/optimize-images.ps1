@@ -149,6 +149,7 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'shop-fanfare.png';   Out = 'shop-fanfare.png';   W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'shop-tallyplat.png'; Out = 'shop-tallyplat.png'; W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'shop-holobadge.png'; Out = 'shop-holobadge.png'; W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'shop-diaaura.png';   Out = 'shop-diaaura.png';   W = 96; H = 96; Fmt = 'png' },
   # ── 알림 배너 플레이트 (JPEG 크롭 밴드) + 김 피디 초상 (캠 얼굴과 같은 문법) ──
   @{ Dir = 'games\shell\img'; In = 'ui-banner-mint.png'; Out = 'ui-banner-mint.jpg'; W = 480; H = 96; Fmt = 'jpg'; Q = 80 },
   @{ Dir = 'games\shell\img'; In = 'ui-banner-gold.png'; Out = 'ui-banner-gold.jpg'; W = 480; H = 96; Fmt = 'jpg'; Q = 80 },
