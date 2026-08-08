@@ -168,7 +168,15 @@ $jobs = @(
   # ── 해체쇼 (배경 플레이트 + 폭탄 몸통 + 폭발 시트) ──
   @{ Dir = 'games\bomb\img'; In = 'bench-bg.png';  Out = 'bench-bg.jpg';  W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\bomb\img'; In = 'bomb-body.png'; Out = 'bomb-body.png'; W = 512; H = 512; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\bomb\img'; In = 'vfx-boom.png';  Out = 'vfx-boom.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true }
+  @{ Dir = 'games\bomb\img'; In = 'vfx-boom.png';  Out = 'vfx-boom.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  # ── UI 크롬 아이콘 (마젠타 키잉 → 알파 PNG). 표시 12~15px → 64px이면 충분 ──
+  @{ Dir = 'games\shell\img'; In = 'ui-logo.png';  Out = 'ui-logo.png';  W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-chat.png';  Out = 'ui-chat.png';  W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-obs.png';   Out = 'ui-obs.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-sound.png'; Out = 'ui-sound.png'; W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-net.png';   Out = 'ui-net.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-eye.png';   Out = 'ui-eye.png';   W = 64; H = 64; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\shell\img'; In = 'ui-heart.png'; Out = 'ui-heart.png'; W = 64; H = 64; Fmt = 'png'; Key = $true }
 )
 
 $total = 0

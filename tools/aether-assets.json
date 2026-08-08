@@ -297,6 +297,51 @@
       "endpoint": "effect2",
       "frame": 16,
       "prompt": "Cartoon water surface splash game VFX animation on a pure black background: a vertical column of dark blue (#4aa0ff) water bursting upward through a surface line with white foam crown and pale droplets scattering outward then falling back, punchy and quick. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "_": "── UI 크롬 아이콘 7종 — 창·작업표시줄·트레이의 이모지를 대체한다. 스타일 공통 문구를 지켜 한 세트로 보이게. 표시 12~15px이라 극단적으로 단순해야 한다"
+    },
+    {
+      "id": "ui-logo",
+      "out": "games/shell/img/ui-logo.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a rounded retro TV screen shape with a small play triangle inside, soft purple (#a970ff) main color with lavender (#c9a8ff) highlight. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-chat",
+      "out": "games/shell/img/ui-chat.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a rounded speech bubble with two small dots inside, soft purple (#a970ff) main color with lavender (#c9a8ff) highlight. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-obs",
+      "out": "games/shell/img/ui-obs.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a broadcast antenna tower emitting two small signal arcs, muted grey-lavender (#9a92a8) color. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-sound",
+      "out": "games/shell/img/ui-sound.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark system tray: a speaker cone with two small sound arcs, muted grey-lavender (#9a92a8) color. Extremely simple bold shape with thick rounded strokes, readable at 13 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-net",
+      "out": "games/shell/img/ui-net.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark system tray: a wifi signal symbol of three stacked arcs above a dot, muted grey-lavender (#9a92a8) color. Extremely simple bold shape with thick rounded strokes, readable at 13 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-eye",
+      "out": "games/shell/img/ui-eye.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a wide open eye shape with a round pupil, warm amber (#ffd27a) main color. Extremely simple bold shape with thick rounded strokes, readable at 14 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    {
+      "id": "ui-heart",
+      "out": "games/shell/img/ui-heart.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a plump rounded heart shape, rich purple (#a970ff) fill with a small lavender (#c9a8ff) shine, dark outline. Extremely simple bold shape with thick rounded strokes, readable at 12 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
     }
   ]
 }
