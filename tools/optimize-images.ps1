@@ -157,6 +157,7 @@ $jobs = @(
   @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true },
   # ── 심연낚시 (배경 플레이트 + 배 + 어종 5티어 + 물보라 시트) ──
   @{ Dir = 'games\fishing\img'; In = 'sea-bg.png';     Out = 'sea-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
+  @{ Dir = 'games\giving-up\img'; In = 'sky-bg.png';   Out = 'sky-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\fishing\img'; In = 'boat.png';       Out = 'boat.png';       W = 256; H = 256; Fmt = 'png'; Key = $true },
   # 어종은 화면 크기(r×3.8 = 34~152px)에 맞춰 티어별로 다르게 줄인다 — 전설만 크다
   @{ Dir = 'games\fishing\img'; In = 'fish-0.png';     Out = 'fish-0.png';     W = 96;  H = 96;  Fmt = 'png'; Key = $true },

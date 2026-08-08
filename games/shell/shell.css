@@ -275,6 +275,39 @@ body {
 /* ---------- 방송 리포트 그래프 ---------- */
 #repGraph { display: block; width: 100%; height: auto; background: #101214; border: 1px solid #26292e; border-radius: 6px; margin: 8px 0 4px; }
 
+/* 클립 — 흥미도 기반 자동 캡처 (방송 리포트 스트립 + 허브 최근 방송 썸네일) */
+.clipLab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin: 10px 0 5px; }
+.clipRow { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.clipCard { margin: 0; flex: 0 0 148px; }
+.clipCard img, .clipCard video { width: 148px; height: 66px; object-fit: cover; border-radius: 5px; border: 1px solid #2c3036; display: block; background: #000; }
+.clipCard figcaption { font-size: 10px; color: #b8bdc4; margin-top: 3px; line-height: 1.35; }
+.clipCard figcaption b { color: var(--plat); }
+.clipCard .cwhy { display: block; color: var(--dim); }
+.recent .rrow { align-items: center; }
+.recent .rrow .rclip { width: 46px; height: 21px; object-fit: cover; border-radius: 3px; margin-right: 7px; vertical-align: middle; border: 1px solid #2c3036; }
+/* 클립 저장 배너 — 좌상단, 도네 배너(#donBanner, 우상단)의 미러. 연출 전용.
+   클립은 설계상 8초 간격이라 도네처럼 큐를 둘 필요가 없다 — 단일 배너로 충분 */
+#clipBanner {
+  position: absolute; top: 76px; left: -440px; z-index: 3; max-width: 400px;
+  display: flex; align-items: center; gap: 9px;
+  background: linear-gradient(80deg, rgba(7,34,25,.95), rgba(5,18,14,.95));
+  border: 1px solid rgba(0,255,163,.55); border-left-width: 4px; border-radius: 9px;
+  padding: 8px 13px; font-size: 12.5px; color: #c8ffe8;
+  box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(0,255,163,.18);
+  pointer-events: none; opacity: 0;
+}
+#clipBanner b { color: #7dffd0; }
+#clipBanner img { width: 64px; height: 29px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(0,255,163,.35); }
+#clipBanner .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
+#clipBanner.show { animation: clipin 3.4s cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes clipin {
+  0% { left: -440px; opacity: 0; }
+  9% { left: 12px; opacity: 1; }
+  84% { left: 12px; opacity: 1; }
+  100% { left: 12px; opacity: 0; transform: translateY(-8px); }
+}
+@keyframes clipRec { to { opacity: .25; } }
+
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
 .pkmoves { flex: 1 1 420px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }

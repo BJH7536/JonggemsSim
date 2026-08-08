@@ -108,7 +108,7 @@
     function me() { return st.bench[st.active]; }
     function alive() { return st.bench.filter(function (m) { return m.hp > 0; }); }
     function after(sec, fn) { st.timers.push({ t: sec, fn: fn }); }
-    function floater(x, y, txt, color) { st.floaters.push({ x: x, y: y, txt: txt, t: 0, c: color || '#ffd27a' }); }
+    function floater(x, y, txt, color) { st.floaters.push({ x: x, y: y, txt: txt, t: 0, c: color || '#e8891a' }); }
     // 스킬 VFX — 명중 지점에 시트 애니메이션. "모든 기술이 몸통박치기로 보인다" 피드백의 해법:
     // 돌진(anim)은 그대로 두고, 무엇으로 때렸는지는 명중 프레임의 이펙트가 말한다.
     function spawnVfx(key, x, y, scale) {
@@ -203,7 +203,7 @@
           // 기술 격에 맞는 이펙트 — 안정타는 타격 별, 강타·도박수는 속성, 필살기는 속성 대기술
           spawnVfx(i === 0 ? 'vfx-tackle' : (i === 3 ? 'vfx-ult-' + TKEY[m.t] : 'vfx-' + TKEY[m.t]),
                    660, 230, i === 3 ? 1.6 : (i >= 1 ? 1.15 : .9));
-          floater(660, 170, '-' + dmg, crit ? '#ff5a4a' : '#fff');
+          floater(660, 170, '-' + dmg, crit ? '#e0342a' : '#2f3a46');
           var gain = Math.round(mv.gain * adv * fm * (crit ? 2.2 : 1));
           if (i >= 2 || crit) {
             var actual = stage.gain(gain, crit ? '급소!!' : (i === 3 ? '필살기 적중!!' : '도박수 적중!'));
@@ -220,7 +220,7 @@
         } else {
           stage.lose(40); // 빗나감 — 조용히 (규약 2)
           sfxMiss();
-          floater(660, 170, 'MISS', '#8a8478');
+          floater(660, 170, 'MISS', '#5f6a76');
           stage.ticker(name + ' 빗나감 −40', true);
           stage.emit('miss', { mv: name });
         }
@@ -260,7 +260,7 @@
           m.hp = Math.max(0, m.hp - dmg);
           st.hitFlash.me = .3; stage.shake(4);
           spawnVfx(ei === 0 ? 'vfx-tackle' : 'vfx-' + TKEY[st.enemy.t], 310, 330, ei === 2 ? 1.2 : 1);
-          floater(310, 300, '-' + dmg, '#ff9a8a');
+          floater(310, 300, '-' + dmg, '#d84a3a');
           sfxHit();
           if (Math.random() < .5) stage.emit('player_hit', { dmg: dmg });
           if (m.hp > 0 && m.hp / m.max < 0.2 && !st.warnedND) {
@@ -455,36 +455,25 @@
         var sc = Math.max(960 / bi.naturalWidth, 430 / bi.naturalHeight);
         var dw = bi.naturalWidth * sc, dh = bi.naturalHeight * sc;
         ctx.drawImage(bi, (960 - dw) / 2, (430 - dh) / 2, dw, dh);
-        ctx.fillStyle = 'rgba(8,10,16,.25)'; ctx.fillRect(0, 0, 960, 430);
       } else {
       var g = ctx.createLinearGradient(0, 0, 0, 430);
-      g.addColorStop(0, '#141a2a'); g.addColorStop(.55, '#1b2438'); g.addColorStop(1, '#0e1219');
+      g.addColorStop(0, '#7ec8f5'); g.addColorStop(.55, '#bfe8a0'); g.addColorStop(1, '#5cb04a');
       ctx.fillStyle = g; ctx.fillRect(0, 0, 960, 430);
       }
-      // 관중석 — 점의 밀도가 시청자 규모를 은근히 반영한다 (연출 전용, C3)
+      // 하늘의 꽃잎 반짝임 — 점의 밀도가 시청자 규모를 은근히 반영한다 (연출 전용, C3)
       var crowd = clamp(Math.log10(stage.viewers + 10) * 22, 12, 90);
       for (var i = 0; i < crowd; i++) {
         var cx = (i * 137 + 61) % 960, cy = 18 + (i * 53 % 70);
-        ctx.fillStyle = 'rgba(255,220,170,' + (0.08 + 0.1 * Math.abs(Math.sin(t * 1.4 + i))) + ')';
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.2 + 0.25 * Math.abs(Math.sin(t * 1.4 + i))) + ')';
         ctx.fillRect(cx, cy, 3, 3);
       }
-      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(0, 96, 960, 6);
-      // 스포트라이트
-      for (var s = 0; s < 2; s++) {
-        var lx = s ? 660 : 310;
-        ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        var cone = ctx.createRadialGradient(lx, 40, 10, lx, 320, 300);
-        cone.addColorStop(0, 'rgba(255,230,180,.08)'); cone.addColorStop(1, 'rgba(255,230,180,0)');
-        ctx.fillStyle = cone; ctx.fillRect(lx - 280, 30, 560, 400);
-        ctx.restore();
-      }
-      // 배틀 플랫폼
+      // 배틀 플랫폼 — 밝은 초원의 풀 둔덕
       [[660, 270, 120, 26], [310, 385, 160, 32]].forEach(function (p) {
         var pg = ctx.createRadialGradient(p[0], p[1], 8, p[0], p[1], p[2]);
-        pg.addColorStop(0, '#2c3448'); pg.addColorStop(1, '#1a2030');
+        pg.addColorStop(0, '#a8de7a'); pg.addColorStop(1, '#69b054');
         ctx.fillStyle = pg;
         ctx.beginPath(); ctx.ellipse(p[0], p[1], p[2], p[3], 0, 0, TAU); ctx.fill();
-        ctx.strokeStyle = 'rgba(120,150,200,.25)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = 'rgba(58,110,46,.45)'; ctx.lineWidth = 2; ctx.stroke();
       });
     }
 
@@ -502,7 +491,7 @@
       ctx.translate(x + dx, y + bob + dy);
       ctx.scale(1, squash);
       // 그림자
-      ctx.fillStyle = 'rgba(0,0,0,.4)';
+      ctx.fillStyle = 'rgba(30,60,25,.25)';
       ctx.beginPath(); ctx.ellipse(0, r * .78, r * .95, r * .26, 0, 0, TAU); ctx.fill();
       // AetherAI 스프라이트가 있으면 그걸 그린다. 그림자·돌진·기절·플래시·HP바는
       // 공통 경로라 그대로 탄다 — 아트만 갈아끼우는 층이다. 없으면 기존 벡터 폴백.
@@ -553,12 +542,14 @@
         ctx.beginPath(); ctx.ellipse(0, 0, r, r * .88, 0, 0, TAU); ctx.fill();
       }
       ctx.restore();
-      // HP 바
+      // HP 바 — 클래식 몬스터 RPG풍 흰 정보 박스
       var bw = 110, bx = x - bw / 2, by = y - r - 34;
-      ctx.fillStyle = 'rgba(10,10,14,.75)'; ctx.fillRect(bx - 4, by - 15, bw + 8, 26);
-      ctx.font = '10.5px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#ece7dd';
+      ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fillRect(bx - 4, by - 15, bw + 8, 26);
+      ctx.strokeStyle = 'rgba(58,80,58,.5)'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(bx - 4, by - 15, bw + 8, 26);
+      ctx.font = '10.5px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c3440';
       ctx.fillText(name + (isFoe ? ' (야생)' : ''), bx, by - 4);
-      ctx.fillStyle = '#000'; ctx.fillRect(bx, by, bw, 6);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(bx, by, bw, 6);
       ctx.fillStyle = hpFrac > .5 ? '#6fd98f' : hpFrac > .25 ? '#ffb447' : '#ff5a4a';
       ctx.fillRect(bx, by, bw * clamp(hpFrac, 0, 1), 6);
     }
@@ -578,11 +569,11 @@
           '같은 기술만 쓰면 물린다(기술 신선도) · 빈사 상태에서의 역전 KO가 최대 수익 · 기절·전멸·장고는 조용히 시청자를 잃는다',
     thumb: function (ctx, w, h) {
       var g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#1b2438'); g.addColorStop(1, '#0e1219');
+      g.addColorStop(0, '#7ec8f5'); g.addColorStop(1, '#5cb04a');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = '#ff6a3d'; ctx.beginPath(); ctx.ellipse(w * .3, h * .68, 26, 22, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#6fd98f'; ctx.beginPath(); ctx.ellipse(w * .72, h * .38, 20, 17, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#ffd27a'; ctx.font = 'bold 20px Georgia, serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#2e9e58'; ctx.beginPath(); ctx.ellipse(w * .72, h * .38, 20, 17, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Georgia, serif'; ctx.textAlign = 'center';
       ctx.fillText('VS', w * .51, h * .52);
     },
     start: start,

@@ -73,6 +73,15 @@ eq('a 3회 → 3단계', f.a, 3);
 f = Shell.rotateFresh(f, 'b', ids);
 eq('b 한 판이 a를 한 단계 회복시킨다', f.a, 2);
 
+// ---- 클립 흥미도 — 조용히 틀리면 클립이 도배되거나 영영 안 잡힌다 ----
+var IS = Shell.interestScore, TH = Shell.CLIP.THRESH;
+ok('무게 4 첫 발생은 급증 없이도 클립', IS(4, 0, 0) >= TH);
+ok('무게 2(도네급 양념)는 급증 만점에도 클립 불가 (규약 5)', IS(2, 0, 1) < TH);
+ok('무게 3은 급증이 실려야 클립', IS(3, 0, 0) < TH && IS(3, 0, 1) >= TH);
+ok('3회째 반복은 무엇이어도 클립 불가 (규약 4)', IS(4, 2, 1) < TH);
+ok('무게 4 두 번째는 급증이 실리면 클립 가능', IS(4, 1, 1) >= TH);
+ok('급증 신호는 단조 증가', IS(4, 1, 1) > IS(4, 1, .5) && IS(4, 1, .5) > IS(4, 1, 0));
+
 // ---- 채팅 검증 게이트 ----
 Chat.init(document.createElement('div'));
 Chat.load({
@@ -270,7 +279,7 @@ FACES = FACES.concat(
 // 화력쇼·GUOI 아트 (AetherAI — 배경 플레이트·팬·클로슈·항아리·망치 헤드)
 FACES = FACES.concat(['../hwaryeok/img/studio-bg.jpg', '../hwaryeok/img/pan.png',
   '../hwaryeok/img/cloche.png', '../giving-up/img/pot.png', '../giving-up/img/hammer.png',
-  '../pocket/img/arena-bg.jpg']);
+  '../giving-up/img/sky-bg.jpg', '../pocket/img/arena-bg.jpg']);
 // UI 크롬 아이콘 + 면 텍스처 (AetherAI — 이모지·CSS 단색면 대체)
 FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-eye', 'ui-heart']
   .map(function (n) { return 'img/' + n + '.png'; }),
