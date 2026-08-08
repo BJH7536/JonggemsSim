@@ -889,3 +889,6 @@ body.fullshow #chatCol { background: transparent; }
 #replayWin video, #replayWin img { height: auto; max-height: 140px; }
 /* 전체화면에선 하단 HUD(패널+풋)가 캠 자리를 덮는다 — 캠을 HUD 위로 올린다 */
 body.fullshow #camBox { bottom: 235px; }
+
+/* 결과 팝업(방송 리포트)은 전체화면 HUD(패널 z6)보다 항상 위 (사용자 피드백) */
+body.fullshow #overlay { z-index: 9; }
