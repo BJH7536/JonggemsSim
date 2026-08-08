@@ -30,6 +30,8 @@
     hwaryeok: ['불 좀 끄고 올게요', '오늘 대참사 0회 도전', '4구 풀가동 각입니다'],
     'giving-up': ['오늘 정상 못 가면 삭발', '항아리 유산소 하는 날', '떨어질수록 커집니다'],
     pocket: ['빈사 역전만 노립니다', '연승 끊기면 바로 자야죠', '명중 38%를 믿습니다'],
+    fishing: ['오늘 나락의군주 잡습니다', '심해만 팝니다 얕은물 금지', '줄 끊기면 낚싯대 삽니다'],
+    bomb: ['판독 없이 갑니다', '오늘 폭발 0회 도전(안 지킴)', '감으로 자르는 남자'],
   };
 
   var Shell = {
@@ -104,12 +106,16 @@
     // 게임이 emit하는 이벤트 이름을 표정으로 번역한다. 새 게임이 기존 이름을 재사용하면
     // 캠은 공짜로 따라온다 — 목록에 없는 이벤트는 무표정 유지 (contract 4.2 참고).
     CAM_MOOD: {
-      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall'],
-      panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death'],
+      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall',
+                 'bite', 'hook', 'new_bomb'],
+      panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death',
+              'line_snap', 'boom'],
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
-            'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done'],
-      confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam'],
-      thinking: ['nag', 'stuck', 'idle'],
+            'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
+            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up'],
+      confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
+                  'strike_miss', 'escape', 'trash', 'timeout_boom'],
+      thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
       question: ['milestone'],
     },
     camReact: function (ev) {

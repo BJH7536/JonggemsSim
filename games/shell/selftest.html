@@ -26,6 +26,10 @@
 <script src="../giving-up/game.js"></script>
 <script src="../pocket/chat-data.js"></script>
 <script src="../pocket/game.js"></script>
+<script src="../bomb/chat-data.js"></script>
+<script src="../bomb/game.js"></script>
+<script src="../fishing/chat-data.js"></script>
+<script src="../fishing/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
 function eq(label, got, want) {
@@ -90,7 +94,7 @@ var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', 
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
 
 // ---- 등록된 게임이 계약을 지키는가 ----
-eq('게임 3종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket']);
+eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket', 'bomb', 'fishing']);
 Shell.games.forEach(function (g) {
   ok(g.title + ': 필수 필드가 있다',
      g.title && g.tagline && g.duration > 0 && g.startViewers > 0 && typeof g.start === 'function');
@@ -172,6 +176,8 @@ var SHIPPED = [
   '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
   '../giving-up/chat-data.js', '../giving-up/game.js',
   '../pocket/chat-data.js', '../pocket/game.js',
+  '../bomb/chat-data.js', '../bomb/game.js',
+  '../fishing/chat-data.js', '../fishing/game.js',
 ];
 // 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
 var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']
@@ -180,7 +186,8 @@ var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'qu
 // 생성 원본은 합계 2.9MB였다. tools/optimize-images.ps1 를 거치지 않고 커밋하면
 // 여기서 예산이 터진다 — 그게 이 목록에 넣는 이유다.
 FACES = FACES.concat(['img/desktop-wallpaper.jpg', 'img/icon-hwaryeok.png',
-  'img/icon-giving-up.png', 'img/icon-pocket.png']);
+  'img/icon-giving-up.png', 'img/icon-pocket.png',
+  'img/icon-fishing.png', 'img/icon-bomb.png']);
 // 주머니 괴수 아트 (AetherAI — 몬스터 6종 알파 PNG, 스킬 VFX 시트 7종 JPEG)
 FACES = FACES.concat(
   ['me-fire', 'me-water', 'me-grass', 'foe-fire', 'foe-water', 'foe-grass']
