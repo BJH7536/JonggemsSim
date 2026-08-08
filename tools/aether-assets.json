@@ -32,6 +32,18 @@
       "prompt": "Square game launcher icon, flat vector style, dark background (#12101a) with green and orange accents. Subject: two round cartoon monster creatures facing each other in a versus standoff, simple blob shapes with big eyes. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding. Original creature design, not resembling any existing franchise."
     },
     {
+      "id": "icon-fishing",
+      "out": "games/shell/img/icon-fishing.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#0e1420) with deep teal and amber accents. Subject: a fishing rod bending hard over dark abyssal water, a glowing lure sinking into the deep with a huge shadowy fish silhouette below. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "id": "icon-bomb",
+      "out": "games/shell/img/icon-bomb.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, dark background (#141014) with red and amber accents. Subject: a cartoon time bomb with a digital countdown display and three colored wires (red, blue, yellow), one wire cut with small sparks, wire cutters nearby. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
       "_": "── 주머니 괴수 몬스터 6종 — 플레이어(등 3/4 뒤태) + 적(정면 3/4). 스타일 공통 문구를 지켜 세대 간 일관성을 최대화한다. 전부 오리지널 디자인 명시 (IP 리스크 차단)"
     },
     {

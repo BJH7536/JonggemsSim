@@ -122,6 +122,8 @@ $jobs = @(
   @{ Dir = 'games\shell\img'; In = 'icon-hwaryeok.png';  Out = 'icon-hwaryeok.png';  W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'icon-giving-up.png'; Out = 'icon-giving-up.png'; W = 96; H = 96; Fmt = 'png' },
   @{ Dir = 'games\shell\img'; In = 'icon-pocket.png';    Out = 'icon-pocket.png';    W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'icon-fishing.png';   Out = 'icon-fishing.png';   W = 96; H = 96; Fmt = 'png' },
+  @{ Dir = 'games\shell\img'; In = 'icon-bomb.png';      Out = 'icon-bomb.png';      W = 96; H = 96; Fmt = 'png' },
   # ── 주머니 괴수: 몬스터 (마젠타 키잉 → 알파 PNG). 화면 최대 134px → 192px이면 레티나까지 충분 ──
   @{ Dir = 'games\pocket\img'; In = 'me-fire.png';   Out = 'me-fire.png';   W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\pocket\img'; In = 'me-water.png';  Out = 'me-water.png';  W = 192; H = 192; Fmt = 'png'; Key = $true },
