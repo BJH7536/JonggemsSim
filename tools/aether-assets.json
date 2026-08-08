@@ -377,6 +377,45 @@
       "prompt": "Game UI button plate, single wide rounded rectangle with softly beveled edges, vivid mint green gradient (#00ffa3 to #00c47e) with a subtle top highlight and darker bottom edge, slight dark outline, designed so dark text on top stays readable. Flat clean vector game UI style, no text, no icons, centered. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background."
     },
     {
+      "_": "── 상점 (방송용품) — 데스크탑 앱 아이콘 1종 + 상품 아이콘 5종. 게임 런처 아이콘과 같은 문법(어두운 배경 플랫 벡터)으로 한 세트로 보이게. 상품은 전부 순수 장식 — 표시 ~52px"
+    },
+    {
+      "id": "icon-shop",
+      "out": "games/shell/img/icon-shop.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square app launcher icon, flat vector style, dark background (#101418) with vivid mint green (#00ffa3) and warm gold (#ffd24a) accents. Subject: a small shop storefront with an awning and a glowing round coin above it. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "id": "shop-camgold",
+      "out": "games/shell/img/shop-camgold.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square item icon for a game shop, flat vector style, dark background (#12100a) with warm gold (#ffd24a, #ffb447) accents. Subject: an ornate golden picture frame around a small webcam camera. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
+    },
+    {
+      "id": "shop-neonsign",
+      "out": "games/shell/img/shop-neonsign.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square item icon for a game shop, flat vector style, dark background (#0e1414) with vivid mint green (#00ffa3) neon glow accents. Subject: a bent neon tube sign shaped like a lightning bolt on a small mounting board, glowing brightly. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
+    },
+    {
+      "id": "shop-fanfare",
+      "out": "games/shell/img/shop-fanfare.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square item icon for a game shop, flat vector style, dark background (#141014) with warm gold (#ffd24a) and coral (#ff6b5a) accents. Subject: a golden party popper cone bursting with confetti pieces and two small musical notes. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
+    },
+    {
+      "id": "shop-tallyplat",
+      "out": "games/shell/img/shop-tallyplat.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square item icon for a game shop, flat vector style, dark background (#101014) with cool platinum silver (#dfe6ee) and ice blue (#9ec8e0) accents. Subject: a gleaming platinum rectangular badge plate with a small diamond gem set in its center, subtle shine sparkles. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
+    },
+    {
+      "id": "shop-holobadge",
+      "out": "games/shell/img/shop-holobadge.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square item icon for a game shop, flat vector style, dark background (#0f1016) with iridescent holographic gradient accents (cyan #66e0ff, magenta #ff7ad9, mint #7dffd0). Subject: a hexagonal holographic chip badge with a subtle prism shine sweeping across it. Bold simple shapes, thick clean edges, high contrast, readable at 64 pixels. No text, centered composition with padding."
+    },
+    {
       "id": "ui-coin",
       "out": "games/shell/img/ui-coin.png",
       "ai_model": "GPT Image 1.5",

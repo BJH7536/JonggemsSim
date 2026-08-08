@@ -82,6 +82,12 @@ ok('3회째 반복은 무엇이어도 클립 불가 (규약 4)', IS(4, 2, 1) < T
 ok('무게 4 두 번째는 급증이 실리면 클립 가능', IS(4, 1, 1) >= TH);
 ok('급증 신호는 단조 증가', IS(4, 1, 1) > IS(4, 1, .5) && IS(4, 1, .5) > IS(4, 1, 0));
 
+// ---- 상점 구매 — 차감·중복·잔액 검사 (틀리면 코인 증발 or 무한 구매) ----
+var shopCh = { coins: 1000, gear: {} };
+eq('구매 성공 시 정확히 차감', (Shell.shopBuy(shopCh, { id: 'x', price: 600 }) === 'ok' ? shopCh.coins : -1), 400);
+ok('잔액 부족은 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'y', price: 999 }) === 'poor' && shopCh.coins === 400);
+ok('중복 구매는 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'x', price: 100 }) === 'owned' && shopCh.coins === 400);
+
 // ---- 채팅 검증 게이트 ----
 Chat.init(document.createElement('div'));
 Chat.load({
@@ -285,6 +291,9 @@ FACES = FACES.concat(['ui-logo', 'ui-chat', 'ui-obs', 'ui-sound', 'ui-net', 'ui-
   .map(function (n) { return 'img/' + n + '.png'; }),
   ['img/ui-titlebar.jpg', 'img/ui-taskbar.jpg', 'img/ui-panelbg.jpg', 'img/ui-button.png',
    'img/ui-coin.png']);
+// 상점 아이콘 (AetherAI — 데스크탑 앱 1종 + 상품 5종)
+FACES = FACES.concat(['icon-shop', 'shop-camgold', 'shop-neonsign', 'shop-fanfare',
+  'shop-tallyplat', 'shop-holobadge'].map(function (n) { return 'img/' + n + '.png'; }));
 // 심연낚시·해체쇼 아트 (AetherAI — "게임 내 이미지 전부 AetherAI" 방침의 마지막 두 게임)
 FACES = FACES.concat(
   ['boat', 'fish-0', 'fish-1', 'fish-2', 'fish-3', 'fish-4']
