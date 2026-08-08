@@ -51,12 +51,17 @@
   // 배경 벽 플레이트·팬·클로슈. 없거나 로드 전이면 기존 벡터로 폴백 — 아트는 얹는 층이다.
   // 조명 콘·가스 불꽃·김·사고 연출은 계속 절차적으로 그린다: 깜빡임이 곧 방송의 생동감이라
   // 정지 이미지로 바꾸면 죽는다. 이미지가 맡는 건 "정물"뿐이다.
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약.
+  // 그래도 늦은 프레임은 imgReady 폴백(벡터)이 그대로 받는다. 재호출은 no-op.
   var IMG = {};
-  [['studio-bg', 'jpg'], ['pan', 'png'], ['cloche', 'png']].forEach(function (e) {
-    var im = new Image();
-    im.src = 'games/hwaryeok/img/' + e[0] + '.' + e[1];
-    IMG[e[0]] = im;
-  });
+  function loadArt() {
+    if (IMG.pan) return;
+    [['studio-bg', 'jpg'], ['pan', 'png'], ['cloche', 'png']].forEach(function (e) {
+      var im = new Image();
+      im.src = 'games/hwaryeok/img/' + e[0] + '.' + e[1];
+      IMG[e[0]] = im;
+    });
+  }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
   // 팬 스프라이트에서 팬 몸통(볼)의 중심이 가로 어디쯤인가 — 손잡이가 오른쪽이라 중심이
   // 왼쪽으로 치우친다. 내용물 타원은 몸통 중심(x)에 그려지므로 이 값으로 정렬한다.
@@ -72,6 +77,7 @@
   var sfxUnlock = function () { if (!sfx.gate('ul')) return; sfx.tone(523, .1, 'triangle', .1); sfx.tone(659, .1, 'triangle', .1, .09); sfx.tone(784, .1, 'triangle', .1, .18); sfx.tone(1047, .22, 'triangle', .11, .27); };
 
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
       chain: 1, chainT: 0, maxChain: 1,
       recOK: 0, recTry: 0, done: 0, disaster: 0,
@@ -612,6 +618,7 @@
     startViewers: START_VIEWERS,
     usesChain: true,
     chat: window.HWARYEOK_CHAT,
+    preload: loadArt,
     foot: '<kbd>1</kbd>~<kbd>4</kbd> 또는 버튼으로 수습 — <b>빨리 반응하라.</b> 배율은 사고 유형이 정한다(창이 짧을수록 높다, 최대 ×2.5)<br>' +
           '같은 사고만 반복 수습하면 시청자가 물린다(신선도 감쇠) · 기름 화재를 놓치면 대참사(+시청자 폭등, 화구 12초 파손) · 빈 화구는 조용히 시청자를 잃는다',
     thumb: function (c, w, h) {

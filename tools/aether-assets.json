@@ -223,6 +223,80 @@
       "out": "games/giving-up/img/hammer.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Game sprite of a sledgehammer HEAD only without any handle, rectangular forged steel block seen from the side, slightly worn edges, oriented horizontally. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "_": "── 심연낚시 — 배경 플레이트 + 배 + 어종 5티어. 물결·수심 라벨·낚싯줄·기포·낚싯대는 살아있는 연출이라 벡터로 위에 얹는다. 물고기는 게임 좌표계상 왼쪽을 본다"
+    },
+    {
+      "id": "bg-fishing",
+      "out": "games/fishing/img/sea-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark night sea for a game background, wide horizontal composition: a thin band of deep night sky along the very top with a small pale moon in the upper right and faint stars, a calm horizontal water surface line near the top edge, and below it deep abyssal water fading darker toward the bottom (#17394f down to #03070d). Flat 2D game style, muted, very dark, no text, no boats, no fish, no characters, the lower two thirds kept as clean simple dark water."
+    },
+    {
+      "id": "fishing-boat",
+      "out": "games/fishing/img/boat.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a small wooden rowboat seen exactly from the side, dark worn brown planks (#3a2c1e, #54402c), with a small chibi streamer character in a dark hoodie sitting toward the RIGHT end of the boat facing right, hands together in front as if holding something invisible. NO fishing rod, NO fishing line. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, muted dark colors, no text."
+    },
+    {
+      "id": "fish-0",
+      "out": "games/fishing/img/fish-0.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single small dull grey minnow fish seen exactly from the side, facing LEFT, plain drab body (#8a8478), simple fins, slightly bored expression. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-1",
+      "out": "games/fishing/img/fish-1.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single sleek silver-blue carp fish seen exactly from the side, facing LEFT, glossy pale blue scales (#9ec8e0) with a white belly, elegant fins. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-2",
+      "out": "games/fishing/img/fish-2.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single stocky bronze-blue catfish seen exactly from the side, facing LEFT, muted steel-blue body (#6fa0c0) with long whisker barbels and a wide flat head, grumpy look. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-3",
+      "out": "games/fishing/img/fish-3.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single large deep-sea predator fish seen exactly from the side, facing LEFT, bronze-amber armored body (#c08a4a) with spiny dorsal fins, one big glassy eye and small fangs, deep-sea anglerfish vibe without a lure stalk. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "fish-4",
+      "out": "games/fishing/img/fish-4.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a single huge ancient abyssal monster fish seen exactly from the side, facing LEFT, near-black scarred body with glowing ember-orange (#ff6a3d) fin edges, gill slits and one baleful glowing eye, ragged ancient fins, terrifying legendary boss vibe. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "_": "── 해체쇼 — 작업실 배경 + 폭탄 몸통. 와이어·타이머·판독 게이지·스파크는 인터랙션 그 자체라 벡터 유지"
+    },
+    {
+      "id": "bg-bomb",
+      "out": "games/bomb/img/bench-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark bomb-disposal workshop back wall for a game background, wide horizontal composition with content in the central horizontal band: pegboard wall with hanging tool silhouettes (wire cutters, pliers, screwdrivers), a shelf with toolboxes, cold slate palette (#12141c to #0c0d12) with a faint warm work-light glow from above center. Flat 2D game style, muted, very dark, no text, no people, bottom third kept as a simple dark workbench surface."
+    },
+    {
+      "id": "bomb-body",
+      "out": "games/bomb/img/bomb-body.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Game sprite of a rectangular gunmetal bomb casing front panel with rounded corners, seen exactly head-on, dark blue-grey steel (#2b2f3a, #3c4150) with four corner bolts, worn scratches, and a completely EMPTY smooth center area with no wires, no display, no buttons (game draws those on top). Wider than tall. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow on the background. Flat cel shading, thick clean dark outline, no text."
+    },
+    {
+      "id": "vfx-boom",
+      "out": "games/bomb/img/vfx-boom.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon massive bomb detonation game VFX animation on a pure black background: a blinding white core flash bursting into an orange-red fireball with a fast expanding shockwave ring, flying metal debris silhouettes and thick smoke puffs, catastrophic finisher feel. Flat 2D game style, thick shapes, no text."
+    },
+    {
+      "id": "vfx-splash",
+      "out": "games/fishing/img/vfx-splash.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon water surface splash game VFX animation on a pure black background: a vertical column of dark blue (#4aa0ff) water bursting upward through a surface line with white foam crown and pale droplets scattering outward then falling back, punchy and quick. Flat 2D game style, thick shapes, no text."
     }
   ]
 }

@@ -104,12 +104,17 @@
   // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
   // 항아리·망치 헤드. 없거나 로드 전이면 기존 벡터로 폴백 — 아트는 얹는 층이다.
   // 지형·먼지·사거리 링은 계속 절차적으로: 접점 하이라이트가 곧 조작 피드백이라서다.
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약.
+  // 그래도 늦은 프레임은 imgReady 폴백(벡터)이 그대로 받는다. 재호출은 no-op.
   var IMG = {};
-  ['pot', 'hammer'].forEach(function (n) {
-    var im = new Image();
-    im.src = 'games/giving-up/img/' + n + '.png';
-    IMG[n] = im;
-  });
+  function loadArt() {
+    if (IMG.pot) return;
+    ['pot', 'hammer'].forEach(function (n) {
+      var im = new Image();
+      im.src = 'games/giving-up/img/' + n + '.png';
+      IMG[n] = im;
+    });
+  }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
 
   var sfxTick  = function () { if (!sfx.gate('gu_k')) return; sfx.tone(210, .04, 'square', .035); };
@@ -165,6 +170,7 @@
   }
 
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
       px: START_X, py: GROUND_Y - PR, vx: 0, vy: 0,
       len: HAMMER_MAX, tipX: 560, tipY: GROUND_Y - 90,
@@ -610,6 +616,7 @@
     startViewers: START_VIEWERS,
     usesChain: false,
     chat: window.GIVINGUP_CHAT,
+    preload: loadArt,
     // selftest가 물리 상수끼리 모순되지 않는지 검사한다 (games/shell/selftest.html)
     tuning: {
       GRAV: GRAV, PX_PER_M: PX_PER_M, GROUND_Y: GROUND_Y, SUMMIT_Y: SUMMIT_Y,

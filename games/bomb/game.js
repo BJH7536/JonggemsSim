@@ -44,14 +44,31 @@
   var sfxDefuse = function () { if (!sfx.gate('bb_df')) return; sfx.tone(523, .09, 'triangle', .1); sfx.tone(659, .1, 'triangle', .1, .07); sfx.tone(784, .16, 'triangle', .1, .14); };
   var sfxTick   = function () { if (!sfx.gate('bb_tk')) return; sfx.tone(1568, .05, 'square', .03); };
 
+  // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
+  // 작업실 배경 플레이트·폭탄 몸통·폭발 VFX 시트. 없거나 로드 전이면 기존 벡터로 폴백.
+  // 와이어·타이머·판독 게이지·스파크는 인터랙션 그 자체라 계속 절차적으로 그린다.
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약. 재호출 no-op.
+  var IMG = {};
+  function loadArt() {
+    if (IMG['bench-bg']) return;
+    [['bench-bg', 'jpg'], ['bomb-body', 'png'], ['vfx-boom', 'jpg']].forEach(function (e) {
+      var im = new Image();
+      im.src = 'games/bomb/img/' + e[0] + '.' + e[1];
+      IMG[e[0]] = im;
+    });
+  }
+  function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
+  var VFX_DUR = 0.7, VFX_GRID = 4;
+
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
       round: 0, chain: 1, maxChain: 1,
       defused: 0, booms: 0, clutches: 0, maxPay: 0,
       bomb: null, scan: null, downT: 0,
       idleT: 0, nagged: false, tickT: 0,
       timers: [], donT: 8 + Math.random() * 7, chatT: 3, mileIdx: 0,
-      sparks: [], floaters: [],
+      sparks: [], floaters: [], vfx: [],
     };
     var panel = stage.panel;
 
@@ -220,6 +237,8 @@
       sfxBoom();
       stage.shake(14); stage.flash(paid ? .5 : .3);
       spawnSparks(480, 230, 40, '#ffb447');
+      // 폭발 VFX — 시트 없으면 스파크만으로 폴백 (연출 전용)
+      if (imgReady('vfx-boom')) st.vfx.push({ x: 480, y: 235, s: paid ? 2.4 : 1.8, born: stage.now });
       if (paid) {
         var g = clamp(rnd(BOOM_MIN, 900) + (st.round - 1) * 40, BOOM_MIN, BOOM_MAX);
         var actual = stage.gain(g, '폭발!! 대참사', 'boom');
@@ -363,6 +382,27 @@
           ctx.fillRect(s.x - 2, s.y - 2, 4, 4);
         });
         ctx.globalAlpha = 1;
+        // 폭발 VFX — 4x4 시트를 'screen' 블렌드로 얹는다 (포켓과 같은 파이프라인)
+        st.vfx = st.vfx.filter(function (f) {
+          var p = (t - f.born) / VFX_DUR;
+          if (p >= 1) return false;
+          if (p < 0) return true;
+          var im = IMG['vfx-boom'];
+          var n = VFX_GRID * VFX_GRID, idx = Math.min(n - 1, (p * n) | 0);
+          var fw = im.naturalWidth / VFX_GRID, fh = im.naturalHeight / VFX_GRID;
+          var size = 170 * f.s;
+          // 생성 시트의 셀 경계 격자선 방지 — 소스 사각형을 4% 안쪽으로 판다
+          var inx = fw * .04, iny = fh * .04;
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.globalAlpha = p > .8 ? (1 - p) * 5 : 1;
+          ctx.drawImage(im,
+                        (idx % VFX_GRID) * fw + inx, ((idx / VFX_GRID) | 0) * fh + iny,
+                        fw - inx * 2, fh - iny * 2,
+                        f.x - size / 2, f.y - size / 2, size, size);
+          ctx.restore();
+          return true;
+        });
         // 플로터
         st.floaters.forEach(function (f) {
           ctx.globalAlpha = 1 - f.t;
@@ -375,18 +415,23 @@
 
     // ---------- 렌더 ----------
     function drawBench(ctx, t) {
-      var g = ctx.createLinearGradient(0, 0, 0, 430);
-      g.addColorStop(0, '#12141c'); g.addColorStop(.6, '#181a24'); g.addColorStop(1, '#0c0d12');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, 960, 430);
+      // 배경 정물은 AetherAI 플레이트 — 작업등 콘은 살아있는 층이라 계속 위에 얹는다
+      if (imgReady('bench-bg')) {
+        ctx.drawImage(IMG['bench-bg'], 0, 0, 960, 430);
+      } else {
+        var g = ctx.createLinearGradient(0, 0, 0, 430);
+        g.addColorStop(0, '#12141c'); g.addColorStop(.6, '#181a24'); g.addColorStop(1, '#0c0d12');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 960, 430);
+        // 작업대 상판 — 이미지에선 하단 1/3이 상판이라 폴백에서만 그린다
+        ctx.fillStyle = '#2a2620'; ctx.fillRect(120, 386, 720, 44);
+        ctx.fillStyle = '#3a352c'; ctx.fillRect(120, 380, 720, 8);
+      }
       // 작업등 콘
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       var cone = ctx.createRadialGradient(480, 20, 20, 480, 260, 340);
       cone.addColorStop(0, 'rgba(255,235,190,.1)'); cone.addColorStop(1, 'rgba(255,235,190,0)');
       ctx.fillStyle = cone; ctx.fillRect(140, 10, 680, 420);
       ctx.restore();
-      // 작업대 상판
-      ctx.fillStyle = '#2a2620'; ctx.fillRect(120, 386, 720, 44);
-      ctx.fillStyle = '#3a352c'; ctx.fillRect(120, 380, 720, 8);
     }
 
     function drawBomb(ctx, t) {
@@ -398,19 +443,23 @@
       ctx.fillStyle = warn && Math.floor(t * 4) % 2 ? '#ff8d7a' : '#ff4a3d';
       ctx.font = 'bold 28px "Courier New", monospace'; ctx.textAlign = 'center';
       ctx.fillText(Math.max(0, b.t).toFixed(1), 480, 84);
-      // 폭탄 몸통
-      var bg = ctx.createLinearGradient(0, 100, 0, 380);
-      bg.addColorStop(0, '#3c4150'); bg.addColorStop(.5, '#2b2f3a'); bg.addColorStop(1, '#1c1f28');
-      ctx.fillStyle = bg;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(260, 100, 440, 278, 16); else ctx.rect(260, 100, 440, 278);
-      ctx.fill();
-      ctx.strokeStyle = '#4a5060'; ctx.lineWidth = 2.5; ctx.stroke();
-      // 볼트
-      [[276, 116], [684, 116], [276, 362], [684, 362]].forEach(function (p) {
-        ctx.fillStyle = '#151820';
-        ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill();
-      });
+      // 폭탄 몸통 — 스프라이트가 있으면 케이스만 이미지로, 와이어·표기는 그대로 위에
+      if (imgReady('bomb-body')) {
+        ctx.drawImage(IMG['bomb-body'], 260, 100, 440, 278);
+      } else {
+        var bg = ctx.createLinearGradient(0, 100, 0, 380);
+        bg.addColorStop(0, '#3c4150'); bg.addColorStop(.5, '#2b2f3a'); bg.addColorStop(1, '#1c1f28');
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(260, 100, 440, 278, 16); else ctx.rect(260, 100, 440, 278);
+        ctx.fill();
+        ctx.strokeStyle = '#4a5060'; ctx.lineWidth = 2.5; ctx.stroke();
+        // 볼트
+        [[276, 116], [684, 116], [276, 362], [684, 362]].forEach(function (p) {
+          ctx.fillStyle = '#151820';
+          ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill();
+        });
+      }
       // 와이어
       b.wires.forEach(function (w, i) {
         var y = wireY(i);
@@ -477,6 +526,7 @@
     startViewers: START_VIEWERS,
     usesChain: true,
     chat: window.BOMB_CHAT,
+    preload: loadArt,
     tuning: {
       SCAN_TIME: SCAN_TIME, DOWN_TIME: DOWN_TIME,
       CUT_BASE: CUT_BASE, CUT_MIN: CUT_MIN, CUT_MAX: CUT_MAX,

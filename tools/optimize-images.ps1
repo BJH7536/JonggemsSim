@@ -154,7 +154,21 @@ $jobs = @(
   @{ Dir = 'games\hwaryeok\img';  In = 'pan.png';    Out = 'pan.png';    W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\hwaryeok\img';  In = 'cloche.png'; Out = 'cloche.png'; W = 192; H = 192; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\giving-up\img'; In = 'pot.png';    Out = 'pot.png';    W = 128; H = 128; Fmt = 'png'; Key = $true },
-  @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true }
+  @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true },
+  # ── 심연낚시 (배경 플레이트 + 배 + 어종 5티어 + 물보라 시트) ──
+  @{ Dir = 'games\fishing\img'; In = 'sea-bg.png';     Out = 'sea-bg.jpg';     W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
+  @{ Dir = 'games\fishing\img'; In = 'boat.png';       Out = 'boat.png';       W = 256; H = 256; Fmt = 'png'; Key = $true },
+  # 어종은 화면 크기(r×3.8 = 34~152px)에 맞춰 티어별로 다르게 줄인다 — 전설만 크다
+  @{ Dir = 'games\fishing\img'; In = 'fish-0.png';     Out = 'fish-0.png';     W = 96;  H = 96;  Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\fishing\img'; In = 'fish-1.png';     Out = 'fish-1.png';     W = 128; H = 128; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\fishing\img'; In = 'fish-2.png';     Out = 'fish-2.png';     W = 160; H = 160; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\fishing\img'; In = 'fish-3.png';     Out = 'fish-3.png';     W = 224; H = 224; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\fishing\img'; In = 'fish-4.png';     Out = 'fish-4.png';     W = 320; H = 320; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\fishing\img'; In = 'vfx-splash.png'; Out = 'vfx-splash.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  # ── 해체쇼 (배경 플레이트 + 폭탄 몸통 + 폭발 시트) ──
+  @{ Dir = 'games\bomb\img'; In = 'bench-bg.png';  Out = 'bench-bg.jpg';  W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
+  @{ Dir = 'games\bomb\img'; In = 'bomb-body.png'; Out = 'bomb-body.png'; W = 512; H = 512; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\bomb\img'; In = 'vfx-boom.png';  Out = 'vfx-boom.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true }
 )
 
 $total = 0
@@ -168,6 +182,14 @@ foreach ($j in $jobs) {
     continue
   }
   $before = (Get-Item $src).Length
+  # 재실행 가드 — In=Out 잡의 원본이 이미 목표 크기 이하면 처리 끝난 최종본이다 (트림돼 더 작을
+  # 수도 있다). 여기서 또 cover-리사이즈하면 업스케일+크롭으로 최종본을 망친다 (2026-08-08 실측
+  # — 전체 재실행이 기존 몬스터·액터를 재크롭해 git checkout으로 복원했다).
+  if ($j.In -eq $j.Out) {
+    $probe = [System.Drawing.Image]::FromFile($src)
+    $small = ($probe.Width -le $j.W -and $probe.Height -le $j.H); $probe.Dispose()
+    if ($small) { $total += $before; Write-Host ("유지    {0} (이미 최적화)" -f $j.Out); continue }
+  }
   $tmp = Join-Path $dir ("_tmp_" + $j.Out)
   # PowerShell 5.1에는 ?? 가 없다 — 파서 오류가 난다
   $q = if ($j.ContainsKey('Q')) { $j.Q } else { 80 }
