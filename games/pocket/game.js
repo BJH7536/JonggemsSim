@@ -63,17 +63,22 @@
   // VFX는 4x4 스프라이트 시트(generate/effect/v2, frame=16)를 'screen' 블렌드로 얹는다.
   // 검은 배경 시트에서 검정이 사라지므로 알파 없는 JPEG로 배포해도 깨지지 않는다 (용량 절약).
   var TKEY = ['fire', 'water', 'grass'];
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약.
+  // 그래도 늦은 프레임은 imgReady 폴백(벡터)이 그대로 받는다. 재호출은 no-op.
   var IMG = {};
-  [['arena-bg', 'jpg'],
-   ['me-fire', 'png'], ['me-water', 'png'], ['me-grass', 'png'],
-   ['foe-fire', 'png'], ['foe-water', 'png'], ['foe-grass', 'png'],
-   ['vfx-tackle', 'jpg'], ['vfx-fire', 'jpg'], ['vfx-water', 'jpg'], ['vfx-grass', 'jpg'],
-   ['vfx-ult-fire', 'jpg'], ['vfx-ult-water', 'jpg'], ['vfx-ult-grass', 'jpg'],
-  ].forEach(function (e) {
-    var im = new Image();
-    im.src = 'games/pocket/img/' + e[0] + '.' + e[1];
-    IMG[e[0]] = im;
-  });
+  function loadArt() {
+    if (IMG['arena-bg']) return;
+    [['arena-bg', 'jpg'],
+     ['me-fire', 'png'], ['me-water', 'png'], ['me-grass', 'png'],
+     ['foe-fire', 'png'], ['foe-water', 'png'], ['foe-grass', 'png'],
+     ['vfx-tackle', 'jpg'], ['vfx-fire', 'jpg'], ['vfx-water', 'jpg'], ['vfx-grass', 'jpg'],
+     ['vfx-ult-fire', 'jpg'], ['vfx-ult-water', 'jpg'], ['vfx-ult-grass', 'jpg'],
+    ].forEach(function (e) {
+      var im = new Image();
+      im.src = 'games/pocket/img/' + e[0] + '.' + e[1];
+      IMG[e[0]] = im;
+    });
+  }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
   var VFX_DUR = 0.5, VFX_GRID = 4;
 
@@ -85,6 +90,7 @@
   var sfxSwap  = function () { if (!sfx.gate('pk_s')) return; sfx.noise(.12, .06, 700); };
 
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
       bench: MONS.map(function (m) { return { n: m.n, t: m.t, hp: 100, max: 100 }; }),
       active: 0,
@@ -566,6 +572,7 @@
     startViewers: START_VIEWERS,
     usesChain: true,
     chat: window.POCKET_CHAT,
+    preload: loadArt,
     tuning: { MOVES: MOVES, FRESH: FRESH, CRIT: CRIT, TYPES: 3 },
     foot: '<kbd>1</kbd>~<kbd>4</kbd> 또는 버튼으로 기술 — <b>명중이 낮을수록 시청자가 크게 반응한다.</b> 벤치 클릭으로 교체(한 턴 소모, 유리 상성 교체는 보상)<br>' +
           '같은 기술만 쓰면 물린다(기술 신선도) · 빈사 상태에서의 역전 KO가 최대 수익 · 기절·전멸·장고는 조용히 시청자를 잃는다',

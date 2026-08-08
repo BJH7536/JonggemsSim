@@ -67,9 +67,25 @@
     { t: 'r', x: 960, y: -400, w: 60, h: WORLD_H + 400, hidden: true },
   ]);
 
+  // 출발 지점 — 자동 플레이 A/B 실측으로 확정 (2026-08-08, 하네스는 ?guoidebug 훅 참고).
+  //   480(초판): 첫 발판 바로 밑 16px 틈에 갇힘. 시작 즉시 조작 불능 (플레이 피드백)
+  //   800(2판): 머리 위는 트였지만 첫 발판까지 207px — 지상 장대높이뛰기 2~3회를
+  //             성공해야 첫 "걸기"가 나온다. 봇 38초 동안 걸기 0회. 도입이 벽이었다.
+  //   660(3판): 봇이 걸기 7회, 12초 만에 9m — 도입은 풀렸다. 그런데 selftest가
+  //             머리 위 80px을 잡아냈다: 바위 C(700,1390,44)의 아래 호가 스폰 위에 걸린다.
+  //             (직접 계산에선 사각형만 보고 원을 빠뜨렸다 — 가드가 있는 이유다.)
+  //   640(현재): 두 제약을 동시에 만족하는 구간 (620,656)의 중앙값.
+  //             첫 발판 모서리(600,1450)까지 67px = 사거리 안, 머리 위는 완전히 트임.
+  var START_X = 640;
+  var HEAD_ROOM_MIN = 120;  // 스폰 머리 위 최소 여유 — 망치 사거리 1회분
+  var FIRST_HOOK_MAX = 110; // 스폰→첫 발판 최대 거리. 이 안이어야 "시작하자마자 건다"가 성립
+
   // ---------- 물리 ----------
   var PR = 16;              // 항아리 반지름
-  var HAMMER_MAX = 118;     // 사거리. 실제 길이는 커서까지의 거리로 정해진다
+  // 사거리 118 → 128 (2026-08-08). 미끄러지는 도중 옆 발판을 다시 잡는 회복 동작이
+  // 실측에서 아슬아슬하게 닿지 않는 경우가 잦았다. +8%는 사다리 기하(수직 갭 최대 70,
+  // selftest 상한 0.75×사거리)를 깨지 않으면서 재걸기 관용만 넓힌다.
+  var HAMMER_MAX = 128;     // 사거리. 실제 길이는 커서까지의 거리로 정해진다
   var HAMMER_MIN = 22;      // 몸통 안으로 말려들지 않게
   var SHAFT_STEPS = 9;      // 자루를 훑는 표본 수 (막대 충돌)
   var GRAV = 1500;
@@ -88,12 +104,17 @@
   // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
   // 항아리·망치 헤드. 없거나 로드 전이면 기존 벡터로 폴백 — 아트는 얹는 층이다.
   // 지형·먼지·사거리 링은 계속 절차적으로: 접점 하이라이트가 곧 조작 피드백이라서다.
+  // 파싱 시점이 아니라 방송 준비(카운트다운) 때 내려받는다 — 첫 화면 payload 절약.
+  // 그래도 늦은 프레임은 imgReady 폴백(벡터)이 그대로 받는다. 재호출은 no-op.
   var IMG = {};
-  ['pot', 'hammer'].forEach(function (n) {
-    var im = new Image();
-    im.src = 'games/giving-up/img/' + n + '.png';
-    IMG[n] = im;
-  });
+  function loadArt() {
+    if (IMG.pot) return;
+    ['pot', 'hammer'].forEach(function (n) {
+      var im = new Image();
+      im.src = 'games/giving-up/img/' + n + '.png';
+      IMG[n] = im;
+    });
+  }
   function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
 
   var sfxTick  = function () { if (!sfx.gate('gu_k')) return; sfx.tone(210, .04, 'square', .035); };
@@ -149,8 +170,9 @@
   }
 
   function start(stage) {
+    loadArt(); // 셸이 preload를 안 불렀어도 (구버전 셸) 여기서라도 건다
     var st = {
-      px: 480, py: GROUND_Y - PR, vx: 0, vy: 0,
+      px: START_X, py: GROUND_Y - PR, vx: 0, vy: 0,
       len: HAMMER_MAX, tipX: 560, tipY: GROUND_Y - 90,
       mx: 590, my: GROUND_Y - 60,   // 월드 좌표
       planted: false, contact: null, camY: 0,
@@ -210,7 +232,12 @@
           var vn = st.vx * sep.nx + st.vy * sep.ny;
           if (vn < 0) { st.vx -= vn * sep.nx; st.vy -= vn * sep.ny; }
           // 곡면은 잘 미끄러지고 평면은 붙잡힌다 — 원작의 질감이 여기서 나온다
-          var fric = TERRAIN[i].t === 'c' ? .965 : .88;
+          // 발판 마찰 .88 → .84 (2026-08-08). 자동 플레이 반복 관측에서 지배적 실패가
+          // "발판 높이까지 오른 뒤 가장자리에서 미끄러져 원점"이었다. 시뮬 A/B로는
+          // .80이 하강 사이클을 20→27초로 늦추는 것까지만 확인됐고(봇의 등반 천장은
+          // 마찰과 무관), 사람 착지감은 시뮬로 안 재진다 — 과조정을 피해 절충값 .84.
+          // 바위(.965)는 그대로: "발판은 붙잡히고 바위는 미끄럽다"는 대비가 이 게임의 질감이다.
+          var fric = TERRAIN[i].t === 'c' ? .965 : .84;
           st.vx *= fric; st.vy *= .975;
         }
       }
@@ -421,6 +448,11 @@
 
       pointer: function (p) { st.mx = p.x; st.my = p.y + st.camY; },
 
+      // 튜닝 계측용 상태 노출 — ?guoidebug 를 붙였을 때만. 배포 경로에서는 죽은 코드다.
+      // 자동 플레이 하네스가 px/py/camY/planted 를 읽어 난이도를 실측하는 데 쓴다.
+      debug: (typeof location !== 'undefined' && /guoidebug/.test(location.search))
+        ? function () { return st; } : null,
+
       summary: function () {
         return [
           ['최고 높이', st.best.toFixed(1) + 'm' + (st.cleared ? ' (정상!)' : '')],
@@ -584,12 +616,14 @@
     startViewers: START_VIEWERS,
     usesChain: false,
     chat: window.GIVINGUP_CHAT,
+    preload: loadArt,
     // selftest가 물리 상수끼리 모순되지 않는지 검사한다 (games/shell/selftest.html)
     tuning: {
       GRAV: GRAV, PX_PER_M: PX_PER_M, GROUND_Y: GROUND_Y, SUMMIT_Y: SUMMIT_Y,
       CLUTCH_V: CLUTCH_V, CLUTCH_MIN_H: CLUTCH_MIN_H,
       HAMMER_MAX: HAMMER_MAX, HAMMER_MIN: HAMMER_MIN, FALL_FRESH: FALL_FRESH,
       ROUTE: ROUTE, TERRAIN: TERRAIN,
+      START_X: START_X, PR: PR, HEAD_ROOM_MIN: HEAD_ROOM_MIN, FIRST_HOOK_MAX: FIRST_HOOK_MAX,
     },
     foot: '<b>마우스</b>로 망치를 움직인다 — 망치는 <b>커서까지만</b> 뻗는다. 바위에 걸고 반대로 밀어내면 몸이 딸려 올라간다. 키보드는 쓰지 않는다.<br>' +
           '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
