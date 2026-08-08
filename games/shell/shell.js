@@ -174,8 +174,13 @@
         if (self.inst && self.inst.key) self.inst.key(e);
       });
       var toScene = function (e) {
+        // 전체화면(fullshow)에선 캔버스가 object-fit: contain으로 레터박스된다 —
+        // 요소 박스가 아니라 실제 그림 영역 기준으로 좌표를 환산해야 조준이 맞는다.
+        // 일반 모드에선 박스 비율 = 960:430이라 같은 식으로 수렴한다.
         var r = cv.getBoundingClientRect();
-        return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+        var sc = Math.min(r.width / W, r.height / H);
+        var ox = (r.width - W * sc) / 2, oy = (r.height - H * sc) / 2;
+        return { x: (e.clientX - r.left - ox) / sc, y: (e.clientY - r.top - oy) / sc };
       };
       cv.addEventListener('pointermove', function (e) {
         if (self.phase === 'live' && self.inst && self.inst.pointer) self.inst.pointer(toScene(e), 'move', e);
@@ -192,6 +197,7 @@
     // ---------- 게임 선택 허브 ----------
     showHub: function () {
       this.phase = 'hub';
+      document.body.classList.remove('fullshow');
       this.game = null;
       if (this.inst && this.inst.dispose) this.inst.dispose();
       this.inst = null;
@@ -379,6 +385,7 @@
       this.phase = 'starting';
       $('jgsWin').classList.remove('minimized');   // 창이 열리며 방송 준비 화면이 뜬다
       $('appJgs').classList.add('on');
+      document.body.classList.add('fullshow');     // 카운트다운부터 전체화면
       var pool = SHOW_TITLES[g.id];
       this._showTitle = pool ? pool[Math.floor(Math.random() * pool.length)] : g.tagline;
       // 게임별 아트는 여기서부터 내려받는다 (지연 로드) — 카운트다운 ~2.4초가 로드를 가리고,
@@ -428,6 +435,7 @@
 
       $('overlay').classList.add('hidden');
       $('overlay').innerHTML = '';
+      document.body.classList.add('fullshow'); // 방송 = 전체화면 (진짜 게임처럼)
       $('tally').classList.remove('off');
       $('tallyR').textContent = g.title;
       $('chainMeter').classList.toggle('hidden', !g.usesChain);
@@ -725,8 +733,11 @@
         if (self.phase !== 'live' || self.game !== game) return;
         var img;
         try {
-          var cv = document.createElement('canvas'); cv.width = 240; cv.height = 108;
-          cv.getContext('2d').drawImage(self.ctx.canvas, 0, 0, 240, 108);
+          // 스틸도 합성 캔버스(게임+채팅)에서 딴다 — 없으면(녹화 미지원) 게임 화면만
+          var srcCv = self._recCanvas || self.ctx.canvas;
+          var iw2 = 300, ih2 = Math.round(iw2 * srcCv.height / srcCv.width);
+          var cv = document.createElement('canvas'); cv.width = iw2; cv.height = ih2;
+          cv.getContext('2d').drawImage(srcCv, 0, 0, iw2, ih2);
           img = cv.toDataURL('image/jpeg', .55);
         } catch (e) {
           // file:// 실행 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 판독을 막는다.
@@ -811,7 +822,12 @@
       if (typeof MediaRecorder === 'undefined' || !cv.captureStream) return; // 미지원 → 스틸만
       var self = this;
       try {
-        this._recStream = cv.captureStream(24);
+        // 합성 캔버스 — 게임(960) + 채팅 미러(300). 클립에 채팅 내역까지 담긴다 (사용자 피드백)
+        this._recCanvas = document.createElement('canvas');
+        this._recCanvas.width = 1260; this._recCanvas.height = 430;
+        this._recCtx = this._recCanvas.getContext('2d');
+        this._recCtx.fillStyle = '#000'; this._recCtx.fillRect(0, 0, 1260, 430);
+        this._recStream = this._recCanvas.captureStream(24);
         var mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
         var mk = function () {
           var chunks = [];
@@ -833,7 +849,53 @@
       clearInterval(this._recTimer); this._recTimer = 0; this._recHold = false;
       try { if (this._rec && this._rec.state !== 'inactive') this._rec.stop(); } catch (e) {}
       if (this._recStream) this._recStream.getTracks().forEach(function (t) { t.stop(); });
-      this._rec = null; this._recStream = null;
+      this._rec = null; this._recStream = null; this._recCanvas = null; this._recCtx = null;
+    },
+    // 녹화 합성 — 매 프레임 게임 화면 + 채팅 미러를 합성 캔버스에 그린다.
+    // 채팅은 DOM 피드를 경량 캐시(마지막 18줄)로 파싱해 캔버스 텍스트로 미러링한다.
+    compositeRec: function () {
+      if (!this._recCtx || this.phase !== 'live') return;
+      var c = this._recCtx;
+      c.drawImage(this.ctx.canvas, 0, 0);
+      var feed = Chat.feed;
+      c.fillStyle = 'rgba(16,18,20,.94)'; c.fillRect(960, 0, 300, 430);
+      c.fillStyle = 'rgba(0,255,163,.45)'; c.fillRect(960, 0, 1, 430);
+      c.font = 'bold 10px system-ui, sans-serif'; c.textAlign = 'left';
+      c.fillStyle = '#7dffd0'; c.fillText('실시간 채팅', 972, 18);
+      if (!feed) return;
+      var key = feed.childElementCount + '|' + (feed.lastElementChild ? feed.lastElementChild.textContent : '');
+      if (key !== this._chatKey) {
+        this._chatKey = key;
+        var out = [], kids = feed.children;
+        for (var i = Math.max(0, kids.length - 18); i < kids.length; i++) {
+          var el = kids[i], b = el.querySelector('b');
+          out.push({
+            sys: el.classList.contains('csys'), don: el.classList.contains('cdon'),
+            nick: b ? b.textContent : '', color: (b && b.style.color) || '#efeff1',
+            text: b ? el.textContent.slice(b.textContent.length) : el.textContent,
+          });
+        }
+        this._chatLines = out;
+      }
+      var y = 420, lines = this._chatLines || [];
+      for (var j = lines.length - 1; j >= 0 && y > 32; j--) {
+        var L = lines[j];
+        c.font = '11px system-ui, sans-serif';
+        if (L.sys) { c.fillStyle = '#9d9ea3'; c.fillText(this._recTrunc(c, L.text, 276), 972, y); y -= 16; continue; }
+        c.font = 'bold 11px system-ui, sans-serif';
+        var nickW = c.measureText(L.nick).width + 5;
+        c.fillStyle = L.color; c.fillText(L.nick, 972, y);
+        c.font = '11px system-ui, sans-serif';
+        c.fillStyle = L.don ? '#ffdf9e' : '#d5cdbd';
+        c.fillText(this._recTrunc(c, L.text, 276 - nickW), 972 + nickW, y);
+        y -= 16;
+      }
+    },
+    _recTrunc: function (c, s, w) {
+      s = String(s || '');
+      if (c.measureText(s).width <= w) return s;
+      while (s.length && c.measureText(s + '…').width > w) s = s.slice(0, -1);
+      return s + '…';
     },
 
     // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
@@ -1090,6 +1152,7 @@
       }
       this.drainFx();
       this.draw(dt);
+      this.compositeRec(); // 클립 녹화용 게임+채팅 합성 (녹화 중일 때만 동작)
       requestAnimationFrame(this.loop.bind(this));
     },
 

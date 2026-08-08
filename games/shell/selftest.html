@@ -347,7 +347,9 @@ FACES = FACES.concat(
 // → 2000 → 2200 (2026-08-08 밤): "작은 것 하나하나 AetherAI" 방침으로 GUOI 발판·바위,
 //   상점 아이콘 6, 김 피디 초상, 배너 플레이트 2가 추가됐다. 전부 지연 로드 뒤에 있어
 //   첫 화면(~150KB)은 불변 — 이 예산은 총량 상한(회선 부담 가드)이다.
-var BUDGET_KB = 2200;
+// → 2200 → 2300 (2026-08-09): 전체화면 방송 + 클립 채팅 합성 코드(약 6KB)로 상한 터치.
+//   이번 인상분은 이미지가 아니라 코드다 — 에셋 총량은 동결 상태.
+var BUDGET_KB = 2300;
 Promise.all([
   Promise.all(SHIPPED.map(function (u) {
     return fetch(u, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
