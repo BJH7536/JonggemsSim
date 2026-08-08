@@ -587,14 +587,36 @@
       var self = this, tAt = this._upT, game = this.game;
       setTimeout(function () {
         if (self.phase !== 'live' || self.game !== game) return;
+        var img;
         try {
           var cv = document.createElement('canvas'); cv.width = 240; cv.height = 108;
           cv.getContext('2d').drawImage(self.ctx.canvas, 0, 0, 240, 108);
+          img = cv.toDataURL('image/jpeg', .55);
+        } catch (e) {
+          // file:// 실행 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 판독을 막는다.
+          // 화면 대신 카드형 썸네일로 클립 기록 자체는 남긴다 (Pages·로컬 서버에선 실화면).
+          try { img = self.clipCard(mood, tAt); } catch (e2) { img = 0; }
+        }
+        if (img) {
           self._clips.push({ t: tAt, ev: ev, s: s, mood: mood, why: why,
-            v: Math.round(self.viewers), img: cv.toDataURL('image/jpeg', .55) });
+            v: Math.round(self.viewers), img: img });
           self.showClipToast();
-        } catch (e) {} // 캡처 실패(오염된 캔버스 등)가 방송을 죽이면 안 된다
+        }
       }, 450);
+    },
+    clipCard: function (mood, t) {
+      var cv = document.createElement('canvas'); cv.width = 240; cv.height = 108;
+      var c = cv.getContext('2d');
+      var g = c.createLinearGradient(0, 0, 0, 108);
+      g.addColorStop(0, '#241a38'); g.addColorStop(1, '#141020');
+      c.fillStyle = g; c.fillRect(0, 0, 240, 108);
+      c.strokeStyle = 'rgba(0,255,163,.5)'; c.lineWidth = 2; c.strokeRect(3, 3, 234, 102);
+      c.fillStyle = '#ff5a4a'; c.beginPath(); c.arc(22, 22, 5, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#7dffd0'; c.font = 'bold 11px system-ui, sans-serif'; c.textAlign = 'left';
+      c.fillText('REC ' + Shell.util.fmtTime(t), 34, 26);
+      c.fillStyle = '#ece7dd'; c.font = 'bold 22px system-ui, sans-serif'; c.textAlign = 'center';
+      c.fillText(mood, 120, 68);
+      return cv.toDataURL('image/png');
     },
     showClipToast: function () {
       var el = $('clipToast'); if (!el) return;
