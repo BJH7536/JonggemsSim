@@ -47,6 +47,21 @@
   var BX = [150, 370, 590, 810];
   var COUNTER_Y = 285;
 
+  // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
+  // 배경 벽 플레이트·팬·클로슈. 없거나 로드 전이면 기존 벡터로 폴백 — 아트는 얹는 층이다.
+  // 조명 콘·가스 불꽃·김·사고 연출은 계속 절차적으로 그린다: 깜빡임이 곧 방송의 생동감이라
+  // 정지 이미지로 바꾸면 죽는다. 이미지가 맡는 건 "정물"뿐이다.
+  var IMG = {};
+  [['studio-bg', 'jpg'], ['pan', 'png'], ['cloche', 'png']].forEach(function (e) {
+    var im = new Image();
+    im.src = 'games/hwaryeok/img/' + e[0] + '.' + e[1];
+    IMG[e[0]] = im;
+  });
+  function imgReady(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0; }
+  // 팬 스프라이트에서 팬 몸통(볼)의 중심이 가로 어디쯤인가 — 손잡이가 오른쪽이라 중심이
+  // 왼쪽으로 치우친다. 내용물 타원은 몸통 중심(x)에 그려지므로 이 값으로 정렬한다.
+  var PAN_BOWL_CX = 0.38;
+
   // ================= SFX =================
   var sfxIgnite = function () { if (!sfx.gate('ig')) return; sfx.noise(.18, .08, 900); sfx.tone(140, .15, 'sine', .06); };
   var sfxAlarm  = function () { if (!sfx.gate('al')) return; sfx.tone(880, .09, 'square', .07); sfx.tone(880, .09, 'square', .07, .14); };
@@ -370,12 +385,23 @@
     };
 
     function drawStudio(ctx, t) {
+      // 벽+선반 정물은 AetherAI 플레이트로. 없으면 기존 그라디언트+실루엣 폴백.
+      if (imgReady('studio-bg')) {
+        var bi = IMG['studio-bg'];
+        // cover — 세로를 COUNTER_Y에 맞추고 가로 중앙 크롭
+        var sc = Math.max(960 / bi.naturalWidth, COUNTER_Y / bi.naturalHeight);
+        var dw = bi.naturalWidth * sc, dh = bi.naturalHeight * sc;
+        ctx.drawImage(bi, (960 - dw) / 2, (COUNTER_Y - dh) / 2, dw, dh);
+        // 위에 얹는 연출(조명 콘)이 떠 보이지 않게 살짝 눌러준다
+        ctx.fillStyle = 'rgba(10,8,6,.22)'; ctx.fillRect(0, 0, 960, COUNTER_Y);
+      } else {
       var bg = ctx.createLinearGradient(0, 0, 0, COUNTER_Y);
       bg.addColorStop(0, '#12100c'); bg.addColorStop(1, '#1e1a14');
       ctx.fillStyle = bg; ctx.fillRect(0, 0, 960, COUNTER_Y);
       ctx.fillStyle = '#17130e'; ctx.fillRect(0, 96, 960, 7);
       ctx.fillStyle = '#100d09';
       [[120, 70], [250, 62], [700, 66], [830, 74]].forEach(function (p) { ctx.fillRect(p[0], 96 - p[1], 34, p[1]); });
+      }
       [300, 660].forEach(function (lx) {
         ctx.fillStyle = '#0a0806';
         ctx.beginPath(); ctx.moveTo(lx - 26, 30); ctx.lineTo(lx + 26, 30); ctx.lineTo(lx + 16, 52); ctx.lineTo(lx - 16, 52); ctx.closePath(); ctx.fill();
@@ -412,10 +438,15 @@
       ctx.beginPath(); ctx.ellipse(x, COUNTER_Y + 1, 34, 10, 0, 0, TAU); ctx.fill();
 
       if (!b.on) { // 잠금: 클로슈 덮개
+        if (imgReady('cloche')) {
+          var ci = IMG['cloche'], cw = 92, ch = cw * ci.naturalHeight / ci.naturalWidth;
+          ctx.drawImage(ci, x - cw / 2, COUNTER_Y + 4 - ch, cw, ch);
+        } else {
         ctx.fillStyle = '#3a3f46';
         ctx.beginPath(); ctx.ellipse(x, COUNTER_Y - 16, 40, 26, 0, Math.PI, 0); ctx.fill();
         ctx.strokeStyle = '#14161a'; ctx.lineWidth = 3; ctx.stroke();
         ctx.fillStyle = '#565c64'; ctx.beginPath(); ctx.arc(x, COUNTER_Y - 42, 5, 0, TAU); ctx.fill();
+        }
         ctx.font = '15px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('🔒', x, COUNTER_Y - 52);
         return;
@@ -446,12 +477,18 @@
       }
       ctx.restore();
 
-      // 팬 + 내용물
+      // 팬 + 내용물 — 팬 몸통은 스프라이트로, 내용물·기포·김은 계속 절차적으로.
+      // 내용물 타원이 팬 몸통 중심(x)에 그려지므로 스프라이트를 PAN_BOWL_CX 로 정렬한다.
+      if (imgReady('pan')) {
+        var pi = IMG['pan'], pw = 118, ph = pw * pi.naturalHeight / pi.naturalWidth;
+        ctx.drawImage(pi, x - pw * PAN_BOWL_CX, COUNTER_Y - 2 - ph * .62, pw, ph);
+      } else {
       ctx.fillStyle = '#2c3138';
       ctx.beginPath(); ctx.ellipse(x, COUNTER_Y - 14, 38, 12, 0, 0, TAU); ctx.fill();
       ctx.strokeStyle = '#14161a'; ctx.lineWidth = 3; ctx.stroke();
       ctx.strokeStyle = '#23272d'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(x + 36, COUNTER_Y - 16); ctx.lineTo(x + 62, COUNTER_Y - 24); ctx.stroke();
+      }
       var doneT = clamp(b.p, 0, 1);
       ctx.fillStyle = b.dish.c;
       ctx.globalAlpha = .55 + .45 * doneT;

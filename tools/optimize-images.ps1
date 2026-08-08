@@ -136,7 +136,23 @@ $jobs = @(
   @{ Dir = 'games\pocket\img'; In = 'vfx-grass.png';     Out = 'vfx-grass.jpg';     W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
   @{ Dir = 'games\pocket\img'; In = 'vfx-ult-fire.png';  Out = 'vfx-ult-fire.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
   @{ Dir = 'games\pocket\img'; In = 'vfx-ult-water.png'; Out = 'vfx-ult-water.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
-  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-grass.png'; Out = 'vfx-ult-grass.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true }
+  @{ Dir = 'games\pocket\img'; In = 'vfx-ult-grass.png'; Out = 'vfx-ult-grass.jpg'; W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  # ── 스트리머 캠 얼굴 (AetherAI 초상 — 어두운 배경 포함이라 키잉 불필요). 표시 74px → 148px 레티나 ──
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_silence.png';   Out = 'adventurer_silence.png';   W = 148; H = 148; Fmt = 'png' },
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_surprise.png';  Out = 'adventurer_surprise.png';  W = 148; H = 148; Fmt = 'png' },
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_panic.png';     Out = 'adventurer_panic.png';     W = 148; H = 148; Fmt = 'png' },
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_aha.png';       Out = 'adventurer_aha.png';       W = 148; H = 148; Fmt = 'png' },
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_confusion.png'; Out = 'adventurer_confusion.png'; W = 148; H = 148; Fmt = 'png' },
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_thinking.png';  Out = 'adventurer_thinking.png';  W = 148; H = 148; Fmt = 'png' },
+  @{ Dir = 'games\shell\faces'; In = 'adventurer_question.png';  Out = 'adventurer_question.png';  W = 148; H = 148; Fmt = 'png' },
+  # ── 배경 플레이트 (알파 불필요 → JPEG). 표시 영역 비율로 크롭 ──
+  @{ Dir = 'games\hwaryeok\img'; In = 'studio-bg.png'; Out = 'studio-bg.jpg'; W = 1280; H = 380; Fmt = 'jpg'; Q = 76 },
+  @{ Dir = 'games\pocket\img';   In = 'arena-bg.png';  Out = 'arena-bg.jpg';  W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
+  # ── 액터 (마젠타 키잉 → 알파 PNG) ──
+  @{ Dir = 'games\hwaryeok\img';  In = 'pan.png';    Out = 'pan.png';    W = 192; H = 192; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\hwaryeok\img';  In = 'cloche.png'; Out = 'cloche.png'; W = 192; H = 192; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\giving-up\img'; In = 'pot.png';    Out = 'pot.png';    W = 128; H = 128; Fmt = 'png'; Key = $true },
+  @{ Dir = 'games\giving-up\img'; In = 'hammer.png'; Out = 'hammer.png'; W = 96;  H = 96;  Fmt = 'png'; Key = $true }
 )
 
 $total = 0

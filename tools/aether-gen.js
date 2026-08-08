@@ -51,18 +51,27 @@ function headers(key) {
  *           스프라이트 시트. 스킬 VFX 용 — 프레임 격자는 4→2x2, 9→3x3, 16→4x4 */
 async function createJob(key, item) {
   const form = new FormData();
-  let path;
+  // 주의: 지역변수 이름을 path로 두면 Node의 path 모듈을 가린다 (아래 ref에서 씀)
+  let urlPath;
   if (item.endpoint === 'effect2') {
-    path = 'generate/effect/v2';
+    urlPath = 'generate/effect/v2';
     form.append('description', item.prompt);
     form.append('quality', item.quality || 'standard');
     form.append('frame', String(item.frame || 16));
   } else {
-    path = 'generate/image';
+    urlPath = 'generate/image';
     form.append('prompt', item.prompt);
     form.append('ai_model', item.ai_model);
+    // 참조 이미지 — 캐릭터 일관성용. 매니페스트의 ref(저장소 상대 경로)를 첨부한다.
+    // "같은 인물, 표정만 다르게"는 프롬프트만으로는 세대마다 얼굴이 갈리므로,
+    // 기준 초상을 먼저 뽑고 나머지가 그 파일을 참조한다 (목록 순서 = 의존 순서).
+    if (item.ref) {
+      const refPath = path.join(ROOT, item.ref);
+      if (!fs.existsSync(refPath)) throw new Error(`ref 파일 없음: ${item.ref} — 기준 항목이 목록에서 먼저 생성돼야 한다`);
+      form.append('ref_images', new Blob([fs.readFileSync(refPath)], { type: 'image/png' }), 'ref.png');
+    }
   }
-  const res = await fetch(`${BASE}/${path}`, {
+  const res = await fetch(`${BASE}/${urlPath}`, {
     method: 'POST',
     headers: headers(key),
     body: form,

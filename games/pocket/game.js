@@ -64,7 +64,8 @@
   // 검은 배경 시트에서 검정이 사라지므로 알파 없는 JPEG로 배포해도 깨지지 않는다 (용량 절약).
   var TKEY = ['fire', 'water', 'grass'];
   var IMG = {};
-  [['me-fire', 'png'], ['me-water', 'png'], ['me-grass', 'png'],
+  [['arena-bg', 'jpg'],
+   ['me-fire', 'png'], ['me-water', 'png'], ['me-grass', 'png'],
    ['foe-fire', 'png'], ['foe-water', 'png'], ['foe-grass', 'png'],
    ['vfx-tackle', 'jpg'], ['vfx-fire', 'jpg'], ['vfx-water', 'jpg'], ['vfx-grass', 'jpg'],
    ['vfx-ult-fire', 'jpg'], ['vfx-ult-water', 'jpg'], ['vfx-ult-grass', 'jpg'],
@@ -441,9 +442,19 @@
 
     // ---------- 렌더 ----------
     function drawArena(ctx, t) {
+      // 배경 정물은 AetherAI 플레이트 — 군중 점·스포트라이트·플랫폼은 계속 위에 얹는다
+      // (군중 밀도가 시청자 규모를 반영하는 연출이라 정지 이미지로 대체하면 죽는다).
+      if (imgReady('arena-bg')) {
+        var bi = IMG['arena-bg'];
+        var sc = Math.max(960 / bi.naturalWidth, 430 / bi.naturalHeight);
+        var dw = bi.naturalWidth * sc, dh = bi.naturalHeight * sc;
+        ctx.drawImage(bi, (960 - dw) / 2, (430 - dh) / 2, dw, dh);
+        ctx.fillStyle = 'rgba(8,10,16,.25)'; ctx.fillRect(0, 0, 960, 430);
+      } else {
       var g = ctx.createLinearGradient(0, 0, 0, 430);
       g.addColorStop(0, '#141a2a'); g.addColorStop(.55, '#1b2438'); g.addColorStop(1, '#0e1219');
       ctx.fillStyle = g; ctx.fillRect(0, 0, 960, 430);
+      }
       // 관중석 — 점의 밀도가 시청자 규모를 은근히 반영한다 (연출 전용, C3)
       var crowd = clamp(Math.log10(stage.viewers + 10) * 22, 12, 90);
       for (var i = 0; i < crowd; i++) {
