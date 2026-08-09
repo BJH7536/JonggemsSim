@@ -143,6 +143,27 @@ ok('29%는 아직 연속이 아니다 (1건)', spike(1000, 290, 10, -99) === 1);
 eq('직전 사건 3초 안에는 다시 예약되지 않는다 (규약 3)', spike(1000, 500, 12, 10), 0);
 ok('3초가 지나면 다시 예약된다', spike(1000, 500, 14, 10) > 0);
 eq('연속 간격은 규약 3의 0.4초 이상', Shell.DON.STAGGER >= 0.4, true);
+
+// ---- 도네 문구 셔플 백 — 순수 랜덤이 같은 줄을 계속 뱉던 문제 (실사용 지적) ----
+// 도네는 채팅과 달리 비반복 게이트를 안 거친다. 백이 깨지면 문구가 즉시 반복으로 돌아간다.
+ok('한 바퀴 도는 동안 소액 문구가 겹치지 않는다', (function () {
+  Shell._donBag = null;
+  var n = Shell.DON_MSG.small.length, got = {};
+  for (var i = 0; i < n; i++) got[Shell.pickDonMsg(100)] = 1;
+  Shell._donBag = null;
+  return Object.keys(got).length === n;
+})());
+ok('금액대로 결이 갈린다 — 고액은 고액 풀에서만', (function () {
+  Shell._donBag = null;
+  var ok2 = true;
+  for (var i = 0; i < 8; i++) if (Shell.DON_MSG.big.indexOf(Shell.pickDonMsg(Shell.DON_BIG)) < 0) ok2 = false;
+  Shell._donBag = null;
+  return ok2;
+})());
+ok('풀이 도네 빈도를 감당할 만큼 넓다 (양쪽 12줄 이상)',
+   Shell.DON_MSG.small.length >= 12 && Shell.DON_MSG.big.length >= 12);
+ok('읽어준 뒤 후원자 답도 12줄 이상 (6줄이면 방송 한 번에 다 돈다)',
+   (Chat.MEMORY.don_read || []).length >= 12);
 ok('방송 중이 아니면 판정하지 않는다', (function () {
   var ctx = { phase: 'hub', viewers: 1000, now: 10, _lastForceAt: -99, _donForce: 0 };
   Shell.donSpike.call(ctx, 900);
