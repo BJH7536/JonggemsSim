@@ -110,24 +110,24 @@ body {
 #paceChip.hot { border-color: var(--amber); color: #ffdf9e; box-shadow: 0 0 14px rgba(255,180,71,.5); animation: tpulse 1.6s infinite; }
 /* 도네 배너 — 화면 우상단으로 슬라이드 인 (규약 5: 양념은 화려하게) */
 #donBanner {
-  position: absolute; top: 76px; right: -420px; z-index: 3; max-width: 380px;
+  position: absolute; top: 76px; right: -740px; z-index: 3; max-width: 680px;
   background: linear-gradient(100deg, rgba(48,36,10,.95), rgba(26,20,8,.95));
-  border: 1px solid var(--amber); border-left-width: 4px; border-radius: 9px;
-  padding: 9px 14px; font-size: 13px; color: #ffedc4;
+  border: 1px solid var(--amber); border-left-width: 7px; border-radius: 12px;
+  padding: 20px 26px; font-size: 28px; color: #ffedc4;
   box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(255,180,71,.25);
   pointer-events: none; opacity: 0;
 }
-#donBanner .dhead { display: flex; align-items: center; gap: 7px; font-weight: 700; }
-#donBanner .uiIco { width: 20px; height: 20px; }
-#donBanner .amt { color: #ffdf9e; font-size: 15px; }
-#donBanner .dmsg { color: #d8cdb4; font-size: 12px; margin-top: 4px; }
+#donBanner .dhead { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+#donBanner .uiIco { width: 44px; height: 44px; }
+#donBanner .amt { color: #ffdf9e; font-size: 34px; }
+#donBanner .dmsg { color: #d8cdb4; font-size: 24px; margin-top: 8px; }
 #donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; pointer-events: auto; cursor: pointer; }
 /* 도네 읽어주기 — 배너가 떠 있는 동안 클릭 가능. 읽으면 민트 확인 (응답 루프, 연출 전용) */
-#donBanner .dhint { margin-top: 4px; font-size: 10.5px; color: #9fd8ff; opacity: .85; }
+#donBanner .dhint { margin-top: 8px; font-size: 21px; color: #9fd8ff; opacity: .85; }
 #donBanner.read { border-color: #00ffa3; box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(0,255,163,.3); }
 #donBanner.read .dhint { color: #7dffd0; }
 @keyframes donin {
-  0% { right: -420px; opacity: 0; }
+  0% { right: -740px; opacity: 0; }
   9% { right: 12px; opacity: 1; }
   84% { right: 12px; opacity: 1; }
   100% { right: 12px; opacity: 0; transform: translateY(-8px); }
@@ -146,23 +146,13 @@ body {
 
 /* ---------- 스트리머 캠 — 게임 이벤트에 반응하는 얼굴 (연출 전용) ---------- */
 #camBox {
-  position: absolute; left: 10px; bottom: 40px; z-index: 2; text-align: center;   /* 전폭 그래프 위 */
-  background: rgba(12,10,16,.78); border: 1px solid var(--plat); border-radius: 8px;
-  padding: 5px 5px 2px; box-shadow: 0 4px 18px rgba(0,0,0,.6);
+  position: absolute; right: 10px; bottom: 40px; z-index: 2; text-align: center;  /* 전폭 그래프 위 */
+  background: rgba(12,10,16,.78); border: 1px solid var(--plat); border-radius: 10px;
+  padding: 8px 8px 4px; box-shadow: 0 4px 18px rgba(0,0,0,.6);
 }
 #camBox.hidden { display: none; }
-/* 스트리머 표현 축 (§6.4) — 캠 옆의 리액션 버튼 열. 방송 중 전용, 쿨다운 동안 흐려진다 */
-#reactBar { position: absolute; left: 100px; bottom: 40px; z-index: 2; display: flex; gap: 4px; }
-#reactBar.hidden { display: none; }
-#reactBar button {
-  font: inherit; font-size: 11px; color: var(--plat2); cursor: pointer;
-  background: rgba(12,10,16,.78); border: 1px solid var(--plat); border-radius: 6px; padding: 4px 8px;
-}
-#reactBar button:hover { color: #ece7dd; border-color: var(--amber); }
-#reactBar.cool { opacity: .35; pointer-events: none; }
-body.fullshow #reactBar { bottom: 235px; }
-#camBox img { display: block; width: 74px; height: 74px; border-radius: 5px; }
-#camBox span { font-size: 8.5px; letter-spacing: 2px; color: var(--plat2); }
+#camBox img { display: block; width: 264px; height: 264px; border-radius: 8px; }
+#camBox span { font-size: 13px; letter-spacing: 2px; color: var(--plat2); }
 .vpopup {
   position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 2;
   font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: var(--amber2);
@@ -606,6 +596,36 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 @keyframes sspop { 0% { transform: scale(1.5); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 100% { opacity: 1; } }
 .ssHint { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
 
+/* 브리핑 상자 — 목표·조작·미션. 미션을 정산 리포트에서만 보여주면 뭘 해야 하는지 모르고 3분을 보낸다 */
+.brBox {
+  width: min(620px, 90%); margin: 2px 0; text-align: left;
+  border: 1px solid #2e3138; border-radius: 10px; background: rgba(10,12,14,.55);
+}
+.brRow { display: flex; gap: 11px; padding: 9px 13px; font-size: 12.5px; line-height: 1.65; color: #c9cdd2; }
+.brRow + .brRow { border-top: 1px solid #23262b; }
+.brRow i { flex: 0 0 34px; font-style: normal; font-size: 10.5px; letter-spacing: 2px; color: var(--plat2); padding-top: 3px; }
+.brRow b { color: var(--ink); }
+.brRow em { font-style: normal; color: var(--amber2); }
+.brRow kbd { border: 1px solid #4a4232; border-radius: 3px; padding: 0 4px; color: var(--ink); }
+
+/* 튜토리얼 팁 — 채팅으로 흘리면 시작 버스트에 묻힌다. 화면에 남고 다음 단계가 덮는다 */
+#tutTip {
+  /* %로 띄우는 이유: #viewport는 전체화면 스테이지 전체이고 그 아래쪽을 조작 패널·안내줄이
+     덮는다. 고정 px로 두면 창 크기에 따라 그 위에 얹힌다 — 게임 그림 안쪽에 머물게 한다 */
+  position: absolute; left: 50%; bottom: 30%; z-index: 4; transform: translate(-50%, 8px);
+  display: flex; align-items: center; gap: 9px; max-width: min(660px, 88%);
+  padding: 9px 14px; border-radius: 9px; cursor: pointer;
+  background: rgba(8,10,12,.9); border: 1px solid var(--plat);
+  box-shadow: 0 8px 26px rgba(0,0,0,.55);
+  font-size: 12.5px; line-height: 1.6; color: var(--ink);
+  opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
+}
+#tutTip.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#tutTip i {
+  flex: 0 0 auto; font-style: normal; font-size: 10px; letter-spacing: 2px; font-weight: 700;
+  color: #06301e; background: var(--plat); border-radius: 5px; padding: 3px 7px;
+}
+
 /* OBS 장면 전환 스팅어 — 보라 와이프가 왼→오로 훑고 지나간다 */
 #stinger {
   position: absolute; inset: 0; pointer-events: none; transform: translateX(-101%);
@@ -664,17 +684,43 @@ body {
   position: fixed; inset: 0 300px 44px 0; padding: 26px 30px; z-index: 1;
 }
 #desktop:empty { pointer-events: none; }
-#desktop .deskIcons { flex-direction: column; align-content: flex-start; height: 100%; }
+/* 가로 흐름 — 세로 컬럼 랩은 아래쪽 아이콘이 recent 패널에 가려 안 보였다 */
+/* 오른쪽 위 미션 쪽지(600px) 아래로 아이콘이 파고들지 않게 폭을 잘라 준다 */
+#desktop .deskIcons { flex-direction: row; max-width: calc(100% - 650px); min-width: 400px; }
 #desktop .dIcon { width: 96px; }
 #desktop .dIconName { text-shadow: 0 1px 4px #000, 0 0 12px rgba(0,0,0,.8); }
-.deskStat {
-  position: fixed; left: 30px; bottom: 60px; font-size: 11.5px; color: #c9cdd2;
-  text-shadow: 0 1px 4px #000; letter-spacing: .3px;
+/* 바탕화면 좌하단 한 칸 — 상태 줄 3종(구독자·채널 색깔·텐션) + 최근 방송.
+   전에는 셋 다 fixed로 같은 좌표에 붙고 그 위를 .recent가 덮어 글자가 겹쳐 보였다 */
+.deskBL {
+  position: absolute; left: 24px; bottom: 44px; z-index: 1;
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+  width: min(640px, 70%);
 }
-#desktop .recent {
-  position: absolute; left: 24px; bottom: 44px; width: min(320px, 40%);
-  background: rgba(23,25,28,.92); border: 1px solid #2e3138; border-radius: 10px; padding: 12px 14px;
+.deskStat { font-size: 11.5px; color: #c9cdd2; text-shadow: 0 1px 4px #000; letter-spacing: .3px; }
+
+/* 잠긴 방송 — 손실 연출 금지(규약 2)에 맞춰 조용히. 흐리게 + 관문 진행도만 */
+#desktop .dIcon.locked { opacity: .45; cursor: default; }
+#desktop .dIcon.locked .dIconArt { position: relative; filter: grayscale(1); }
+#desktop .dIcon.locked .dLock {   /* .dIconArt가 overflow:hidden이라 안쪽에 얹는다 */
+  position: absolute; right: 3px; bottom: 3px; width: 22px; height: 22px;
+  filter: none; opacity: .95;
 }
+#desktop .dIcon.locked:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
+.dIconNeed {
+  display: block; margin-top: 2px; font-size: 9.5px; line-height: 1.3;
+  color: var(--plat2); letter-spacing: .2px; text-shadow: 0 1px 4px #000;
+}
+.dwHint.locked { color: var(--plat2); }
+/* 2배로 키우면서 왼쪽 아래 deskStat(텐션·휴방 버튼)을 덮어버려 오른쪽으로 옮겼다 */
+#desktop .recent {   /* 오른쪽 아래 — 왼쪽 아래는 .deskBL(상태 줄) 자리다 */
+  position: absolute; right: 24px; bottom: 44px; width: min(560px, 46%);
+  background: rgba(23,25,28,.92); border: 1px solid #2e3138; border-radius: 10px; padding: 24px 28px;
+}
+/* 바탕화면 최근 방송 목록만 2배 — 허브 패널 안의 .recent는 그대로 둔다 */
+#desktop .recent .rlab { font-size: 21px; margin-bottom: 12px; }
+#desktop .recent .rrow { font-size: 24px; padding: 4px 0; }
+#desktop .recent .rrow .rec { font-size: 21px; margin-left: 12px; }
+#desktop .recent .rrow .rclip { width: 92px; height: 42px; border-radius: 6px; margin-right: 14px; }
 
 /* JGS.tv 창 크롬 — 방송 중에만 열리고, 열리면 전체화면(채팅 독 왼쪽 전체)이다.
    바탕화면을 완전히 덮으므로 방송 중에는 다른 게임 아이콘을 클릭할 수 없다 */
@@ -856,15 +902,17 @@ body {
 .pdMis .hit { color: var(--ok); }
 .pdMis .miss { color: var(--dim); }
 .pdMis b { color: #ffd24a; }
+/* 김 피디의 오늘 미션 — 오른쪽 위, 2배. 아래는 최근 방송 자리다 */
 .pdNote {
-  position: absolute; right: 24px; bottom: 44px; max-width: 300px;
-  display: flex; gap: 9px; align-items: flex-start;
-  padding: 10px 12px; border: 1px solid #2e3138; border-radius: 10px;
+  position: absolute; right: 24px; top: 26px; max-width: 600px;
+  display: flex; gap: 18px; align-items: flex-start;
+  padding: 20px 24px; border: 1px solid #2e3138; border-radius: 14px;
   background: linear-gradient(rgba(23,25,28,.85), rgba(23,25,28,.85)),
     url('img/ui-panelbg.jpg') center/cover, #17191c;
 }
-.pdNote img { width: 44px; height: 44px; border-radius: 7px; border: 1px solid #2c3036; }
-.pdnRow { font-size: 11.5px; color: #c9cdd2; padding: 1px 0; }
+.pdNote img { width: 88px; height: 88px; border-radius: 12px; border: 1px solid #2c3036; }
+.pdNote .rlab { font-size: 21px; margin-bottom: 8px; }
+.pdnRow { font-size: 23px; color: #c9cdd2; padding: 2px 0; }
 .pdnRow b { color: var(--amber2); }
 
 /* ---------- AetherAI 면 오버라이드 — 수제 CSS 그라데이션 금지 방침 (2026-08-08 지시) ---------- */
@@ -895,17 +943,47 @@ body {
 body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
 .rwCap .rwNote { color: var(--dim); font-size: 10px; }
 
-/* ---------- 인트로 4컷 만화 (AetherAI 컷 + HTML 캡션) ---------- */
-.isPanel { width: min(680px, 94%); }
-#introSplash .comic { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin: 16px 0 8px; }
-#introSplash .comic figure { margin: 0; }
+/* ---------- 인트로 4컷 만화 — 한 화면에 한 컷 (AetherAI 컷 + HTML 캡션) ---------- */
+.isPanel { width: min(520px, 94%); }
+/* 컷마다 이미지·캡션 길이가 달라도 패널이 출렁이지 않게 무대 높이를 고정한다 */
+#introSplash .comic { margin: 18px 0 10px; min-height: 366px; }
+#introSplash .comic figure { margin: 0; display: none; }
+#introSplash .comic figure.on { display: block; animation: cutDrop .42s cubic-bezier(.2,.9,.3,1.35) both; }
+#introSplash .comic figure.on img { animation: cutFlash .42s ease-out; }
+#introSplash .comic figure.on figcaption { animation: cutCap .34s ease-out .18s both; }
 #introSplash .comic img {
-  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
-  border: 1px solid #2c3036; display: block; background: #101214;
+  width: min(300px, 78%); aspect-ratio: 1; object-fit: cover; border-radius: 10px;
+  border: 1px solid #2c3036; display: block; margin: 0 auto; background: #101214;
+  box-shadow: 0 14px 34px rgba(0,0,0,.55);
 }
-#introSplash .comic figcaption { font-size: 11.5px; color: #c9cdd2; margin-top: 5px; line-height: 1.45; text-align: left; }
+#introSplash .comic figcaption {
+  font-size: 14px; color: #d5d9de; margin-top: 14px; line-height: 1.65;
+  min-height: 3.3em; padding: 0 6px;
+}
 #introSplash .comic figcaption b { color: var(--plat2); }
 #introSplash .comic figcaption .dia { color: #7de8ff; }
+@keyframes cutDrop {
+  from { opacity: 0; transform: translateY(18px) scale(.94); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes cutFlash {
+  0%   { filter: brightness(2.6) contrast(.6); }
+  100% { filter: none; }
+}
+@keyframes cutCap { from { opacity: 0; } to { opacity: 1; } }
+/* 마지막 컷에 닿아야 서명 버튼이 열린다 — 그전엔 컷 번호·안내가 그 자리를 지킨다 */
+.isPanel .isSkip { font-size: 11.5px; color: var(--dim); margin: 0; }
+.isPanel .isSkip b { color: var(--plat2); letter-spacing: 1px; }
+#introSplash .isSub { visibility: hidden; }        /* 신선도 안내는 마지막 컷에서만 */
+#introSplash.done .isSub { visibility: visible; }
+#introSplash.done .isSkip { visibility: hidden; }
+#introSplash #introGo { opacity: 0; pointer-events: none; transition: opacity .35s; }
+#introSplash.done #introGo { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  #introSplash .comic figure.on,
+  #introSplash .comic figure.on img,
+  #introSplash .comic figure.on figcaption { animation: none; opacity: 1; }
+}
 
 /* 이모지 대체 미니 아이콘 (AetherAI) */
 .uiIco.star { width: 13px; height: 13px; vertical-align: -2px; }
@@ -957,3 +1035,21 @@ body.fullshow #camBox { bottom: 235px; }
 
 /* 결과 팝업(방송 리포트)은 전체화면 HUD(패널 z6)보다 항상 위 (사용자 피드백) */
 body.fullshow #overlay { z-index: 9; }
+
+/* ---------- 클립 보관함 (clips.js) — 지난 방송 클립 다시보기 ---------- */
+.panel.clipWin { width: min(880px, 96%); max-height: 86vh; overflow-y: auto; }
+.clipSaveGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin: 12px 0 4px; }
+.clipSave { margin: 0; }
+.clipSave video {
+  width: 100%; height: auto; display: block; border-radius: 7px;
+  border: 1px solid #2c3036; background: #000;
+}
+.clipSave figcaption { font-size: 11.5px; color: #c9cdd2; margin-top: 5px; line-height: 1.5; }
+.clipSave figcaption b { color: var(--plat); }
+.csMeta { display: block; color: var(--dim); font-size: 10.5px; margin: 2px 0 4px; }
+.csBtn {
+  display: inline-block; margin-right: 5px; padding: 3px 9px; font-size: 10.5px; cursor: pointer;
+  border: 1px solid #3a3f46; border-radius: 5px; background: #23262a; color: #c9cdd2; text-decoration: none;
+}
+.csBtn:hover { border-color: var(--plat); color: var(--plat); }
+.csBtn.del:hover { border-color: #ff8d7a; color: #ff8d7a; }

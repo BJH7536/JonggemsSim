@@ -95,6 +95,27 @@ eq('구매 성공 시 정확히 차감', (Shell.shopBuy(shopCh, { id: 'x', price
 ok('잔액 부족은 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'y', price: 999 }) === 'poor' && shopCh.coins === 400);
 ok('중복 구매는 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'x', price: 100 }) === 'owned' && shopCh.coins === 400);
 
+// ---- 해금 사슬 — 조용히 틀리면 게임이 영영 안 열리거나 전부 열린다 ----
+var uCh = { clears: {} };
+ok('첫 게임은 조건 없이 열려 있다', Shell.unlockState(uCh, 'hwaryeok').open);
+ok('앞 게임 실적이 0이면 다음 게임은 잠긴다', !Shell.unlockState(uCh, 'giving-up').open);
+Shell.recordClear(uCh, 'hwaryeok', 'C');
+ok('C등급은 관문을 채우지 않는다', !Shell.unlockState(uCh, 'giving-up').open);
+Shell.recordClear(uCh, 'hwaryeok', 'B');
+Shell.recordClear(uCh, 'hwaryeok', 'B');
+ok('B 2회로 두 번째 게임이 열린다', Shell.unlockState(uCh, 'giving-up').open);
+ok('두 번째 게임 실적 없이 세 번째는 여전히 잠김', !Shell.unlockState(uCh, 'pocket').open);
+var uCh2 = { clears: {} };
+Shell.recordClear(uCh2, 'pocket', 'S');
+Shell.recordClear(uCh2, 'pocket', 'A');
+ok('상위 등급은 하위 등급 관문도 함께 채운다', Shell.unlockState(uCh2, 'bomb').open &&
+   uCh2.clears.pocket.B === 2 && uCh2.clears.pocket.A === 2);
+ok('관문은 뒤로 갈수록 높아진다 (B 2회 → A 3회)',
+   Shell.UNLOCK[1].grade === 'B' && Shell.UNLOCK[1].times === 2 &&
+   Shell.UNLOCK[4].grade === 'A' && Shell.UNLOCK[4].times === 3);
+ok('사슬이 등록된 게임 전부를 덮는다',
+   Shell.UNLOCK.length === 5 && Shell.UNLOCK.filter(function (u) { return !u.from; }).length === 1);
+
 // ---- 파트너 평가 (김 피디) — 결정론 공식. 틀리면 평가가 채널 서사를 거꾸로 쓴다 ----
 var GS = Shell.gradeShow;
 ok('대박 방송(100배 성장·클립 3·도네)은 S',

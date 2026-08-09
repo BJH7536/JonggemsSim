@@ -126,6 +126,7 @@
     now: 0,
     _shake: 0, _flash: 0, _prevFrame: 0,
     _fxQueue: [], _lastFxAt: 0,
+    _tutT: [],                      // 튜토리얼 예약 타이머 — 허브로 돌아가면 전부 취소한다
     _stampTimer: 0,
 
     register: function (game) { this.games.push(game); },
@@ -143,6 +144,7 @@
         log: d.log || [],           // 최근 방송 기록 [{g, v, r}] 최신순 4개
         coins: d.coins || 0,        // 도네 코인 잔액 — 방송 정산 때 적립, 상점에서 소비
         gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
+        clears: d.clears || {},     // gameId -> {B, A} 등급별 달성 횟수 — 다음 게임 해금의 재료
         tier: d.tier || 0,          // 파트너 등급 0~4 (브론즈~다이아) — 내려가지 않는다
         tierPts: d.tierPts || 0,    // 등급 게이지 — C/D가 조용히 깎는 유일한 수치 (규약 2)
         // 채널의 색 — 원형별 구성 비율(합 1). 방송이 끝날 때마다 물든다.
@@ -378,6 +380,7 @@
       this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
       if (Shell.Dex) Shell.Dex.init(); // 영입된 캐스트를 채팅에 복원 (ADR-006)
+      if (Shell.Clips) Shell.Clips.init(); // 보관된 클립 개수 (아이콘 배지용)
       this.applyGear(); // 보유 방송용품(장식)을 화면에 반영
       var self2 = this;
       $('followBtn').addEventListener('click', function () {
@@ -385,15 +388,23 @@
       });
       // 도네 읽어주기 — 배너가 떠 있는 3.4초 동안만 클릭이 통한다 (CSS pointer-events)
       $('donBanner').addEventListener('click', function () { self2.readDonation(); });
-      // 스트리머 표현 축 (§6.4) — 리액션 버튼. 방송 중에만 보인다
-      $('reactBar').addEventListener('click', function (e) {
-        var b = e.target.closest('[data-tag]');
-        if (b) self2.express(b.getAttribute('data-tag'));
-      });
       // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
-      $('introSplash').classList.remove('hidden');
+      // 한 화면에 한 컷. 클릭으로 넘기고, 마지막 컷에서 서명 버튼이 열린다.
+      var splash = $('introSplash'), cuts = splash.querySelectorAll('.comic figure'), ci = -1;
+      function nextCut() {
+        if (ci >= 0) cuts[ci].classList.remove('on');
+        cuts[++ci].classList.add('on');
+        $('cutNo').textContent = (ci + 1) + ' / ' + cuts.length;
+        if (ci === cuts.length - 1) splash.classList.add('done'); // 마지막 컷 = 계약서
+      }
+      splash.classList.remove('hidden');
+      nextCut();
+      splash.addEventListener('click', function (e) { // 클릭 = 다음 컷
+        if (splash.classList.contains('done') || e.target.id === 'introGo') return;
+        nextCut();
+      });
       $('introGo').addEventListener('click', function () {
-        $('introSplash').classList.add('hidden');
+        splash.classList.add('hidden');
       });
       addEventListener('resize', function () { self2.fitHud(); });
       this.showHub();
@@ -427,24 +438,6 @@
           if (f && f.complete && f.naturalWidth) $('camImg').src = f.src;
           return;
         }
-      }
-    },
-
-    // ---- 스트리머 표현 축 (시뮬 레이어 v0.2 §6.4) — 방송 중 능동 리액션 ----
-    // 플레이어 입력이 관측 가능한 사건(streamer_* 태그)이 되어 판정층에 들어간다.
-    // 관객은 여전히 관측만 하므로 C3 위반이 아니다. 마우스 전용 — 게임 키와 충돌 없음 (§11.4).
-    // 쿨다운은 규약 3(자극 간격)의 확장 — 연타로 도감을 긁는 것을 막는다.
-    REACT_CD: 6,
-    express: function (tag) {
-      if (this.phase !== 'live' || !Shell.Dex || !this.game) return;
-      if (this.now - (this._lastReactAt || -99) < this.REACT_CD) return;
-      this._lastReactAt = this.now;
-      Shell.Dex.judge(this.game.id, tag); // 결정론 판정 — 칸·파장 (메타 통화만)
-      this.camReact(tag);                 // 캠이 표정으로 응답한다 (연출)
-      var bar = $('reactBar');
-      if (bar) {
-        bar.classList.add('cool');
-        setTimeout(function () { bar.classList.remove('cool'); }, this.REACT_CD * 1000);
       }
     },
 
@@ -508,6 +501,7 @@
       Chat.sys('— 방송 대기 중 —');
 
       $('camBox').classList.add('hidden');
+      if (Shell.Clips) Shell.Clips.closeUrls(); // 보관함을 닫고 나왔다면 객체 URL 회수 (Esc 경로 포함)
       $('tallyUp').textContent = '';
       $('infoTitle').textContent = '방송 준비 중…';
       $('infoCat').textContent = '대기 화면';
@@ -515,6 +509,8 @@
       $('infoUptime').textContent = '';
       $('infoViewers').textContent = '0';
       clearTimeout(this._startTimer);
+      this._tutT.forEach(clearTimeout); this._tutT.length = 0;
+      this.tutTip('');
       this.updateTopbar();
 
       var self = this;
@@ -523,6 +519,19 @@
       // 아래 bindHub()가 .noimg 로 떨어뜨려 CSS 타일로 그린다 — 이미지 없이도 기능은 온전하다.
       var icons = this.games.map(function (g) {
         var pct = Math.round(FRESH_MULT[self.freshStep(g.id)] * 100);
+        var u = Shell.unlockState(self.ch, g.id);
+        // 잠긴 방송도 목록에 남긴다 — 다음에 뭐가 열리는지 보여야 관문이 목표가 된다
+        if (!u.open) {
+          // disabled를 쓰지 않는다 — 비활성 버튼은 마우스 이벤트를 내지 않아 툴팁(해금 조건)이
+          // 안 뜬다. 실제 걸쇠는 start()에 있다
+          return '<button class="dIcon locked" data-game="' + g.id + '">' +
+            '<span class="dIconArt"><img src="games/shell/img/icon-' + g.id + '.png" alt="">' +
+            '<img class="dLock" src="games/shell/img/ui-lock.png" alt="잠김"></span>' +
+            '<span class="dIconName">' + g.title + '</span>' +
+            // 아이콘 폭(96px)에 들어가야 한다 — 어느 게임에서 따는지는 툴팁이 말한다
+            '<span class="dIconNeed">' + u.grade + '등급 ' + u.have + '/' + u.need + '</span>' +
+            '</button>';
+        }
         return '<button class="dIcon" data-game="' + g.id + '">' +
           '<span class="dIconArt"><img src="games/shell/img/icon-' + g.id + '.png" alt=""></span>' +
           '<span class="dIconName">' + g.title + '</span>' +
@@ -537,7 +546,8 @@
         '</button>';
       // 캐스트 영입 (반응 도감) — 구독자·코인을 소비해 채팅 캐스트를 늘린다 (ADR-006)
       if (Shell.Dex) icons += Shell.Dex.deskIcon();
-      $('reactBar').classList.add('hidden'); // 표현 축은 방송 중 전용
+      // 클립 보관함 — 지난 방송에서 딴 영상을 다시 본다 (기록 전용)
+      if (Shell.Clips) icons += Shell.Clips.deskIcon();
 
       var recent = this.ch.log.length
         ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
@@ -569,6 +579,7 @@
       $('desktop').innerHTML =
         '<div class="deskIcons">' + icons + '</div>' +
         '<div id="dTip"></div>' +
+        '<div class="deskBL">' +
         '<div class="deskStat">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
           this.ch.shows + '</b>회 · 더블클릭 = 바로 방송</div>' +
         // 채널 색깔 (공명 판정층) — 게임을 고르기 전에 보여야 선택이 전략이 된다
@@ -585,7 +596,7 @@
             (Shell.Dex.tension() < 100 ? '<button id="restBtn" type="button">휴방 (+25)</button>' : '') +
             '</div>'
           : '') +
-        pdNote + recent;
+        '</div>' + recent + pdNote;
 
       this.bindHub();
       // 아직 한 번도 방송한 적 없으면 첫 게임 아이콘에 코치마크 — 진입까지 헤매지 않게
@@ -629,6 +640,7 @@
         if (btn.hasAttribute('data-game')) self.start(btn.getAttribute('data-game'));
         else if (btn.getAttribute('data-app') === 'shop') self.openShop();
         else if (btn.getAttribute('data-app') === 'cast' && Shell.Dex) Shell.Dex.openPanel();
+        else if (btn.getAttribute('data-app') === 'clips' && Shell.Clips) Shell.Clips.openPanel();
       });
       // 휴방 (§7) — 하루를 쉬고 텐션을 회복한다. 시청자 수에는 아무 일도 일어나지 않는다
       var rest = $('restBtn');
@@ -663,6 +675,13 @@
         }
       }
 
+      // 해금 조건 — 아이콘에는 짧게(등급 n/N), 여기서 어느 게임에서 따는지까지 말한다
+      var lk = Shell.unlockState(this.ch, g.id), lkFrom = '';
+      if (!lk.open) {
+        var src = this.games.filter(function (x) { return x.id === lk.from; })[0];
+        lkFrom = src ? src.title : lk.from;
+      }
+
       var tip = $('dTip');
       var art = TIP_ART[g.id]; // 실제 게임 아트 컷 — 없으면(화력쇼) 벡터 thumb 폴백
       tip.innerHTML =
@@ -678,7 +697,10 @@
             (best ? '<b>최고 ' + best.toLocaleString() + '</b>' : '') + '</div>' +
           profHtml +
         '</div>' +
-        '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>';
+        (lk.open
+          ? '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>'
+          : '<div class="dwHint locked">🔒 <b>' + lkFrom + '</b>에서 <b>' + lk.grade + '등급</b> 이상을 ' +
+            '<b>' + lk.need + '회</b> 받으면 열립니다 (현재 ' + lk.have + '회)</div>');
 
       // 벡터 썸네일 — 아트가 없는 게임은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
       var drawVec = function (cv) {
@@ -714,6 +736,10 @@
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
       if (!g) return;
       if (this.phase === 'starting') return; // 카운트다운 중 재진입 방지
+      // 해금 사슬 — 아이콘이 disabled라 보통은 여기 오지 않지만, 키보드 'r'(다시 방송)과
+      // 콘솔 호출도 같은 문을 지나야 한다 (걸쇠는 한 곳에)
+      var lock = Shell.unlockState(this.ch, gameId);
+      if (!lock.open) return;
       var self = this;
       this.phase = 'starting';
       $('jgsWin').classList.remove('minimized');   // 창이 열리며 방송 준비 화면이 뜬다
@@ -725,16 +751,47 @@
       // 그래도 늦은 이미지는 각 게임의 imgReady 벡터 폴백이 받는다. 첫 화면 payload 절약.
       if (g.preload) { try { g.preload(); } catch (e) {} }
 
+      // 브리핑 — 목표·조작·미션을 방송 전에 정중앙에서 한 번에 읽힌다. 미션을 정산 리포트에서만
+      // 보여주면 플레이어는 뭘 해야 하는지 모른 채 3분을 보낸다. makeMissions는 결정론이라
+      // 여기서 미리 만들어 보여줘도 _launch가 만드는 값과 같다.
+      this._missions = Shell.makeMissions(this.ch);
+      var misHtml = this._missions.map(function (m) {
+        return '<b>' + m.label + ' ' + m.target.toLocaleString() + '</b> 이상 <em>+' + m.reward + '코인</em>';
+      }).join(' · ');
+
       $('overlay').classList.remove('hidden');
       $('overlay').innerHTML = '<div class="startSoon">' +
-        '<div class="ssTop">STARTING SOON</div>' +
-        '<h2>잠시 후 방송이 시작됩니다</h2>' +
-        '<div class="ssGame"><span class="cat">' + g.title + '</span> ' + this._showTitle + '</div>' +
-        '<div class="ssCount" id="ssCount">3</div>' +
-        '<div class="ssHint">방송 준비 중 — 마이크·송출 확인</div>' +
+        '<div class="ssTop">BROADCAST BRIEFING</div>' +
+        '<h2>' + this._showTitle + '</h2>' +
+        '<div class="ssGame"><span class="cat">' + g.title + '</span> 오늘의 방송</div>' +
+        '<div class="brBox">' +
+          '<div class="brRow"><i>목표</i><span>' + Math.round(g.duration / 60) +
+            '분 동안 시청자를 최대한 모은다 — <b>0명이 되면 방송이 강제 종료된다</b></span></div>' +
+          '<div class="brRow"><i>조작</i><span>' + (g.foot || '조작 안내 없음') + '</span></div>' +
+          '<div class="brRow"><i>미션</i><span>' + misHtml + '</span></div>' +
+        '</div>' +
+        '<button id="brGo" type="button" class="slab primary">방송 시작 →</button>' +
+        '<div class="ssHint">김 피디가 미션 달성을 지켜본다 — 보상 코인은 방송용품 상점에서 쓴다</div>' +
         '</div><div id="stinger"></div>';
       Chat.reset();
       Chat.sys('— 방송 대기 화면 —');
+      $('tallyR').textContent = '브리핑';
+
+      var go = $('brGo');
+      go.onclick = function () { self._countdown(g); };
+      go.focus(); // 포커스만 주면 엔터·스페이스는 버튼 기본 동작이 받는다
+    },
+
+    // 브리핑을 읽고 누른 뒤에야 3·2·1이 돈다
+    _countdown: function (g) {
+      var self = this;
+      var so = $('overlay').querySelector('.startSoon');
+      if (!so) return;
+      so.innerHTML = '<div class="ssTop">STARTING SOON</div>' +
+        '<h2>잠시 후 방송이 시작됩니다</h2>' +
+        '<div class="ssGame"><span class="cat">' + g.title + '</span> ' + this._showTitle + '</div>' +
+        '<div class="ssCount" id="ssCount">3</div>' +
+        '<div class="ssHint">방송 준비 중 — 마이크·송출 확인</div>';
       $('tallyR').textContent = '준비 중';
 
       var n = 3;
@@ -743,7 +800,7 @@
           // OBS 장면 전환 — 보라 와이프가 화면을 훑고 지나가며 게임이 드러난다
           var st = $('stinger');
           if (st) { st.classList.add('go'); }
-          setTimeout(function () { self._launch(gameId); }, 340);
+          setTimeout(function () { self._launch(g.id); }, 340);
           return;
         }
         var el = $('ssCount');
@@ -793,10 +850,7 @@
       Chat.reset();
       Chat.load(g.chat.T, g.chat.BURST);
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
-      if (Shell.Dex) {
-        Shell.Dex.newShow(g.id);             // 반응 도감 — 파장 리셋 + 저텐션 fatigue 발행 (ADR-006·§7.2)
-        $('reactBar').classList.remove('hidden'); // 스트리머 표현 축 (§6.4) — 방송 중에만
-      }
+      if (Shell.Dex) Shell.Dex.newShow(g.id); // 반응 도감 — 파장 리셋 + 저텐션 fatigue 발행 (ADR-006·§7.2)
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
       // file:// 직접 실행 안내 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 녹화가
       // 막힌다 (클립 영상·리플레이 비활성). 한 번만, 조용히.
@@ -828,19 +882,7 @@
       this._missions = Shell.makeMissions(this.ch);             // 김 피디의 오늘 미션 (결정론)
       this.startClipRec();
 
-      // 첫 방송 튜토리얼 — 관객석에서 안내가 흘러나온다 (한 번만, 이후 방송에선 침묵)
-      if (!localStorage.getItem('JGS_TUT')) {
-        localStorage.setItem('JGS_TUT', '1');
-        var self = this, tutGame = g;
-        [[4, '[안내] 목표: 3분 동안 시청자를 최대한 모은다 — 0명이 되면 방송이 강제 종료된다'],
-         [12, '[안내] 잘한 플레이도, 아슬아슬한 사고도 전부 시청자를 부른다. 조작법은 화면 아래 안내 참고'],
-         [24, '[안내] 같은 게임만 파면 시청자가 물린다(신선도) — 방송을 바꿔가며 도는 게 종겜이다'],
-        ].forEach(function (t) {
-          setTimeout(function () {
-            if (self.phase === 'live' && self.game === tutGame) Chat.sys(t[1]);
-          }, t[0] * 1000);
-        });
-      }
+      this.tutorial(g);
 
       // 단골 인사 — 채널 기록(지난 방송·최고 기록)을 시청자가 기억하고 언급한다 (연출 전용 C3).
       // 시작 버스트가 지나간 뒤 최대 2줄, 순차 방출 (규약 3 — 자극 간격). 데이터: data/regulars.js
@@ -1172,8 +1214,12 @@
               try { r.requestData(); } catch (e) { self._recHold = false; self.showReplay(clip, 'INSTANT REPLAY'); return; }
               setTimeout(function () {
                 self._recHold = false;
-                if (r._chunks.length)
-                  clip.vid = URL.createObjectURL(new Blob(r._chunks.slice(), { type: 'video/webm' }));
+                if (r._chunks.length) {
+                  // Blob도 들고 있는다 — 보관함(IndexedDB)이 방송 끝에 이걸 그대로 담는다.
+                  // 객체 URL은 새로고침까지만 살지만 Blob은 저장소로 넘어간다.
+                  clip.blob = new Blob(r._chunks.slice(), { type: 'video/webm' });
+                  clip.vid = URL.createObjectURL(clip.blob);
+                }
                 self.showReplay(clip, 'INSTANT REPLAY');
               }, 150);
             }, 2500);
@@ -1379,6 +1425,44 @@
       Shell.Dex.judge(this.game.id, 'record_pace');
     },
 
+    // ---------- 튜토리얼 ----------
+    // 채팅으로 흘리면 시작 버스트에 묻힌다 — 화면에 남겨 두고 다음 단계가 덮는다.
+    // 게임별 조작은 그 게임을 처음 켤 때, 공통 규칙은 첫 방송에 한 번.
+    tutorial: function (g) {
+      var self = this, steps = [];
+      this._tutT.forEach(clearTimeout); this._tutT.length = 0;
+      var gk = 'JGS_TUT_' + g.id;
+      if (!localStorage.getItem(gk)) {
+        localStorage.setItem(gk, '1');
+        // foot(화면 아래 조작 안내)의 첫 줄을 그대로 쓴다 — 따로 적으면 조작이 바뀔 때 여기만 낡는다
+        var ctl = String(g.foot || '').split('<br>')[0].replace(/<[^>]+>/g, '').trim();
+        if (ctl) steps.push([2, '조작 — ' + ctl]);
+      }
+      if (!localStorage.getItem('JGS_TUT')) {
+        localStorage.setItem('JGS_TUT', '1');
+        steps.push([13, '잘한 플레이도, 아슬아슬한 사고도 전부 시청자를 부른다 — 시청자가 0명이 되면 방송이 끝난다']);
+        steps.push([25, '같은 게임만 파면 시청자가 물린다(신선도) — 방송을 바꿔가며 도는 게 종겜이다']);
+      }
+      if (!steps.length) return;
+      steps.forEach(function (s, i) {
+        self._tutT.push(setTimeout(function () {
+          if (self.phase !== 'live' || self.game !== g) return; // 지난 방송의 예약분은 버린다
+          self.tutTip(s[1]);
+          // 마지막 단계는 덮어 줄 다음 단계가 없으니 스스로 물러난다
+          if (i === steps.length - 1) self._tutT.push(setTimeout(function () { self.tutTip(''); }, 8000));
+        }, s[0] * 1000));
+      });
+    },
+
+    tutTip: function (text) {
+      var el = $('tutTip');
+      if (!el) return;
+      if (!text) { el.classList.remove('show'); return; }
+      el.innerHTML = '<i>TIP</i><span>' + text + '</span>';
+      el.classList.add('show');
+      el.onclick = function () { el.classList.remove('show'); }; // 읽었으면 치울 수 있어야 한다
+    },
+
     showTicker: function (text, muted) {
       var t = $('ticker');
       t.textContent = text;
@@ -1399,6 +1483,8 @@
     endShow: function (reason) {
       if (this.phase !== 'live') return; // 이중 종료 방지 (H-2)
       this.phase = 'result';
+      this._tutT.forEach(clearTimeout); this._tutT.length = 0;
+      this.tutTip(''); // 리포트 위에 팁이 남으면 안 된다
       this.stopClipRec(); // 종료 직전 클립(2.5초 여운 대기 중)은 스틸로만 남는다 — 감수
       var g = this.game, final = Math.round(this.viewers);
 
@@ -1422,6 +1508,8 @@
       // blob URL이라 새로고침까지만 산다). 다음 방송의 조용한 구간에 '다시보기'로 재생.
       var arch = Shell._clipArchive = Shell._clipArchive || [];
       (this._clips || []).forEach(function (c) { if (c.vid) arch.push(c); });
+      // 보관함 — 세션 아카이브는 새로고침에 날아간다. 흥미도 상위 KEEP개는 디스크(IndexedDB)로 넘긴다
+      if (Shell.Clips) Shell.Clips.save(clips);
       arch.sort(function (a, b) { return b.s - a.s; });
       while (arch.length > 8) {
         var old = arch.pop();
@@ -1464,10 +1552,21 @@
         return { m: m, hit: hit, got: got[m.k] };
       });
       this.ch.coins += mBonus; // 미션 보상도 코인 — 장식 재원일 뿐, 룰 수치 무관
+      // 이 방송의 등급이 다음 게임의 열쇠가 된다 (해금 사슬). 강제 종료분은 gradeShow가
+      // 이미 점수를 0.6배로 깎으므로 따로 거르지 않는다 — 사고 방송으로는 관문이 잘 안 채워진다
+      Shell.recordClear(this.ch, g.id, evGrade.grade);
+      var chNow = this.ch;
+      var opened = this.games.filter(function (x) {
+        var u = Shell.unlockState(chNow, x.id);
+        return u.open && u.from === g.id && u.have === u.need;   // 이번 방송으로 관문이 막 찬 게임
+      }).map(function (x) { return x.title; });
+      opened.forEach(function (t) { Chat.sys('— 새 방송 콘텐츠 해금: ' + t + ' —'); });
+
       // 파트너 등급 게이지 — 승급은 과하게, 하락(게이지 감소)은 숫자만 조용히 (규약 2)
       var ts = Shell.tierStep(this.ch.tier || 0, this.ch.tierPts || 0, evGrade.grade);
       this.ch.tier = ts.tier; this.ch.tierPts = ts.pts;
       if (ts.promoted) this.showStamp('★ ' + Shell.TIERS[ts.tier].n + ' 파트너 승급!');
+      else if (opened.length) this.showStamp('★ ' + opened[0] + ' 해금!');
       else if (!isDead && (evGrade.grade === 'S' || evGrade.grade === 'A')) this.showStamp('파트너 평가 ' + evGrade.grade);
       // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
@@ -1596,7 +1695,6 @@
       $('btnHub').onclick = function () { self.showHub(); };
       this.drawReport($('repGraph'));
       $('camBox').classList.add('hidden');
-      $('reactBar').classList.add('hidden');
     },
 
     // ---------- 루프 ----------
@@ -1846,6 +1944,40 @@
     var g = score >= 85 ? 'S' : score >= 70 ? 'A' : score >= 50 ? 'B' : score >= 30 ? 'C' : 'D';
     return { score: score, grade: g,
       parts: { growth: Math.round(growth), hold: Math.round(hold), clips: clips, don: Math.round(don), vari: vari } };
+  };
+
+  // ---------- 방송 해금 사슬 ----------
+  // 다음 게임은 "직전 게임에서 일정 등급 이상을 몇 번" 받아야 열린다. 절대 시청자 수를
+  // 관문으로 쓰지 않는 이유: gradeShow의 growth가 log10(final/start) — 비율이라 구독자가
+  // 늘어 출발선이 올라가도 난이도가 녹지 않는다. 그래서 앞 게임에서 익힌 운영(유지율·클립·
+  // 신선도)이 그대로 다음 관문의 발판이 되고, 관문은 B 2회 → A 3회로 점차 올라간다.
+  Shell.UNLOCK = [
+    { id: 'hwaryeok' },                                          // 첫 방송 — 항상 열려 있다
+    { id: 'giving-up', from: 'hwaryeok',  grade: 'B', times: 2 },
+    { id: 'pocket',    from: 'giving-up', grade: 'B', times: 3 },
+    { id: 'bomb',      from: 'pocket',    grade: 'A', times: 2 },
+    { id: 'fishing',   from: 'bomb',      grade: 'A', times: 3 },
+  ];
+  var RANK = { S: 3, A: 2, B: 1, C: 0, D: 0 };
+
+  // 정산이 부르는 기록기 — 상위 등급은 하위 등급 관문도 함께 채운다 (A 한 번은 B 한 번이기도 하다)
+  Shell.recordClear = function (ch, gameId, grade) {
+    if (!ch.clears) ch.clears = {};
+    var c = ch.clears[gameId] || (ch.clears[gameId] = {});
+    var r = RANK[grade] || 0;
+    if (r >= 1) c.B = (c.B || 0) + 1;
+    if (r >= 2) c.A = (c.A || 0) + 1;
+    return c;
+  };
+
+  // 해금 상태 — 순수 함수로 떼어 둔 이유는 shopBuy와 같다. 조용히 틀리면 게임이
+  // 영영 안 열리거나 전부 열린다. 검증: games/shell/selftest.html
+  Shell.unlockState = function (ch, gameId) {
+    var u = null;
+    for (var i = 0; i < Shell.UNLOCK.length; i++) if (Shell.UNLOCK[i].id === gameId) u = Shell.UNLOCK[i];
+    if (!u || !u.from) return { open: true };   // 사슬에 없는 게임은 잠그지 않는다
+    var have = ((ch.clears || {})[u.from] || {})[u.grade] || 0;
+    return { open: have >= u.times, from: u.from, grade: u.grade, need: u.times, have: have };
   };
 
   // 오늘의 미션 — 결정론 (shows 회차로 회전, 목표는 채널 기록에 비례). 보상은 코인(장식 재원)뿐.

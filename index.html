@@ -19,16 +19,18 @@
 <div id="introSplash" class="hidden">
   <div class="isPanel">
     <b class="isLogo">JGS<span>.tv</span></b>
-    <h1>당신은 종합게임 스트리머다</h1>
-    <!-- 4컷 인트로 — 컷은 AetherAI 생성, 캡션은 HTML (이미지 무텍스트 원칙) -->
+    <h1>뜨지 못하면 죽음</h1>
+    <!-- 4컷 인트로 — 컷은 AetherAI 생성, 캡션은 HTML (이미지 무텍스트 원칙).
+         한 화면에 한 컷 (shell.js 인트로 재생). 클릭 = 다음 컷 -->
     <div class="comic">
-      <figure><img src="games/shell/img/comic-1.jpg" alt=""><figcaption><b>1</b> 시청자 0명. 아무도 나를 보지 않았다.</figcaption></figure>
-      <figure><img src="games/shell/img/comic-2.jpg" alt=""><figcaption><b>2</b> 그때 김 피디가 계약서를 내밀었다 — "JGS.tv 파트너, 해볼래요?"</figcaption></figure>
-      <figure><img src="games/shell/img/comic-3.jpg" alt=""><figcaption><b>3</b> 잘한 방송보다 <b>터진 방송</b>이 남는다 — 사고도 콘텐츠다.</figcaption></figure>
-      <figure><img src="games/shell/img/comic-4.jpg" alt=""><figcaption><b>4</b> 목표는 <b class="dia">다이아 파트너</b>. 다만 <b>시청자가 0명이 되면 방송도 끝</b>난다.</figcaption></figure>
+      <figure><img src="games/shell/img/comic-1.jpg" alt=""><figcaption><b>1</b> 공무원 3수, 오디션 탈락, 알바 해고. 스물아홉. <b>다 해봤고 다 안 됐다.</b></figcaption></figure>
+      <figure><img src="games/shell/img/comic-2.jpg" alt=""><figcaption><b>2</b> 마지막 문을 김 피디가 열어줬다 — "JGS.tv 파트너. 대신 여기서도 못 뜨면, 진짜 끝이에요."</figcaption></figure>
+      <figure><img src="games/shell/img/comic-3.jpg" alt=""><figcaption><b>3</b> 잘한 방송은 안 남는다. <b>터진 방송</b>이 남는다. 사고까지 팔아야 산다.</figcaption></figure>
+      <figure><img src="games/shell/img/comic-4.jpg" alt=""><figcaption><b>4</b> <b class="dia">다이아 파트너</b>가 되거나, 끝나거나. <b>시청자가 0명이 되는 순간 방송도 끝</b>이다.</figcaption></figure>
     </div>
+    <p class="isSkip"><b id="cutNo">1 / 4</b> — 클릭하면 다음 컷</p>
     <p class="isSub">같은 게임만 파면 시청자가 물린다(신선도) — 방송을 바꿔가며 도는 게 종겜이다.</p>
-    <button id="introGo" type="button" class="slab primary">파트너 계약 — 방송국 입장 →</button>
+    <button id="introGo" type="button" class="slab primary">계약서에 서명한다 — 방송 시작 →</button>
   </div>
 </div>
 
@@ -68,14 +70,8 @@
     <div id="replayWin"></div>
     <div class="vpopup" id="vpopup"></div>
     <div id="camBox" class="hidden"><img id="camImg" src="games/shell/faces/adventurer_silence.png" alt="스트리머 캠"><span>LIVE CAM</span></div>
-    <!-- 스트리머 표현 축 (시뮬 레이어 v0.2 §6.4) — 방송 중 능동 리액션. 마우스 전용 (게임 키와 무충돌) -->
-    <div id="reactBar" class="hidden">
-      <button type="button" data-tag="streamer_scream" title="비명을 지른다">비명</button>
-      <button type="button" data-tag="streamer_joy" title="환호한다">환호</button>
-      <button type="button" data-tag="streamer_selfmock" title="자조한다">자조</button>
-      <button type="button" data-tag="streamer_silence" title="말없이 화면만 본다">침묵</button>
-    </div>
     <div id="ticker"></div>
+    <div id="tutTip"></div>
     <div id="bigStamp"><div id="bigStampText"></div></div>
     <div id="overlay" class="hidden"></div>
   </div>
@@ -134,6 +130,7 @@
 <!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 + 반응 도감·캐스트 해금(dex) -->
 <script src="games/shell/shell.js"></script>
 <script src="games/shell/dex.js"></script>
+<script src="games/shell/clips.js"></script>
 <!-- 게임 — 각자 자기 이벤트 어휘(chat-data)와 룰(game)을 가지고 셸에 등록한다 -->
 <script src="data/events/hwaryeok.js"></script>
 <script src="games/hwaryeok/game.js"></script>
