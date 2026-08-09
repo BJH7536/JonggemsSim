@@ -496,6 +496,18 @@
         });
       }
 
+      // 단골 인사 — 채널 기록(지난 방송·최고 기록)을 시청자가 기억하고 언급한다 (연출 전용 C3).
+      // 시작 버스트가 지나간 뒤 최대 2줄, 순차 방출 (규약 3 — 자극 간격). 데이터: data/regulars.js
+      var last = this.ch.log[0], mem = [];
+      if (!this.ch.shows) mem.push(['first', {}]);
+      else {
+        if (last && last.g === g.title) mem.push(['same_again', { game: g.title }]);
+        else if (last && last.d) mem.push(['after_dead', {}]);
+        if (this.ch.best[g.id]) mem.push(['best', { best: this.ch.best[g.id].toLocaleString() }]);
+        if (!mem.length && this.ch.shows >= 3) mem.push(['regular', { shows: String(this.ch.shows + 1) }]);
+      }
+      mem.slice(0, 2).forEach(function (m2, i) { Chat.memory(m2[0], m2[1], null, 2600 + i * 3200); });
+
       this.stage = this.makeStage();
       this.inst = g.start(this.stage);
       this.renderViewers();
@@ -946,7 +958,11 @@
       var txt = '', hot = false;
       if (best > 0 && v > best) {
         txt = '★ 신기록 갱신 중'; hot = true;
-        if (!this._recordStamped) { this._recordStamped = true; this.showStamp('★ 신기록'); }
+        if (!this._recordStamped) {
+          this._recordStamped = true; this.showStamp('★ 신기록');
+          // 단골이 종전 기록을 기억하고 있다 — 스탬프(큰 자극)와 겹치지 않게 한 박자 뒤 (규약 3)
+          Chat.memory('record_live', { best: best.toLocaleString() }, null, 900);
+        }
       } else if (best > 0 && v > best * 0.8) {
         txt = '신기록 페이스 — 기록 ' + best.toLocaleString();
       } else {
@@ -1039,6 +1055,7 @@
       else if (!isDead && (evGrade.grade === 'S' || evGrade.grade === 'A')) this.showStamp('파트너 평가 ' + evGrade.grade);
       // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
+        d: isDead ? 1 : 0, // 강제 종료 여부 — 다음 방송의 단골 인사(after_dead)가 읽는다
         c: bestClip ? bestClip.img : 0,
         cm: bestClip ? bestClip.mood + ' · ' + Shell.util.fmtTime(bestClip.t) : '' });
       if (this.ch.log.length > 4) this.ch.log.length = 4;

@@ -116,6 +116,47 @@
       }, 420 + Math.random() * 520); // 사람이 읽고 받아치는 템포
     },
 
+    // ---- 단골 기억 발화 — 방송 간 기억(채널 기록)을 페르소나가 언급하는 1회성 라인.
+    //      데이터는 data/regulars.js(소윤 소유), 호출 시점·사실값은 셸이 정한다 (관측 산물만).
+    //      연출 전용 (C3) — 슬롯 포함·비반복 게이트를 react()와 동일하게 통과해야 나온다.
+    MEMORY: global.JONG_REGULARS || {},
+    pickByTone: function (tone) {
+      var c = this.personas.filter(function (p) { return p.tones.indexOf(tone) >= 0; });
+      return c.length ? c[rnd(0, c.length - 1)] : null;
+    },
+    // 동기 코어 — selftest가 직접 호출한다. 성공 시 발화 텍스트, 폐기 시 null.
+    memoryNow: function (key, facts, who) {
+      var pool = (this.MEMORY[key] || []).slice();
+      if (!pool.length) return null;
+      var raw = facts || {}, f2 = {};
+      for (var k in raw) if (Object.prototype.hasOwnProperty.call(raw, k)) f2[k] = esc(raw[k]);
+      for (var i = pool.length - 1; i > 0; i--) {
+        var j = rnd(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      }
+      for (var m = 0; m < pool.length; m++) {
+        // who(지정 화자 — 예: 도네 후원자)가 있으면 톤 필터를 건너뛴다. 없으면 톤이 화자를 정한다
+        var p = who || this.pickByTone(pool[m][0]);
+        if (!p) continue;
+        var text = pool[m][1].replace(/\{(\w+)\}/g, function (_, s) {
+          return String(f2[s] != null ? f2[s] : '');
+        });
+        if (this.verify(text, f2)) {
+          this.history.push(text);
+          if (this.history.length > 10) this.history.shift();
+          this.push(p, text);
+          return text;
+        }
+      }
+      return null; // 전 라인 검증 실패 — 침묵 (어색한 반복보다 낫다)
+    },
+    memory: function (key, facts, who, delayMs) {
+      var self = this, token = this.epoch;
+      setTimeout(function () {
+        if (self.epoch !== token) return; // 방송이 바뀌었으면 폐기
+        self.memoryNow(key, facts, who);
+      }, delayMs == null ? 420 + Math.random() * 600 : delayMs);
+    },
+
     sys: function (text) { this.append('<div class="cline csys">' + text + '</div>'); },
 
     push: function (p, text, cls) {

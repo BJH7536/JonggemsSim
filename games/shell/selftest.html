@@ -18,6 +18,7 @@
 
 <script src="../../data/personas/cast.js"></script>
 <script src="../../data/tikitaka.js"></script>
+<script src="../../data/regulars.js"></script>
 <script src="config.js"></script>
 <script src="../../engine/chat.js"></script>
 <script src="../../engine/llm.js"></script>
@@ -176,6 +177,32 @@ ok('큰 이벤트(버스트 무게 3+)만 trust를 누적한다', (function () {
   }
 })());
 
+// ---- 단골 기억 발화 — 방송 간 기억의 연출층 (data/regulars.js). 조용히 죽으면 기억이 침묵한다 ----
+ok('단골 기억 데이터가 로드된다 (키 6종 · 각 6줄 이상)',
+   ['first', 'same_again', 'after_dead', 'best', 'regular', 'record_live']
+     .every(function (k) { return (Chat.MEMORY[k] || []).length >= 6; }));
+ok('기억 발화 톤이 전부 공인 6종 안이다', (function () {
+  var TONES = ['hype', 'worry', 'info', 'mock', 'cheer', 'question'];
+  return Object.keys(Chat.MEMORY).every(function (k) {
+    return Chat.MEMORY[k].every(function (l) { return TONES.indexOf(l[0]) >= 0; });
+  });
+})());
+ok('슬롯 키는 모든 줄이 슬롯을 포함한다 (contract 1절과 같은 규칙)', (function () {
+  var SLOTS = { same_again: ['game'], best: ['best'], regular: ['shows'], record_live: ['best'] };
+  return Object.keys(SLOTS).every(function (k) {
+    return Chat.MEMORY[k].every(function (l) {
+      return SLOTS[k].every(function (s) { return l[1].indexOf('{' + s + '}') >= 0; });
+    });
+  });
+})());
+ok('기억 발화가 사실 슬롯을 채워 나간다', (function () {
+  Chat.history.length = 0;
+  var t = Chat.memoryNow('best', { best: '9,999' });
+  Chat.history.length = 0;
+  return !!t && t.indexOf('9,999') >= 0;
+})());
+ok('없는 키는 조용히 침묵한다', Chat.memoryNow('없는키', {}) === null);
+
 // ---- 등록된 게임이 계약을 지키는가 ----
 eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket', 'bomb', 'fishing']);
 Shell.games.forEach(function (g) {
@@ -330,6 +357,7 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 var SHIPPED = [
   '../../index.html', 'shell.css', 'config.js', 'shell.js',
   '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js', '../../data/tikitaka.js',
+  '../../data/regulars.js',
   '../../data/events/hwaryeok.js', '../hwaryeok/game.js',
   '../../data/events/giving-up.js', '../giving-up/game.js',
   '../../data/events/pocket.js', '../pocket/game.js',
