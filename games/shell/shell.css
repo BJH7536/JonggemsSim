@@ -385,7 +385,8 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   font-size: 10px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
 }
 .rwHead .rwSave { margin-left: auto; color: #c8ffe8; font-weight: 400; letter-spacing: 0; }
-#replayWin video, #replayWin img { display: block; width: 100%; height: 266px; object-fit: cover; background: #000; }
+/* 합성 클립은 1260×600 (게임+HUD+채팅) — cover로 자르면 하단 조작부가 잘려나간다 */
+#replayWin video, #replayWin img { display: block; width: 100%; height: 324px; object-fit: contain; background: #000; }
 .rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
 .rwCap b { color: #7dffd0; }
 /* 클립 하단 후원 줄 (치지직 문법) — 연출 전용, 코인 무관 */
@@ -722,6 +723,27 @@ body {
   color: var(--plat2); letter-spacing: .2px; text-shadow: 0 1px 4px #000;
 }
 .dwHint.locked { color: var(--plat2); }
+
+/* 물음표 슬롯 — 다음 방송 콘텐츠 자리. 아이콘 아트가 없으므로 글리프로 그린다 */
+.dIconArt.qmark {
+  display: grid; place-items: center;
+  font: bold 30px Georgia, serif; color: var(--plat2);
+  background: rgba(10,12,14,.55); border: 1px dashed rgba(0,255,163,.45);
+}
+.dIconFresh.soon { color: var(--dim); }
+.labWin { width: min(760px, 94%); border-color: #2e3138; }
+.labWin h2 { display: flex; align-items: center; gap: 12px; }
+.labQ {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px;
+  font: bold 22px Georgia, serif; color: var(--plat2);
+  background: rgba(10,12,14,.6); border: 1px dashed rgba(0,255,163,.45);
+}
+.labLead { font-size: 13px; line-height: 1.75; color: #c9cdd2; margin: 8px 0 14px; }
+.labLead b { color: var(--plat2); }
+.labSeed { border: 1px solid #2c3036; border-radius: 9px; padding: 12px 14px; background: rgba(10,12,14,.45); }
+.labRow { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; padding: 4px 0; color: var(--dim); }
+.labRow b { color: var(--ink); }
+.labSoon { margin: 13px 0 0; font-size: 12px; color: var(--dim); letter-spacing: 1px; }
 /* 2배로 키우면서 왼쪽 아래 deskStat(텐션·휴방 버튼)을 덮어버려 오른쪽으로 옮겼다 */
 #desktop .recent {   /* 오른쪽 아래 — 왼쪽 아래는 .deskBL(상태 줄) 자리다 */
   position: absolute; right: 24px; bottom: 44px; width: min(560px, 46%);
@@ -1070,7 +1092,7 @@ body.fullshow #chatDock {
 body.fullshow #chatWinbar { background: transparent; border-bottom: none; }
 body.fullshow #chatCol { background: transparent; }
 
-/* 클립 미디어 비율 — 합성 녹화(1260:430)와 구판 스틸(960:430)이 섞이므로 비율 고정 대신 auto */
+/* 클립 미디어 비율 — 합성 녹화(1260:600)와 구판(1260:430·960:430)이 섞이므로 비율 고정 대신 auto */
 .clipCard img, .clipCard video { height: auto; }
 #replayWin video, #replayWin img { height: auto; max-height: 300px; } /* 영상이 창의 주인공 — 2배 확대 (사용자 피드백). 300 상한 = 구판 스틸(960:430)이 뷰포트 바닥을 안 뚫는 선 */
 /* 전체화면에선 하단 HUD(패널+풋)가 캠 자리를 덮는다 — 캠을 HUD 위로 올린다 */

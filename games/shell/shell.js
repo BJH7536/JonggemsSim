@@ -145,7 +145,7 @@
         coins: d.coins || 0,        // 도네 코인 잔액 — 방송 정산 때 적립, 상점에서 소비
         gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
         day: d.day || 1,            // 시즌 N일차 — 방송 한 판·휴방 한 번이 각각 하루 (Shell.CAMPAIGN)
-        clears: d.clears || {},     // gameId -> {B, A} 등급별 달성 횟수 — 다음 게임 해금의 재료
+        plays: d.plays || {},       // gameId -> 방송 횟수 — 다음 게임 해금의 재료
         tier: d.tier || 0,          // 파트너 등급 0~4 (브론즈~다이아) — 내려가지 않는다
         tierPts: d.tierPts || 0,    // 등급 게이지 — C/D가 조용히 깎는 유일한 수치 (규약 2)
         // 채널의 색 — 원형별 구성 비율(합 1). 방송이 끝날 때마다 물든다.
@@ -572,7 +572,7 @@
             '<img class="dLock" src="games/shell/img/ui-lock.png" alt="잠김"></span>' +
             '<span class="dIconName">' + g.title + '</span>' +
             // 아이콘 폭(96px)에 들어가야 한다 — 어느 게임에서 따는지는 툴팁이 말한다
-            '<span class="dIconNeed">' + u.grade + '등급 ' + u.have + '/' + u.need + '</span>' +
+            '<span class="dIconNeed">방송 ' + u.have + '/' + u.need + '</span>' +
             '</button>';
         }
         return '<button class="dIcon" data-game="' + g.id + '">' +
@@ -589,6 +589,12 @@
         '</button>';
       // 캐스트 영입 (반응 도감) — 구독자·코인을 소비해 채팅 캐스트를 늘린다 (ADR-006)
       if (Shell.Dex) icons += Shell.Dex.deskIcon();
+      // 빈 슬롯 — 다음 방송 콘텐츠 자리. 아직 기능이 아니라 방향이라 물음표로 둔다
+      icons += '<button class="dIcon" data-app="lab">' +
+        '<span class="dIconArt qmark">?</span>' +
+        '<span class="dIconName">새 방송 콘텐츠</span>' +
+        '<span class="dIconFresh soon">준비 중</span>' +
+        '</button>';
       // 클립 보관함 — 지난 방송에서 딴 영상을 다시 본다 (기록 전용)
       if (Shell.Clips) icons += Shell.Clips.deskIcon();
 
@@ -687,6 +693,7 @@
         else if (btn.getAttribute('data-app') === 'shop') self.openShop();
         else if (btn.getAttribute('data-app') === 'cast' && Shell.Dex) Shell.Dex.openPanel();
         else if (btn.getAttribute('data-app') === 'clips' && Shell.Clips) Shell.Clips.openPanel();
+        else if (btn.getAttribute('data-app') === 'lab') self.openLab();
       });
       // 휴방 (§7) — 하루를 쉬고 텐션을 회복한다. 시청자 수에는 아무 일도 일어나지 않는다
       var rest = $('restBtn');
@@ -747,8 +754,8 @@
         '</div>' +
         (lk.open
           ? '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>'
-          : '<div class="dwHint locked">🔒 <b>' + lkFrom + '</b>에서 <b>' + lk.grade + '등급</b> 이상을 ' +
-            '<b>' + lk.need + '회</b> 받으면 열립니다 (현재 ' + lk.have + '회)</div>');
+          : '<div class="dwHint locked">🔒 <b>' + lkFrom + '</b>을 <b>' + lk.need + '회</b> 방송하면 ' +
+            '열립니다 (현재 ' + lk.have + '회 — 등급은 상관없다)</div>');
 
       // 벡터 썸네일 — 아트가 없는 게임은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
       var drawVec = function (cv) {
@@ -1189,6 +1196,40 @@
       });
     },
 
+    // 새 방송 콘텐츠 (물음표 슬롯) — 아직 기능이 아니라 방향이다.
+    // 여기서 뭔가 생성하는 척하지 않는다. 채널이 이미 들고 있는 값(색깔·최다 반응 태그)을
+    // 씨앗으로 보여주고, 다음 게임은 그걸 읽고 만들어진다는 것까지만 말한다.
+    openLab: function () {
+      var self = this;
+      $('jgsWin').classList.remove('minimized');
+      $('appJgs').classList.add('on');
+      $('overlay').classList.remove('hidden');
+      var top = this.mixTop();
+      // 씨앗 = 도감에서 가장 많이 열린 반응 태그. 새 API를 만들지 않고 이미 쌓인 칸을 센다
+      var seeds = [];
+      if (Shell.Dex) {
+        var cells = Shell.Dex.load().cells || {}, tally = {};
+        for (var key in cells) {
+          var ev = key.split('@')[1];
+          if (ev) tally[ev] = (tally[ev] || 0) + 1;
+        }
+        seeds = Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; }).slice(0, 3);
+      }
+      $('overlay').innerHTML = '<div class="panel labWin">' +
+        '<h2><span class="labQ">?</span>새 방송 콘텐츠</h2>' +
+        '<p class="labLead">종겜은 게임이 떨어지면 끝난다. 다음 콘텐츠는 <b>채널이 무엇에 반응했는지</b>를 ' +
+          '읽어서 만들어진다 — 남의 게임을 가져오는 게 아니라, 이 채널의 취향을 재료로 쓴다.</p>' +
+        '<div class="labSeed"><div class="rlab">지금 채널이 넘긴 재료</div>' +
+          '<div class="labRow"><span>채널 색깔</span><b style="color:' + top.c + '">' + top.n + '</b></div>' +
+          '<div class="labRow"><span>가장 많이 나온 반응</span><b>' +
+            (seeds.length ? seeds.join(' · ') : '아직 방송 기록이 부족하다') + '</b></div>' +
+          '<div class="labRow"><span>방송 수</span><b>' + this.ch.shows + '회</b></div>' +
+        '</div>' +
+        '<p class="labSoon">준비 중 — 이 슬롯은 아직 비어 있다.</p>' +
+        '<div class="btnrow"><button class="slab" id="labClose">데스크탑으로 (Esc)</button></div></div>';
+      $('labClose').onclick = function () { self.showHub(); };
+    },
+
     // ---------- 클립 — 흥미도 기반 자동 캡처 (관측 전용, C3) ----------
     // "어느 포인트가 흥미를 유발했는가"를 셸이 판정해 그 순간을 딴다. 새 저작 테이블 없이
     // 이미 있는 신호 3개를 합성한다 — 자세한 식은 Shell.interestScore (파일 하단, selftest 검증).
@@ -1363,11 +1404,12 @@
       if (typeof MediaRecorder === 'undefined' || !cv.captureStream) return; // 미지원 → 스틸만
       var self = this;
       try {
-        // 합성 캔버스 — 게임(960) + 채팅 미러(300). 클립에 채팅 내역까지 담긴다 (사용자 피드백)
+        // 합성 캔버스 — 게임(960) + 채팅 미러(300) 가로, 세로는 게임(430) + 시청자 그래프(34)
+        // + 하단 HUD(136). 클립이 실제 플레이 화면과 같아 보이게 DOM HUD까지 굽는다 (사용자 피드백)
         this._recCanvas = document.createElement('canvas');
-        this._recCanvas.width = 1260; this._recCanvas.height = 430;
+        this._recCanvas.width = this.REC_W; this._recCanvas.height = this.REC_H;
         this._recCtx = this._recCanvas.getContext('2d');
-        this._recCtx.fillStyle = '#000'; this._recCtx.fillRect(0, 0, 1260, 430);
+        this._recCtx.fillStyle = '#0b0908'; this._recCtx.fillRect(0, 0, this.REC_W, this.REC_H);
         this._recStream = this._recCanvas.captureStream(24);
         var mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
         var mk = function () {
@@ -1392,34 +1434,39 @@
       if (this._recStream) this._recStream.getTracks().forEach(function (t) { t.stop(); });
       this._rec = null; this._recStream = null; this._recCanvas = null; this._recCtx = null;
     },
-    // 녹화 합성 — 매 프레임 게임 화면 + 채팅 미러를 합성 캔버스에 그린다.
-    // 채팅은 DOM 피드를 경량 캐시(마지막 18줄)로 파싱해 캔버스 텍스트로 미러링한다.
+    // 녹화 합성 — 매 프레임 게임 화면 + 화면 위 HUD + 하단 조작부 + 채팅 미러를 합성 캔버스에 그린다.
+    // 캔버스(#scene)만 녹화하면 시청자 수·조작 버튼처럼 DOM으로 그린 것이 클립에서 통째로 빠진다.
+    // 외부 의존성(html2canvas류) 0건 방침이라 DOM 텍스트를 읽어 캔버스로 다시 그린다 — 연출 전용, C3 무관.
+    REC_W: 1260, REC_H: 600,  // 게임 960×430 + 시청자 그래프 34 + 하단 HUD 136 / 오른쪽 채팅 300
     compositeRec: function () {
       if (!this._recCtx || this.phase !== 'live') return;
       var c = this._recCtx;
       c.drawImage(this.ctx.canvas, 0, 0);
-      // 스트리머 캠 — 화면의 캠 박스를 클립에도 굽는다 (우하단, 축소판). 표정은 CAM_MOOD가
+      // 스트리머 캠 — 화면의 캠 박스를 그대로 (우하단, 같은 크기). 표정은 CAM_MOOD가
       // 이미 골라 둔 것을 그대로 쓴다 — 연출 전용이라 수치와 무관 (C3).
       var face = this._camFaces && this._camFaces[this._camMood];
       if (face && face.complete && face.naturalWidth) {
-        var S = 132, bw = S + 12, bh = S + 28, bx = 960 - 12 - bw, by = 430 - 12 - bh;
+        var S = 264, bw = S + 16, bh = S + 30, bx = 960 - 10 - bw, by = 430 - 40 - bh;
         c.fillStyle = 'rgba(12,10,16,.78)'; c.fillRect(bx, by, bw, bh);
         c.strokeStyle = '#00ffa3'; c.lineWidth = 1; c.strokeRect(bx + .5, by + .5, bw - 1, bh - 1);
-        c.drawImage(face, bx + 6, by + 6, S, S);
-        c.fillStyle = '#7dffd0'; c.font = 'bold 10px system-ui, sans-serif'; c.textAlign = 'center';
-        c.fillText('LIVE CAM', bx + bw / 2, by + bh - 8);
+        c.drawImage(face, bx + 8, by + 8, S, S);
+        c.fillStyle = '#7dffd0'; c.font = 'bold 12px system-ui, sans-serif'; c.textAlign = 'center';
+        c.fillText('LIVE CAM', bx + bw / 2, by + bh - 9);
       }
+      this._recHud(c);     // 화면 위 오버레이 — 탈리·시청자 카운터·게임 HUD·연쇄 배수
+      this._recBottom(c);  // 화면 아래 — 시청자 그래프·방송 정보줄·조작 패널·키 안내
       var feed = Chat.feed;
-      c.fillStyle = 'rgba(16,18,20,.94)'; c.fillRect(960, 0, 300, 430);
-      c.fillStyle = 'rgba(0,255,163,.45)'; c.fillRect(960, 0, 1, 430);
-      c.font = 'bold 10px system-ui, sans-serif'; c.textAlign = 'left';
+      c.textAlign = 'left';
+      c.fillStyle = 'rgba(16,18,20,.94)'; c.fillRect(960, 0, 300, this.REC_H);
+      c.fillStyle = 'rgba(0,255,163,.45)'; c.fillRect(960, 0, 1, this.REC_H);
+      c.font = 'bold 10px system-ui, sans-serif';
       c.fillStyle = '#7dffd0'; c.fillText('실시간 채팅', 972, 18);
       if (!feed) return;
       var key = feed.childElementCount + '|' + (feed.lastElementChild ? feed.lastElementChild.textContent : '');
       if (key !== this._chatKey) {
         this._chatKey = key;
         var out = [], kids = feed.children;
-        for (var i = Math.max(0, kids.length - 18); i < kids.length; i++) {
+        for (var i = Math.max(0, kids.length - 36); i < kids.length; i++) {
           var el = kids[i], b = el.querySelector('b');
           out.push({
             sys: el.classList.contains('csys'), don: el.classList.contains('cdon'),
@@ -1429,7 +1476,7 @@
         }
         this._chatLines = out;
       }
-      var y = 420, lines = this._chatLines || [];
+      var y = this.REC_H - 10, lines = this._chatLines || [];
       for (var j = lines.length - 1; j >= 0 && y > 32; j--) {
         var L = lines[j];
         c.font = '11px system-ui, sans-serif';
@@ -1448,6 +1495,114 @@
       if (c.measureText(s).width <= w) return s;
       while (s.length && c.measureText(s + '…').width > w) s = s.slice(0, -1);
       return s + '…';
+    },
+    // 숨은 요소는 빈 문자열 — textContent만 쓴다 (innerText는 매 프레임 레이아웃을 강제한다)
+    _recTxt: function (id) {
+      var e = $(id);
+      if (!e || e.classList.contains('hidden')) return '';
+      return (e.textContent || '').replace(/\s+/g, ' ').trim();
+    },
+    _recPlate: function (c, x, y, w, h, bd) {
+      c.fillStyle = 'rgba(18,14,9,.86)'; c.fillRect(x, y, w, h);
+      c.strokeStyle = bd || '#4a4232'; c.lineWidth = 1; c.strokeRect(x + .5, y + .5, w - 1, h - 1);
+    },
+    // 화면 위 오버레이 미러 — 위치·색은 shell.css의 실제 배치를 따라간다
+    _recHud: function (c) {
+      var live = !$('tally').classList.contains('off');
+      c.fillStyle = live ? 'rgba(178,44,36,.94)' : 'rgba(58,51,42,.94)';
+      c.fillRect(0, 0, 960, 24);
+      c.font = 'bold 11px system-ui, sans-serif'; c.fillStyle = live ? '#fff' : '#9a9184';
+      c.textAlign = 'left';
+      c.fillText('● ON AIR  ' + this._recTxt('tallyUp'), 12, 16);
+      c.textAlign = 'right'; c.fillText(this._recTxt('tallyR'), 948, 16);
+
+      // 시청자 카운터 — 체력바이자 점수(규약 1). 클립에서 이게 빠지면 아무것도 안 남는다
+      var n = this._recTxt('viewerCount'), cold = $('liveBar').classList.contains('cold');
+      c.font = 'bold 24px system-ui, sans-serif';
+      var nw = c.measureText(n).width, pw = nw + 92, px = 480 - pw / 2;
+      this._recPlate(c, px, 32, pw, 34, cold ? '#3a3f46' : '#4a4232');
+      c.textAlign = 'left'; c.fillStyle = cold ? '#9aa0a8' : '#ffdf9e';
+      c.fillText(n, px + 40, 57);
+      c.font = '13px system-ui, sans-serif'; c.fillStyle = '#d5cdbd';
+      c.fillText('명', px + 46 + nw, 57);
+      c.font = 'bold 13px system-ui, sans-serif'; c.fillStyle = '#7dffd0';
+      c.fillText('👁', px + 14, 55);
+
+      var pace = this._recTxt('paceChip');
+      if (pace) {
+        c.font = '11.5px system-ui, sans-serif';
+        var pcw = c.measureText(pace).width + 24;
+        this._recPlate(c, 480 - pcw / 2, 74, pcw, 22);
+        c.fillStyle = '#ffdf9e'; c.textAlign = 'center'; c.fillText(pace, 480, 89);
+      }
+      var pl = this._recTxt('plaque');   // 게임 HUD (stage.hud) — 방송 시간·진행 수치
+      if (pl) {
+        c.font = '12px system-ui, sans-serif';
+        var plw = c.measureText(pl).width + 24;
+        this._recPlate(c, 10, 34, plw, 26);
+        c.fillStyle = '#c9cdd2'; c.textAlign = 'left'; c.fillText(pl, 22, 51);
+      }
+      if (!$('chainMeter').classList.contains('hidden')) {
+        var cv2 = this._recTxt('chainVal'), hot = $('chainMeter').classList.contains('hot');
+        this._recPlate(c, 860, 34, 90, 46, hot ? '#ffb447' : '#4a4232');
+        c.textAlign = 'center'; c.font = '10px system-ui, sans-serif'; c.fillStyle = '#6b6455';
+        c.fillText('연쇄 배수', 905, 50);
+        c.font = 'bold 22px system-ui, sans-serif'; c.fillStyle = hot ? '#ffdf9e' : '#ffb447';
+        c.fillText(cv2, 905, 72);
+      }
+    },
+    // 화면 아래 — 시청자 그래프(캔버스라 그대로 복사) + 방송 정보줄 + 게임 조작 패널 + 키 안내.
+    // 패널은 매 프레임 갱신돼서 0.2초 캐시로 읽는다 (DOM 순회를 60fps로 돌릴 이유가 없다).
+    _recBottom: function (c) {
+      var g = $('liveGraph');
+      if (g) c.drawImage(g, 0, 430, 960, 34);
+      c.fillStyle = '#141517'; c.fillRect(0, 464, 960, this.REC_H - 464);
+      c.fillStyle = '#2e3138'; c.fillRect(0, 464, 960, 1);
+
+      c.textAlign = 'left';
+      c.font = 'bold 14px system-ui, sans-serif'; c.fillStyle = '#ece7dd';
+      var title = this._recTxt('infoTitle');
+      c.fillText(this._recTrunc(c, title, 640), 12, 486);
+      c.font = '11.5px system-ui, sans-serif'; c.fillStyle = '#6b6455';
+      c.fillText(this._recTxt('infoCat') + ' · ' + this._recTxt('infoUptime'), 12, 502);
+      c.textAlign = 'right'; c.font = 'bold 14px system-ui, sans-serif'; c.fillStyle = '#ffb447';
+      c.fillText('👁 ' + this._recTxt('infoViewers'), 948, 486);
+
+      if (this.now - (this._recPanelAt || -9) > .2) {
+        this._recPanelAt = this.now;
+        var host = $('panel');
+        var els = host.querySelectorAll('.bcol');
+        if (!els.length) els = host.querySelectorAll('button');
+        if (!els.length) els = host.children;
+        this._recChips = Array.prototype.map.call(els, function (el) {
+          var kids = el.children.length
+            ? Array.prototype.map.call(el.children, function (k) { return (k.textContent || '').replace(/\s+/g, ' ').trim(); })
+            : [(el.textContent || '').replace(/\s+/g, ' ').trim()];
+          return { lines: kids.filter(Boolean).slice(0, 3), cls: el.className || '' };
+        });
+      }
+      var chips = this._recChips || [], top = 512, h = this.REC_H - top - 24;
+      if (chips.length) {
+        var gap = 8, w = (960 - 20 - gap * (chips.length - 1)) / chips.length;
+        chips.forEach(function (ch, i) {
+          var x = 10 + i * (w + gap), hot = /\bhot\b/.test(ch.cls), lock = /\block(ed)?\b/.test(ch.cls);
+          c.fillStyle = lock ? '#131417' : '#1d1810';
+          c.fillRect(x, top, w, h);
+          c.strokeStyle = hot ? '#ffb447' : lock ? '#2c3036' : '#3a332a';
+          c.lineWidth = 1; c.strokeRect(x + .5, top + .5, w - 1, h - 1);
+          c.textAlign = 'center';
+          ch.lines.forEach(function (t, li) {
+            c.font = (li ? '' : 'bold ') + (li ? '11px' : '12.5px') + ' system-ui, sans-serif';
+            c.fillStyle = li ? (lock ? '#6b6455' : '#c9cdd2') : hot ? '#ffdf9e' : '#ece7dd';
+            c.fillText(this._recTrunc(c, t, w - 12), x + w / 2, top + 18 + li * 17);
+          }, this);
+        }, this);
+      }
+      var foot = this._recTxt('foot');
+      if (foot) {
+        c.textAlign = 'center'; c.font = '11px system-ui, sans-serif'; c.fillStyle = '#6b6455';
+        c.fillText(this._recTrunc(c, foot, 940), 480, this.REC_H - 8);
+      }
     },
 
     // ---------- 페이스 압박 (연출 전용 — 수치 무관) ----------
@@ -1618,7 +1773,7 @@
       this.ch.coins += mBonus; // 미션 보상도 코인 — 장식 재원일 뿐, 룰 수치 무관
       // 이 방송의 등급이 다음 게임의 열쇠가 된다 (해금 사슬). 강제 종료분은 gradeShow가
       // 이미 점수를 0.6배로 깎으므로 따로 거르지 않는다 — 사고 방송으로는 관문이 잘 안 채워진다
-      Shell.recordClear(this.ch, g.id, evGrade.grade);
+      Shell.recordPlay(this.ch, g.id);
       var chNow = this.ch;
       var opened = this.games.filter(function (x) {
         var u = Shell.unlockState(chNow, x.id);
@@ -2039,27 +2194,23 @@
   };
 
   // ---------- 방송 해금 사슬 ----------
-  // 다음 게임은 "직전 게임에서 일정 등급 이상을 몇 번" 받아야 열린다. 절대 시청자 수를
-  // 관문으로 쓰지 않는 이유: gradeShow의 growth가 log10(final/start) — 비율이라 구독자가
-  // 늘어 출발선이 올라가도 난이도가 녹지 않는다. 그래서 앞 게임에서 익힌 운영(유지율·클립·
-  // 신선도)이 그대로 다음 관문의 발판이 되고, 관문은 B 2회 → A 3회로 점차 올라간다.
+  // 다음 게임은 "직전 게임을 몇 번 방송했나"로 열린다. 등급 관문(B·A 몇 회)이었을 때는
+  // 실력이 모자라면 사슬 자체가 멈춰서, 30일 안에 마지막 게임을 만져보지도 못하고 시즌이
+  // 끝났다 — 종겜(여러 게임을 도는 것)이라는 컨셉이 잠겨 버린다.
+  // 방송 횟수로 바꾸면 해금은 반드시 진행되고, 실력은 등급·미션·시즌 목표에서 겨룬다.
   Shell.UNLOCK = [
-    { id: 'hwaryeok' },                                          // 첫 방송 — 항상 열려 있다
-    { id: 'giving-up', from: 'hwaryeok',  grade: 'B', times: 2 },
-    { id: 'pocket',    from: 'giving-up', grade: 'B', times: 3 },
-    { id: 'bomb',      from: 'pocket',    grade: 'A', times: 2 },
-    { id: 'fishing',   from: 'bomb',      grade: 'A', times: 3 },
+    { id: 'hwaryeok' },                              // 첫 방송 — 항상 열려 있다
+    { id: 'giving-up', from: 'hwaryeok',  times: 2 },
+    { id: 'pocket',    from: 'giving-up', times: 2 },
+    { id: 'bomb',      from: 'pocket',    times: 3 },
+    { id: 'fishing',   from: 'bomb',      times: 3 },
   ];
-  var RANK = { S: 3, A: 2, B: 1, C: 0, D: 0 };
 
-  // 정산이 부르는 기록기 — 상위 등급은 하위 등급 관문도 함께 채운다 (A 한 번은 B 한 번이기도 하다)
-  Shell.recordClear = function (ch, gameId, grade) {
-    if (!ch.clears) ch.clears = {};
-    var c = ch.clears[gameId] || (ch.clears[gameId] = {});
-    var r = RANK[grade] || 0;
-    if (r >= 1) c.B = (c.B || 0) + 1;
-    if (r >= 2) c.A = (c.A || 0) + 1;
-    return c;
+  // 정산이 부르는 기록기 — 등급과 무관하게 "방송했다"는 사실만 센다
+  Shell.recordPlay = function (ch, gameId) {
+    if (!ch.plays) ch.plays = {};
+    ch.plays[gameId] = (ch.plays[gameId] || 0) + 1;
+    return ch.plays[gameId];
   };
 
   // 해금 상태 — 순수 함수로 떼어 둔 이유는 shopBuy와 같다. 조용히 틀리면 게임이
@@ -2068,18 +2219,20 @@
     var u = null;
     for (var i = 0; i < Shell.UNLOCK.length; i++) if (Shell.UNLOCK[i].id === gameId) u = Shell.UNLOCK[i];
     if (!u || !u.from) return { open: true };   // 사슬에 없는 게임은 잠그지 않는다
-    var have = ((ch.clears || {})[u.from] || {})[u.grade] || 0;
-    return { open: have >= u.times, from: u.from, grade: u.grade, need: u.times, have: have };
+    var have = (ch.plays || {})[u.from] || 0;
+    return { open: have >= u.times, from: u.from, need: u.times, have: have };
   };
 
   // 오늘의 미션 — 결정론 (shows 회차로 회전, 목표는 채널 기록에 비례). 보상은 코인(장식 재원)뿐.
   Shell.makeMissions = function (ch) {
     var bestAll = 0;
     for (var k in ch.best) bestAll = Math.max(bestAll, ch.best[k] || 0);
+    // 목표는 자기 최고 기록의 35%다 (전 60%). 최고 기록은 잘 풀린 날의 수치라 그 60%를
+    // 매 방송 요구하면 평범한 날은 무조건 실패한다 — 미션이 보상이 아니라 벌점이 된다.
     var pool = [
-      { k: 'peak',  label: '피크 시청자', target: Math.max(1000, Math.round(bestAll * .6 / 100) * 100), reward: 400 },
-      { k: 'coins', label: '도네 코인',   target: Math.min(3000, 300 + ch.shows * 100), reward: 400 },
-      { k: 'clips', label: '클립',        target: 2, reward: 400 },
+      { k: 'peak',  label: '피크 시청자', target: Math.max(600, Math.round(bestAll * .35 / 100) * 100), reward: 600 },
+      { k: 'coins', label: '도네 코인',   target: Math.min(1500, 150 + ch.shows * 50), reward: 600 },
+      { k: 'clips', label: '클립',        target: 1, reward: 600 },
     ];
     var i = ch.shows % 3;
     return [pool[i], pool[(i + 1) % 3]];
