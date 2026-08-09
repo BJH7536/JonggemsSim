@@ -1346,6 +1346,17 @@
       if (!this._recCtx || this.phase !== 'live') return;
       var c = this._recCtx;
       c.drawImage(this.ctx.canvas, 0, 0);
+      // 스트리머 캠 — 화면의 캠 박스를 클립에도 굽는다 (우하단, 축소판). 표정은 CAM_MOOD가
+      // 이미 골라 둔 것을 그대로 쓴다 — 연출 전용이라 수치와 무관 (C3).
+      var face = this._camFaces && this._camFaces[this._camMood];
+      if (face && face.complete && face.naturalWidth) {
+        var S = 132, bw = S + 12, bh = S + 28, bx = 960 - 12 - bw, by = 430 - 12 - bh;
+        c.fillStyle = 'rgba(12,10,16,.78)'; c.fillRect(bx, by, bw, bh);
+        c.strokeStyle = '#00ffa3'; c.lineWidth = 1; c.strokeRect(bx + .5, by + .5, bw - 1, bh - 1);
+        c.drawImage(face, bx + 6, by + 6, S, S);
+        c.fillStyle = '#7dffd0'; c.font = 'bold 10px system-ui, sans-serif'; c.textAlign = 'center';
+        c.fillText('LIVE CAM', bx + bw / 2, by + bh - 8);
+      }
       var feed = Chat.feed;
       c.fillStyle = 'rgba(16,18,20,.94)'; c.fillRect(960, 0, 300, 430);
       c.fillStyle = 'rgba(0,255,163,.45)'; c.fillRect(960, 0, 1, 430);

@@ -1037,18 +1037,22 @@ body.fullshow #camBox { bottom: 235px; }
 body.fullshow #overlay { z-index: 9; }
 
 /* ---------- 클립 보관함 (clips.js) — 지난 방송 클립 다시보기 ---------- */
-.panel.clipWin { width: min(880px, 96%); max-height: 86vh; overflow-y: auto; }
-.clipSaveGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin: 12px 0 4px; }
+.panel.clipWin { width: min(1520px, 96%); max-height: 86vh; overflow-y: auto; }
+/* 카드 폭 720px 고정 — 좁은 화면에선 100%로 줄고, 넓으면 두 장씩 붙는다 (사용자 요청: 3배) */
+.clipSaveGrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 720px), 720px));
+  justify-content: center; gap: 18px; margin: 12px 0 4px;
+}
 .clipSave { margin: 0; }
 .clipSave video {
   width: 100%; height: auto; display: block; border-radius: 7px;
   border: 1px solid #2c3036; background: #000;
 }
-.clipSave figcaption { font-size: 11.5px; color: #c9cdd2; margin-top: 5px; line-height: 1.5; }
+.clipSave figcaption { font-size: 13px; color: #c9cdd2; margin-top: 7px; line-height: 1.55; }
 .clipSave figcaption b { color: var(--plat); }
-.csMeta { display: block; color: var(--dim); font-size: 10.5px; margin: 2px 0 4px; }
+.csMeta { display: block; color: var(--dim); font-size: 11.5px; margin: 3px 0 6px; }
 .csBtn {
-  display: inline-block; margin-right: 5px; padding: 3px 9px; font-size: 10.5px; cursor: pointer;
+  display: inline-block; margin-right: 6px; padding: 4px 11px; font-size: 11.5px; cursor: pointer;
   border: 1px solid #3a3f46; border-radius: 5px; background: #23262a; color: #c9cdd2; text-decoration: none;
 }
 .csBtn:hover { border-color: var(--plat); color: var(--plat); }
