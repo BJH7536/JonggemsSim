@@ -90,6 +90,32 @@ ok('3회째 반복은 무엇이어도 클립 불가 (규약 4)', IS(4, 2, 1) < T
 ok('무게 4 두 번째는 급증이 실리면 클립 가능', IS(4, 1, 1) >= TH);
 ok('급증 신호는 단조 증가', IS(4, 1, 1) > IS(4, 1, .5) && IS(4, 1, .5) > IS(4, 1, 0));
 
+// ---- 도네 사건 판정 — 비율이 틀리면 초반엔 영영 안 터지고 후반엔 배너가 도배된다 ----
+function spike(viewers, n, now, lastAt) {
+  var ctx = { phase: 'live', viewers: viewers, now: now, _lastForceAt: lastAt, _donForce: 0 };
+  Shell.donSpike.call(ctx, n);
+  return ctx._donForce;
+}
+eq('빈도 배율은 0.5 — 재장전이 절반이면 빈도는 두 배', Shell.DON.RATE, 0.5);
+eq('임계 미만은 사건이 아니다', spike(1000, 119, 10, -99), 0);
+eq('시청자의 12%가 움직이면 사건 — 1건 예약', spike(1000, 120, 10, -99), 1);
+eq('큰 채널도 같은 비율이면 같은 판정 (절대값 기준 아님)', spike(100000, 12000, 10, -99), 1);
+eq('작은 채널도 비율만 넘으면 터진다', spike(300, 36, 10, -99), 1);
+eq('큰 채널에서 소액 유입은 사건이 아니다', spike(100000, 500, 10, -99), 0);
+ok('대참사급(30%)은 2~3건 연속 예약', (function () {
+  for (var i = 0; i < 40; i++) { var n = spike(1000, 300, 10, -99); if (n !== 2 && n !== 3) return false; }
+  return true;
+})());
+ok('29%는 아직 연속이 아니다 (1건)', spike(1000, 290, 10, -99) === 1);
+eq('직전 사건 3초 안에는 다시 예약되지 않는다 (규약 3)', spike(1000, 500, 12, 10), 0);
+ok('3초가 지나면 다시 예약된다', spike(1000, 500, 14, 10) > 0);
+eq('연속 간격은 규약 3의 0.4초 이상', Shell.DON.STAGGER >= 0.4, true);
+ok('방송 중이 아니면 판정하지 않는다', (function () {
+  var ctx = { phase: 'hub', viewers: 1000, now: 10, _lastForceAt: -99, _donForce: 0 };
+  Shell.donSpike.call(ctx, 900);
+  return ctx._donForce === 0;
+})());
+
 // ---- 상점 구매 — 차감·중복·잔액 검사 (틀리면 코인 증발 or 무한 구매) ----
 var shopCh = { coins: 1000, gear: {} };
 eq('구매 성공 시 정확히 차감', (Shell.shopBuy(shopCh, { id: 'x', price: 600 }) === 'ok' ? shopCh.coins : -1), 400);

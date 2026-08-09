@@ -110,32 +110,44 @@ body {
 #paceChip.hot { border-color: var(--amber); color: #ffdf9e; box-shadow: 0 0 14px rgba(255,180,71,.5); animation: tpulse 1.6s infinite; }
 /* 도네 배너 — 화면 우상단으로 슬라이드 인 (규약 5: 양념은 화려하게) */
 /* 판·테두리 없이 글자만 게임 위에 얹는다 (사용자 요청) — 대신 그림자로 가독성을 잡는다 */
+/* 도네 스택 — 여러 건이 동시에 뜰 수 있고 채팅처럼 위에서 아래로 쌓인다.
+   한 장짜리 배너를 큐로 돌리던 구조를 바꾼 이유: 대참사 때 2~3건이 몰리는데
+   순차 재생하면 마지막 도네가 사건이 끝난 한참 뒤에 뜬다 */
 #donBanner {
-  position: absolute; top: 76px; right: -1000px; z-index: 3; max-width: 900px;
-  padding: 0 12px; font-size: 56px; color: #ffedc4;
+  position: absolute; top: 76px; right: 12px; z-index: 3; max-width: 900px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  pointer-events: none;
+}
+.donCard {
+  /* 폭 상한이 없으면 카드가 컨테이너를 넘어 화면 밖으로 나가고, drainDon의 글자 줄이기
+     루프(scrollWidth > clientWidth)도 영영 발동하지 않는다 — 긴 닉네임이 잘린다 */
+  max-width: 100%;
+  padding: 0 12px; font-size: 56px; color: #ffedc4; text-align: right;
   text-shadow: 0 3px 10px #000, 0 0 22px rgba(0,0,0,.95);
-  pointer-events: none; opacity: 0;
+  opacity: 0; pointer-events: auto; cursor: pointer;
+  animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards;
 }
 /* flex로 두면 "님이"·금액·"후원!"이 각각 flex 아이템이라 글자 중간에서 줄이 끊긴다.
    글자가 커진 뒤로는 일반 텍스트 흐름이어야 어절 단위로 줄바꿈된다 */
 /* 후원 머리줄은 한 줄로 — 이름·금액이 줄바꿈으로 끊기면 읽히지 않는다 (사용자 요청).
    긴 닉네임으로 폭을 넘길 때만 drainDon이 글자 크기를 줄여 한 줄에 맞춘다 */
-#donBanner .dhead { font-weight: 700; line-height: 1.25; white-space: nowrap; }
-#donBanner .uiIco { width: 1.3em; height: 1.3em; vertical-align: -.28em; margin-right: .22em; }
+.donCard .dhead { font-weight: 700; line-height: 1.25; white-space: nowrap; }
+.donCard .uiIco { width: 1.3em; height: 1.3em; vertical-align: -.28em; margin-right: .22em; }
 /* 머리줄 안에 있으니 em — px로 두면 줄여도 금액만 그대로 커서 한 줄에 들어오지 않는다 */
-#donBanner .amt { color: #ffdf9e; font-size: 1.22em; }
-#donBanner .dmsg { color: #e6dcc6; font-size: 48px; margin-top: 12px; }
-#donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; pointer-events: auto; cursor: pointer; }
+.donCard .amt { color: #ffdf9e; font-size: 1.22em; }
+.donCard .dmsg { color: #e6dcc6; font-size: 36px; margin-top: 8px; }
 /* 도네 읽어주기 — 배너가 떠 있는 동안 클릭 가능. 읽으면 민트 확인 (응답 루프, 연출 전용) */
-#donBanner .dhint { margin-top: 12px; font-size: 42px; color: #9fd8ff; opacity: .85; }
+/* 카드가 세 장까지 쌓이므로 안내줄은 최소 크기(20px)로 — 안 그러면 스트리머 캠을 덮는다 */
+.donCard .dhint { margin-top: 8px; font-size: 20px; color: #9fd8ff; opacity: .85; }
 /* 읽음 표시 — 테두리가 없으니 글자 빛을 민트로 바꿔 응답 루프를 유지한다 */
-#donBanner.read { text-shadow: 0 3px 10px #000, 0 0 24px rgba(0,255,163,.6); }
-#donBanner.read .dhint { color: #7dffd0; }
+.donCard.read { text-shadow: 0 3px 10px #000, 0 0 24px rgba(0,255,163,.6); }
+.donCard.read .dhint { color: #7dffd0; }
+/* 컨테이너가 flex 칼럼이라 right를 움직이면 안 된다 — transform으로 밀어 넣는다 */
 @keyframes donin {
-  0% { right: -1000px; opacity: 0; }
-  9% { right: 12px; opacity: 1; }
-  84% { right: 12px; opacity: 1; }
-  100% { right: 12px; opacity: 0; transform: translateY(-8px); }
+  0%   { opacity: 0; transform: translateX(1000px); }
+  9%   { opacity: 1; transform: translateX(0); }
+  84%  { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
 }
 /* 전폭 실시간 그래프 — 뷰포트 하단에 반투명으로 깔린다 */
 #liveGraph {
@@ -372,7 +384,7 @@ body.g-holobadge .chatBadge {
 }
 /* 판이 없어져 box-shadow는 허공에 사각 글로우만 남긴다 — 금색 글자 빛으로 대체 */
 body.g-fanfare #donBanner { color: #fff3d4; text-shadow: 0 3px 10px #000, 0 0 26px rgba(255,210,74,.7); }
-body.g-fanfare #donBanner .amt { text-shadow: 0 0 10px rgba(255,210,74,.8); }
+body.g-fanfare .donCard .amt { text-shadow: 0 0 10px rgba(255,210,74,.8); }
 body.g-neonsign #viewport { outline-color: rgba(0,255,163,.55); box-shadow: 0 14px 44px #000c, 0 0 26px rgba(0,255,163,.28); }
 body.g-tallyplat #tally { background: linear-gradient(100deg, #dfe6ee, #9ec8e0 60%, #dfe6ee); color: #1a2430; animation: none; }
 body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }

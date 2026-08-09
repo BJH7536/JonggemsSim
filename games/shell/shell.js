@@ -431,7 +431,7 @@
       });
       this._camMood = 'silence'; this._camAt = 0;
       this._graph = []; this._graphT = 0; this._upT = 0;
-      this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
+      this._donQ = [];                             // 도네 카드 큐 (스택으로 동시 표시)
       this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
       if (Shell.Crowd) Shell.Crowd.init(); // 시청자 100종 중 88명을 발화층에 합류 (관측단 제외)
@@ -443,7 +443,10 @@
         self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
       });
       // 도네 읽어주기 — 배너가 떠 있는 3.4초 동안만 클릭이 통한다 (CSS pointer-events)
-      $('donBanner').addEventListener('click', function () { self2.readDonation(); });
+      $('donBanner').addEventListener('click', function (e) {
+        var c = e.target && e.target.closest ? e.target.closest('.donCard') : null;
+        self2.readDonation(c);
+      });
       // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
       // 한 지면에 4컷. 클릭할 때마다 다음 컷이 왼쪽에서 들어와 쌓이고(이전 컷은 남는다),
       // 4컷이 다 차면 만화가 완성되면서 서명 버튼이 열린다 (사용자 요청).
@@ -899,6 +902,7 @@
       this._start0 = start0;
       this.viewers = start0;
       this._donT = 6 + Math.random() * 4;  // 도네 타이머는 셸 소유 (contract 4.2)
+      this._donForce = 0; this._lastForceAt = -99;   // 사건 도네 예약 건수 (방송 단위 리셋)
       this.comp = this.ch.mix.map(function (r) { return start0 * r; });
       this.compStart = this.comp.slice();
       this.fickle = [0, 0, 0, 0];
@@ -947,7 +951,7 @@
       $('liveBar').classList.remove('cold');
       $('paceChip').classList.add('hidden');
       $('donBanner').classList.remove('show');
-      this._donQ.length = 0; this._donBusy = false;
+      this._donQ.length = 0; $('donBanner').innerHTML = '';
       // 클립 — 흥미도 기반 자동 캡처 상태 (방송 단위 리셋). 지난 방송 영상 URL은
       // 아카이브(하이라이트 다시보기)에 남은 것만 빼고 회수한다
       var arch0 = Shell._clipArchive || [];
@@ -999,6 +1003,9 @@
           // 대가는 이미 hold(final/peak)에 있다: 크게 터뜨릴수록 유지가 어려워진다
           var rigM = (ev === 'donation') ? 1 : Shell.rigGain(self.ch);
           var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id) * rigM));
+          // 사건 판정은 유입 전 규모 기준이다 (더한 뒤 재면 비율이 희석된다).
+          // 도네 자신의 획득은 제외 — 안 그러면 도네가 도네를 부르는 고리가 생긴다
+          if (ev !== 'donation') self.donSpike(actual);
           self.viewers += actual;
           self._surgeAcc += actual;                          // 흥미도의 급증 신호 (클립)
           self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
@@ -1027,14 +1034,24 @@
         // base·prob는 게임이 정한다 (기존 밸런스 보존). 반환: 터졌으면 실제 반영량, 아니면 0
         donRoll: function (dt, base, prob) {
           if (self.phase !== 'live') return 0;
+          // 사건(급등·급락)이 예약돼 있으면 타이머도 확률도 건너뛰고 무조건 터뜨린다
+          var forced = (self._donForce || 0) > 0;
           self._donT -= dt;
-          if (self._donT > 0) return 0;
+          if (!forced && self._donT > 0) return 0;
           var r = Shell.rigDon(self.ch);
-          self._donT = ((base || 9) + Math.random() * 7) * r.gap;
-          if (Math.random() >= (prob == null ? .45 : prob) + r.prob) return 0;
-          // 양념 (규약 5): 랜덤 도네는 드물게, 규모 비례 1~3% 최소 10명 (critic L5).
-          // 게임 5종에서 이관된 밸런스 근거 — 값을 바꾸면 양념이 뼈대를 넘본다
-          var d = Math.max(10, Math.round(self.viewers * (0.01 + Math.random() * 0.02)));
+          var reload = ((base || 9) + Math.random() * 7) * r.gap * Shell.DON.RATE;
+          if (forced) {
+            // 남은 연속분이 있으면 짧은 간격으로, 마지막이면 평소 주기로 되돌린다
+            self._donForce--;
+            self._donT = self._donForce > 0 ? Shell.DON.STAGGER : reload;
+          } else {
+            self._donT = reload;
+            if (Math.random() >= (prob == null ? .45 : prob) + r.prob) return 0;
+          }
+          // 양념 (규약 5): 규모 비례. 원래 1~3%였는데 빈도를 2배로 올리고 사건 연속 발행까지
+          // 붙였으므로 건당 금액을 0.4~1.2%로 낮췄다 — 총 수입을 대략 유지해서 도네(랜덤)가
+          // 뼈대를 넘보지 않게 한다. 이 값은 장비 유지비의 기준이기도 하다 (ADR-008 §5)
+          var d = Math.max(5, Math.round(self.viewers * (0.004 + Math.random() * 0.008)));
           var a = this.gain(d, '익명의 도네', 'donation');
           this.emit('donation', { d: a.toLocaleString() });
           return a;
@@ -1083,8 +1100,23 @@
       }
       el.innerHTML = html;
     },
+    // 사건 감지 — 시청자가 한 번에 확 오르거나 확 빠지면 다음 프레임의 donRoll이 무조건 터진다.
+    // 스트리밍에서 지갑이 열리는 건 '그 순간'이지 평균적인 순간이 아니다.
+    // C3 유지: 시청자 수를 여기서 건드리지 않는다 — 도네 발행 여부만 예약한다
+    donSpike: function (n) {
+      if (this.phase !== 'live' || !(n > 0)) return;
+      var base = Math.max(1, this.viewers);
+      if (n < base * Shell.DON.SPIKE) return;
+      if (this.now - (this._lastForceAt || -99) < Shell.DON.FORCE_GAP) return;
+      this._lastForceAt = this.now;
+      // 대참사급이면 2~3건이 연달아 터진다. 이벤트 이름을 셸이 알 필요는 없다 —
+      // 규모가 곧 사건의 크기다 (게임마다 대참사 태그가 달라도 그대로 동작한다)
+      this._donForce = (n >= base * Shell.DON.BURST) ? (2 + Math.floor(Math.random() * 2)) : 1;
+    },
+
     loseViewers: function (n) {
       if (this.phase !== 'live' || !(n > 0)) return;
+      this.donSpike(n);   // 급락도 사건이다 — 빠지기 전 규모 기준으로 잰다
       this.viewers = Math.max(0, this.viewers - n);
       this.compSub(n);
       this.renderViewers();
@@ -1130,11 +1162,17 @@
       });
       this.drainDon();
     },
+    // 큐에 쌓인 도네를 전부 카드로 띄운다. 동시에 여러 장이 떠 있을 수 있고,
+    // 채팅처럼 위에서 아래로 쌓인다 (연속 발행 간격은 donRoll이 정한다)
     drainDon: function () {
-      if (this._donBusy || !this._donQ.length) return;
-      var self = this, d = this._donQ.shift();
-      this._donBusy = true;
-      var el = $('donBanner');
+      while (this._donQ.length) this.pushDonCard(this._donQ.shift());
+    },
+
+    pushDonCard: function (d) {
+      var self = this, wrap = $('donBanner');
+      var el = document.createElement('div');
+      el.className = 'donCard';
+      wrap.appendChild(el);
       // 금액 단위는 '코인'(플랫폼 화폐) — 게임이 넘기는 값이 시청자 환산 수치라
       // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법).
       // 형식은 치지직 후원 배너: "{이름}님이 {n}코인 후원!" 머리줄 + 아래 도네 내용 줄.
@@ -1143,7 +1181,7 @@
         d.amt + '코인</b> 후원!</div>' +
         '<div class="dmsg">' + d.msg + '</div>' +
         '<div class="dhint">클릭해서 읽어주기</div>';
-      d.read = false; this._donShown = d; // 읽어주기 대상 — 배너가 사라지면 기회도 사라진다
+      d.read = false; el._don = d; // 읽어주기 대상은 카드마다 따로 — 여러 장이 동시에 뜬다
       // 머리줄은 nowrap이라 긴 닉네임이면 화면 밖으로 흘러 잘린다 — 넘칠 때만 줄여 한 줄에 맞춘다.
       // 아이콘 크기가 em이라 글자와 함께 줄어들어 비례 계산 한 번으로 들어맞는다.
       var hd = el.querySelector('.dhead'), fs = 56;
@@ -1155,18 +1193,18 @@
         fs = Math.min(fs - 1, Math.floor(fs * hd.clientWidth / hd.scrollWidth));
         hd.style.fontSize = fs + 'px';
       }
-      el.classList.remove('show', 'read'); void el.offsetWidth; el.classList.add('show');
+      // 화면을 다 덮지 않게 상한을 둔다 — 넘치면 가장 오래된 카드부터 물러난다
+      while (wrap.children.length > Shell.DON.STACK) wrap.removeChild(wrap.firstChild);
       // 도네 알림음은 기본 — 코인 딸랑 두 음. 팡파레(상점 용품)는 그 위에 얹는다 (순수 장식)
       Shell.sfx.tone(1175, .07, 'triangle', .06); Shell.sfx.tone(1568, .1, 'triangle', .05, .07);
       if (this.ch.gear.fanfare) {
         Shell.sfx.tone(1047, .09, 'triangle', .07); Shell.sfx.tone(1319, .1, 'triangle', .06, .08);
         Shell.sfx.tone(1568, .18, 'triangle', .06, .16);
       }
+      // 애니메이션(3.4초)이 끝나면 카드 자신만 사라진다 — 다른 카드는 자기 시계로 산다
       setTimeout(function () {
-        self._donBusy = false; self._donShown = null;
-        $('donBanner').classList.remove('show', 'read'); // 애니메이션 종료 시점 — 시각적 무변화
-        self.drainDon();
-      }, 3400);
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 3500);
     },
 
     // ---------- 도네 읽어주기 (응답 루프 — 연출 전용) ----------
@@ -1174,13 +1212,18 @@
     // 잠깐 게임에서 떨어지는 것 자체가 비용이자 몰입 장치다. 읽어주면 후원자가 반갑게
     // 반응하고(don_read, 화자 = 후원자 본인) trust(방송 간 관계 변수, ADR-003)가 쌓인다.
     // ponytail: 경제 무관여 — 시청자·코인 이득 없음. 유입을 붙이려면 공명 모델 게이트(§5) 뒤에.
-    readDonation: function () {
-      var d = this._donShown;
+    // card 없이 부르면 아직 안 읽은 가장 최근 카드를 읽는다 (스택이라 대상이 여럿이다)
+    readDonation: function (card) {
+      var wrap = $('donBanner');
+      if (!card) {
+        var cs = wrap.querySelectorAll('.donCard');
+        for (var i = cs.length - 1; i >= 0; i--) if (cs[i]._don && !cs[i]._don.read) { card = cs[i]; break; }
+      }
+      var d = card && card._don;
       if (!d || d.read || this.phase !== 'live') return;
       d.read = true;
-      var el = $('donBanner');
-      el.classList.add('read');
-      var h = el.querySelector('.dhint'); if (h) h.textContent = '읽어줬다 — 후원자가 답한다';
+      card.classList.add('read');
+      var h = card.querySelector('.dhint'); if (h) h.textContent = '읽어줬다 — 후원자가 답한다';
       this.camReact('donation'); // aha 표정 — 도네를 보고 웃는 얼굴
       this.showTicker('"' + d.msg + '" — ' + d.who.nick + '님 감사합니다!');
       Chat.memory('don_read', {}, d.who, 700 + Math.random() * 500); // 사람이 읽고 답하는 템포
@@ -2446,6 +2489,18 @@
     ch.coins -= item.price;
     ch.gear[item.id] = true;
     return 'ok';
+  };
+
+  // 도네 튜닝 — 주기·확률은 셸 소유다 (contract 4.2)
+  Shell.DON = {
+    RATE: 0.5,      // 재장전 배율. 0.5 = 빈도 2배
+    // 사건 판정을 비율로 잡는 이유: 절대값으로 두면 초반엔 영영 안 터지고 후반엔 계속 터진다.
+    // 시청자의 12%가 한 번에 움직였으면 그건 평범한 순간이 아니다
+    SPIKE: 0.12,
+    BURST: 0.30,    // 대참사급 — 시청자의 30%가 한 번에 움직이면 2~3건이 연달아 터진다
+    STAGGER: 0.45,  // 연속 도네 사이 간격(초). 규약 3의 0.4초를 지키면서 겹쳐 보이게 한다
+    STACK: 3,       // 화면에 동시에 떠 있을 수 있는 카드 수 (그 이상은 스트리머 캠을 덮는다)
+    FORCE_GAP: 3,   // 사건 도네 최소 간격(초) — 연쇄 사건에 배너가 도배되지 않게 (규약 3)
   };
 
   Shell.CLIP = { THRESH: .5, GAP: 8, KEEP: 4, RAW_MAX: 10 };
