@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>주머니 괴수 구동 검사 (임시)</title></head>
+<body>
+<canvas id="scene" width="960" height="430"></canvas>
+<div id="panel"></div>
+<div id="plaque"></div><div id="chainVal"></div><div id="chainMeter"></div>
+<pre id="out"></pre>
+<script src="../../data/personas/cast.js"></script>
+<script src="../../data/tikitaka.js"></script>
+<script src="../../data/regulars.js"></script>
+<script src="../../data/dex.js"></script>
+<script src="../../data/personas/viewers.js"></script>
+<script src="../../data/events/tagmap.js"></script>
+<script src="config.js"></script>
+<script src="../../engine/chat.js"></script>
+<script src="../../engine/llm.js"></script>
+<script src="shell.js"></script>
+<script src="dex.js"></script>
+<script src="crowd.js"></script>
+<script src="impact.js"></script>
+<script src="../../data/events/pocket.js"></script>
+<script src="../pocket/game.js"></script>
+<script>
+// ADR-010 구동 검사 — 셸 없이 stage를 스텁으로 물려 pocket 인스턴스만 돌린다.
+// 검사 대상: 복귀 2지선다 · 선입력 큐 · 40% 복귀 · wipe 임팩트 트리거.
+var log = [], pass = 0, fail = 0;
+function ok(label, cond) { cond ? pass++ : fail++; log.push((cond ? '  ok  ' : ' FAIL ') + label); }
+
+var G = Shell.games.filter(function (g) { return g.id === 'pocket'; })[0];
+var emitted = [], gained = [], lost = 0, tickers = [];
+var panel = document.getElementById('panel');
+var stage = {
+  W: 960, H: 430, ctx: document.getElementById('scene').getContext('2d'), panel: panel,
+  viewers: 1000, timeLeft: 180, now: 0, live: true,
+  gain: function (n, label, ev) { gained.push([Math.round(n), ev]); this.viewers += Math.round(n); return Math.round(n); },
+  lose: function (n) { lost += n; this.viewers -= n; },
+  emit: function (ev) { emitted.push(ev); },
+  hud: function () {}, stamp: function () {}, ticker: function (t) { tickers.push(t); },
+  setChain: function () {}, shake: function () {}, flash: function () {}, donRoll: function () { return 0; },
+  end: function () {},
+};
+var inst = G.start(stage);
+var st = inst.st;
+function tick(sec) { var d = 1 / 60; for (var i = 0; i < Math.round(sec * 60); i++) { stage.now += d; inst.step(d); } }
+function click(sel) { var b = panel.querySelector(sel); if (b && !b.disabled) { b.click(); return true; } return false; }
+
+// ── 1. 기본 턴: 기술 클릭 → busy → 연출 뒤 조작권 복귀
+ok('시작 시 조작 가능', st.phase === 'player');
+ok('기술 버튼 4개가 활성', panel.querySelectorAll('.pkmove:not([disabled])').length === 4);
+click('[data-mv="0"]');
+ok('클릭 즉시 busy로', st.phase === 'busy');
+ok('연출 중에도 기술 버튼이 살아 있다 (선입력)', panel.querySelectorAll('.pkmove:not([disabled])').length === 4);
+
+// ── 2. 선입력 큐: busy 중 입력 → 큐 적재 → 복귀 프레임에 소비
+click('[data-mv="2"]');
+ok('busy 중 입력이 큐에 담긴다', st.buf && st.buf.mv === 2);
+ok('큐에 든 버튼이 표시된다', /border-color/.test(panel.querySelector('[data-mv="2"]').getAttribute('style') || ''));
+click('[data-mv="3"]');
+ok('마지막 입력이 이긴다 (1칸 큐)', st.buf && st.buf.mv === 3);
+var beforeFresh = st.mfresh[3];
+tick(2.5);
+ok('연출이 끝나면 큐가 비워진다', st.buf === null);
+ok('큐에 있던 기술이 실제로 나갔다 (신선도 소모)', st.mfresh[3] > beforeFresh);
+
+// ── 3. 전멸 → 복귀 2지선다
+st.bench.forEach(function (b) { b.hp = 0; });
+st.bench[st.active].hp = 1;
+st.phase = 'player'; st.buf = null;
+emitted.length = 0;
+var guard = 0;
+while (st.phase !== 'choice' && guard++ < 400) { if (st.phase === 'player') click('[data-mv="0"]'); tick(0.2); }
+ok('전멸하면 choice 단계로 들어간다', st.phase === 'choice');
+ok('전멸 시 wipe를 발행한다', emitted.indexOf('wipe') >= 0);
+// P0-3(BURST.wipe 3→4) 기각을 못박는다 — 전멸은 런당 5~10회라 설계 피크가 될 만큼
+// 드물지 않다(ADR-010). 다시 4로 올리려면 크기 문턱이 달린 별도 이벤트여야 한다
+ok('wipe는 무게 3에 머문다 (설계 피크 아님 — ADR-010 기각 기록)',
+   G.chat.BURST.wipe === 3 && Shell.impactOf('wipe', 3) === null);
+ok('복귀 선택지 2개가 뜬다', panel.querySelectorAll('[data-rv]').length === 2);
+ok('선택 중에는 기술 선입력을 받지 않는다', panel.querySelectorAll('.pkmove[data-mv]:not([disabled])').length === 0);
+var lostBefore = lost;
+tick(1.0);
+ok('고르는 동안에도 조용히 샌다 (규약 2)', lost > lostBefore);
+
+// ── 4. 즉시 복귀: 1초 · 체력 40% · 복귀 중 선입력 가능
+click('[data-rv="0"]');
+ok('즉시 복귀를 고르면 heal로', st.phase === 'heal');
+ok('즉시 복귀 카운터는 1.0초', Math.abs(st.healT - 1.0) < 0.001);
+ok('복귀 중에도 기술 버튼이 남아 있다', panel.querySelectorAll('.pkmove[data-mv]:not([disabled])').length === 4);
+click('[data-mv="1"]');
+ok('복귀 중 선입력이 담긴다', st.buf && st.buf.mv === 1);
+tick(1.2);
+ok('즉시 복귀는 체력 40%로 돌아온다', st.bench.every(function (b) { return Math.abs(b.hp / b.max - 0.40) < 0.02; }));
+ok('복귀 즉시 미리 눌러둔 기술이 나갔다', st.buf === null && st.phase !== 'heal');
+ok('복귀 시 revive를 발행한다', emitted.indexOf('revive') >= 0);
+ok('즉시 복귀 횟수가 집계된다', st.fastRevives === 1 && st.wipes === 1);
+
+// ── 5. 완전 회복: 5초 · 체력 100%
+tick(2.0); // 직전 턴의 연출을 끝까지 흘려보낸다 (예약 타이머를 남긴 채 상태를 조작하지 않는다)
+st.bench.forEach(function (b) { b.hp = 0; });
+st.bench[st.active].hp = 1; st.phase = 'player'; st.buf = null; st.timers.length = 0;
+var wipesBefore = st.wipes, fastBefore = st.fastRevives;
+guard = 0;
+while (st.phase !== 'choice' && guard++ < 400) { if (st.phase === 'player') click('[data-mv="0"]'); tick(0.2); }
+ok('두 번째 전멸도 choice로', st.phase === 'choice');
+click('[data-rv="1"]');
+ok('완전 회복 카운터는 5.0초', Math.abs(st.healT - 5.0) < 0.001);
+tick(5.2);
+ok('완전 회복은 체력 100%', st.bench.every(function (b) { return b.hp === b.max; }));
+ok('즉시 복귀 집계는 늘지 않는다',
+   st.fastRevives === fastBefore && st.wipes === wipesBefore + 1);
+
+// ── 6. 큐 유효성 재검사 — 예약해 둔 교체 대상이 그 사이에 죽으면 조용히 폐기된다
+//     (공개 경로로만 검사한다: 연출 중 교체를 예약 → 대상이 죽음 → 연출 종료 → 소비 시도)
+tick(1.0);
+st.phase = 'player'; st.buf = null; st.timers.length = 0;
+st.bench.forEach(function (b) { b.hp = b.max; });
+var target = (st.active + 1) % 3, activeBefore = st.active;
+click('[data-mv="0"]');                 // busy 진입
+click('[data-sw="' + target + '"]');    // 교체 예약
+ok('연출 중 교체가 큐에 담긴다', st.buf && st.buf.sw === target);
+st.bench[target].hp = 0;                // 예약 대상이 그 사이에 쓰러진다
+tick(2.5);
+ok('죽은 개체로의 예약 교체는 조용히 폐기된다', st.buf === null && st.active === activeBefore);
+
+// ── 7. 정산 요약
+var sum = inst.summary();
+ok('요약에 전멸/즉시 복귀 행이 있다', sum.some(function (r) { return /전멸/.test(r[0]); }));
+ok('연출 정지값이 tuning에 노출된다', G.tuning.KO_PAUSE === 0.9 && G.tuning.FAINT_PAUSE === 0.8 && G.tuning.REVIVE.fastHp === 0.4);
+
+// ── 8. 리뷰 발견 결함: 콜백이 타이머 큐를 비울 때 역순 순회가 깨지지 않는가
+//     전멸 처리는 st.timers를 통째로 비운다. 큐에 다른 타이머가 함께 있으면
+//     역순 루프의 남은 인덱스가 undefined가 되어 step()이 예외로 죽던 경로다.
+tick(1.5);
+st.phase = 'player'; st.buf = null; st.timers.length = 0;
+st.bench.forEach(function (b) { b.hp = 0; });
+st.bench[st.active].hp = 1;
+var extraRan = false;
+st.timers.push({ t: 5.0, fn: function () { extraRan = true; } }); // 늦게 깨어날 동거 타이머
+var crashed = null;
+try {
+  var g2 = 0;
+  while (st.phase !== 'choice' && g2++ < 400) { if (st.phase === 'player') click('[data-mv=\"0\"]'); tick(0.2); }
+  tick(3.0); // 전멸로 큐가 비워진 뒤에도 step이 계속 돈다
+} catch (e) { crashed = e; }
+ok('타이머 큐가 콜백에 의해 비워져도 step이 죽지 않는다', crashed === null);
+ok('전멸이 동거 타이머까지 끊는다 (전멸한 팀을 다시 때리지 않는다)', extraRan === false);
+
+// ── 9. 복귀 대기 중 기술명이 복귀 후 조작할 개체의 것인가
+click('[data-rv=\"1\"]');
+var MOVE_NAMES_T = [['몸통박치기','불꽃세례','화염돌진','대폭발'],
+                    ['몸통박치기','물대포','아쿠아소용돌이','해일'],
+                    ['몸통박치기','잎날가르기','덩굴쇄도','숲의심판']];
+var shown = panel.querySelector('[data-mv=\"1\"] b').textContent;
+ok('복귀 대기 중 기술명이 복귀 후 개체(0번)의 것이다',
+   shown.indexOf(MOVE_NAMES_T[st.bench[0].t][1]) >= 0);
+
+document.getElementById('out').textContent = log.join('\n') + '\n\n' + (fail ? 'FAIL ' + fail + ' / ' : '') + 'PASS ' + pass;
+
+</script>
+</body></html>

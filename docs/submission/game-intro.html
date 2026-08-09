@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>종겜스 시뮬레이터 — 게임 소개서</title>
+<style>
+/* ============================================================
+   종겜스 시뮬레이터 — 게임 소개서 (A4 5p, PDF 출력용)
+   팔레트·타이포는 games/shell/shell.css의 실제 값을 그대로 승계한다.
+   플랫폼(AI 관객) = 민트, 무대(게임) = 앰버 — 게임 안의 색 규칙과 같다.
+   ============================================================ */
+:root{
+  --ground:#141517; --panel:#1a1d21; --panel2:#202429; --rule:#2e3138;
+  --ink:#efeff1; --dim:#a2a8ae; --faint:#8b9199; --label:#71777d;
+  --plat:#00ffa3; --plat2:#7dffd0; --amber:#ffb447; --amber2:#ffd27a;
+  --tally:#ff2d2d;
+}
+@page{ size:A4; margin:0; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:'Noto Sans KR','Malgun Gothic',sans-serif;
+  font-weight:350; font-size:9.6pt; line-height:1.62;
+  letter-spacing:-.01em;
+}
+.page{
+  position:relative; width:210mm; height:297mm; padding:13mm 15mm 11mm;
+  background:var(--ground); overflow:hidden;
+  display:flex; flex-direction:column;
+  page-break-after:always; break-after:page;
+}
+.page:last-child{ page-break-after:auto; break-after:auto; }
+
+/* ---------- 플랫폼 레일 (게임 안 톱바의 인쇄판) ---------- */
+.rail{
+  display:flex; align-items:center; gap:9px;
+  padding-bottom:6px; border-bottom:1px solid var(--rule); margin-bottom:9mm;
+  font-size:7.4pt; letter-spacing:.1em; color:var(--label);
+}
+.rail .tally{
+  width:6px; height:6px; border-radius:50%; background:var(--tally);
+  box-shadow:0 0 7px rgba(255,45,45,.85); flex:none;
+}
+.rail .live{ color:var(--tally); font-weight:700; letter-spacing:.26em; }
+.rail .mid{ flex:1; color:var(--label); }
+.rail .pg{ font-variant-numeric:tabular-nums; color:var(--dim); letter-spacing:.14em; }
+
+/* ---------- 타이포 ---------- */
+h1,h2,h3,.serif{ font-family:'Noto Serif KR','Nanum Myeongjo',serif; font-weight:700; }
+h2{
+  font-size:16.5pt; line-height:1.3; color:var(--ink);
+  letter-spacing:-.02em; text-wrap:balance;
+}
+h2 em{ font-style:normal; color:var(--amber); }
+h2 .mt{ font-style:normal; color:var(--plat); }
+h3{ font-size:10.5pt; line-height:1.4; color:var(--ink); letter-spacing:-.01em; }
+.eyebrow{
+  font-size:7.4pt; font-weight:600; letter-spacing:.3em; color:var(--plat);
+  margin-bottom:3.5mm;
+}
+.eyebrow.am{ color:var(--amber); }
+.lede{ font-size:10.4pt; line-height:1.7; color:#d6d8db; }
+.dim{ color:var(--dim); }
+.fine{ font-size:8.2pt; line-height:1.6; color:var(--faint); }
+.card .fine{ color:var(--dim); }
+strong{ font-weight:600; color:var(--ink); }
+.mint{ color:var(--plat2); }
+.am{ color:var(--amber2); }
+.num{ font-variant-numeric:tabular-nums; }
+
+/* ---------- 표지 ---------- */
+.cover-top{ display:flex; align-items:baseline; gap:12px; margin-bottom:auto; }
+.logo{
+  font-family:'Noto Serif KR',serif; font-weight:700; font-size:20pt;
+  color:var(--plat); letter-spacing:.02em; line-height:1;
+}
+.logo span{ color:var(--plat2); font-size:12pt; }
+.cover-org{ font-size:7.6pt; letter-spacing:.22em; color:var(--label); }
+
+.hero{ margin:0 0 9mm; }
+.hero h1{
+  font-size:34pt; line-height:1.14; letter-spacing:-.035em; color:var(--ink);
+  text-wrap:balance;
+}
+.hero h1 .k{ color:var(--amber); }
+.hero .sub{
+  margin-top:5mm; font-size:11.6pt; line-height:1.62; color:#d6d8db;
+  max-width:118mm; text-wrap:balance;
+}
+.hero .sub b{ font-weight:600; color:var(--plat2); }
+
+.seed{
+  margin:0 0 8mm; padding:4mm 0 0; border-top:1px solid var(--rule);
+  display:flex; gap:7mm;
+}
+.seed .lbl{ flex:none; width:26mm; font-size:7.4pt; letter-spacing:.18em; color:var(--label); padding-top:2px; }
+.seed .q{ font-family:'Noto Serif KR',serif; font-size:10.2pt; line-height:1.62; color:var(--amber2); }
+.seed .a{ margin-top:2.5mm; font-size:9.2pt; color:var(--dim); }
+
+/* ---------- 방송 프레임 목업 ---------- */
+.rig{ display:flex; gap:0; border:1px solid var(--rule); background:var(--panel); margin-bottom:8mm; }
+.rig-stage{ flex:1; padding:6mm 6mm 5mm; border-right:1px solid var(--rule); background:
+  radial-gradient(120% 80% at 50% -10%, #23262b 0%, var(--panel) 62%); }
+.rig-stage .cap{ font-size:7.2pt; letter-spacing:.24em; color:var(--amber); margin-bottom:3.5mm; }
+.rig-hud{ display:flex; gap:6mm; align-items:flex-end; margin-bottom:4.5mm; }
+.rig-hud .big{ font-family:'Noto Serif KR',serif; font-size:20pt; line-height:1; color:var(--amber); font-variant-numeric:tabular-nums; }
+.rig-hud .unit{ font-size:8pt; color:var(--dim); padding-bottom:2px; }
+.rig-meter{ height:3px; background:#2a2e35; margin-bottom:4mm; }
+.rig-meter i{ display:block; height:100%; width:61%; background:linear-gradient(90deg,var(--amber),var(--amber2)); }
+.rig-ev{ font-size:8.4pt; color:var(--dim); line-height:1.9; }
+.rig-ev code{
+  font-family:'Noto Sans KR',monospace; font-size:8pt; color:var(--amber2);
+  background:rgba(255,180,71,.09); padding:1px 4px;
+}
+.rig-chat{ flex:none; width:62mm; padding:5mm 5mm 4mm; background:#17191c; }
+.rig-chat .cap{ font-size:7.2pt; letter-spacing:.18em; color:var(--plat); margin-bottom:3.5mm; }
+.line{ font-size:8.2pt; line-height:1.5; margin-bottom:2.1mm; }
+.line b{ font-weight:600; }
+.line.fact{ color:var(--amber2); }
+.line.fact b{ color:var(--amber); }
+.line span{ color:#c9cdd2; }
+
+/* ---------- 스펙 스트립 ---------- */
+.strip{ display:flex; border-top:1px solid var(--rule); padding-top:4mm; gap:0; }
+.strip div{ flex:1; padding-right:5mm; }
+.strip dt{ font-size:7.2pt; letter-spacing:.16em; color:var(--label); margin-bottom:1.5mm; }
+.strip dd{ font-size:9pt; color:var(--ink); line-height:1.45; }
+.strip dd b{ color:var(--plat2); font-weight:600; font-variant-numeric:tabular-nums; }
+
+/* ---------- 공용 블록 ---------- */
+.body{ flex:1; display:flex; flex-direction:column; gap:7mm; justify-content:space-between; }
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:7mm; }
+.card{ border:1px solid var(--rule); background:var(--panel); padding:5mm 5.5mm; }
+.card h3{ margin-bottom:2.5mm; }
+.card .fine{ margin-top:2mm; }
+
+/* 강조 수치 판 */
+.figs{ display:flex; border:1px solid var(--rule); background:var(--panel); }
+.figs div{ flex:1; padding:4.5mm 5mm; border-right:1px solid var(--rule); }
+.figs div:last-child{ border-right:0; }
+.figs .k{ font-size:7.2pt; letter-spacing:.14em; color:var(--label); margin-bottom:1.5mm; }
+.figs .v{ font-family:'Noto Serif KR',serif; font-size:15pt; line-height:1.1; color:var(--amber); font-variant-numeric:tabular-nums; }
+.figs .v.m{ color:var(--plat); }
+.figs .n{ font-size:8pt; color:var(--dim); margin-top:1mm; }
+
+/* 순서가 실제로 있는 것에만 번호를 붙인다 (하루의 루프 · 해금 사슬) */
+.steps{ display:flex; gap:0; border-top:1px solid var(--rule); }
+.steps li{ list-style:none; flex:1; padding:4mm 4mm 0 0; }
+.steps .i{
+  font-family:'Noto Serif KR',serif; font-size:8.6pt; color:var(--plat);
+  border-top:2px solid var(--plat); padding-top:2mm; margin-bottom:2mm; display:block;
+  font-variant-numeric:tabular-nums;
+}
+.steps h3{ font-size:9.4pt; margin-bottom:1.5mm; }
+.steps p{ font-size:8.2pt; line-height:1.5; color:var(--dim); }
+
+/* 표 */
+table{ width:100%; border-collapse:collapse; font-size:8.6pt; }
+th{
+  text-align:left; font-size:7.2pt; font-weight:600; letter-spacing:.12em; color:var(--label);
+  padding:0 4mm 2.5mm 0; border-bottom:1px solid var(--rule); vertical-align:bottom;
+}
+td.w{ white-space:nowrap; }
+td{ padding:3mm 4mm 3mm 0; border-bottom:1px solid #23272c; vertical-align:top; line-height:1.5; color:var(--dim); }
+td.g{ color:var(--ink); font-weight:600; white-space:nowrap; }
+td.n{ font-variant-numeric:tabular-nums; color:var(--amber2); white-space:nowrap; }
+tr:last-child td{ border-bottom:0; }
+
+/* 파이프라인 */
+.pipe{ border:1px solid var(--rule); background:var(--panel); padding:5mm 5.5mm; }
+.pipe-row{ display:flex; align-items:stretch; gap:0; }
+.pipe-row .n{ flex:1; padding-right:4mm; }
+.pipe-row .n:last-child{ padding-right:0; }
+.pipe-row .t{ font-size:7.2pt; letter-spacing:.18em; margin-bottom:2mm; }
+.pipe-row .t.a{ color:var(--amber); }
+.pipe-row .t.m{ color:var(--plat); }
+.pipe-row .d{ font-size:8.2pt; line-height:1.5; color:var(--dim); }
+.pipe-row .d b{ color:var(--ink); font-weight:600; }
+.arrow{ flex:none; width:7mm; display:flex; align-items:center; justify-content:center;
+  color:#525860; font-size:11pt; padding-bottom:4mm; }
+.gate{ margin-top:4mm; padding-top:3.5mm; border-top:1px dashed var(--rule); display:flex; gap:5mm; }
+.gate div{ flex:1; font-size:8.2pt; line-height:1.5; color:var(--dim); }
+.gate b{ display:block; color:var(--plat2); font-weight:600; font-size:8.4pt; margin-bottom:.8mm; }
+
+/* 원칙 배너 */
+.axiom{
+  border-left:2px solid var(--plat); padding:1mm 0 1mm 5mm;
+  font-family:'Noto Serif KR',serif; font-size:11pt; line-height:1.55; color:var(--ink);
+}
+.axiom.am{ border-left-color:var(--amber); }
+.axiom small{ display:block; font-family:'Noto Sans KR',sans-serif; font-weight:350;
+  font-size:8.4pt; line-height:1.6; color:var(--dim); margin-top:2mm; }
+
+/* 푸터 */
+.foot{
+  margin-top:auto; padding-top:4mm; border-top:1px solid var(--rule);
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-size:7.4pt; letter-spacing:.14em; color:var(--faint);
+}
+.foot b{ color:var(--dim); font-weight:400; }
+
+/* 링크 판 */
+.links{ display:flex; border:1px solid var(--plat); background:rgba(0,255,163,.05); }
+.links div{ flex:1; padding:5mm; border-right:1px solid rgba(0,255,163,.28); }
+.links div:last-child{ border-right:0; }
+.links .k{ font-size:7.2pt; letter-spacing:.2em; color:var(--plat); margin-bottom:2mm; }
+.links .v{ font-size:9.4pt; color:var(--ink); word-break:break-all; line-height:1.45; }
+.links .n{ font-size:8pt; color:var(--dim); margin-top:1.5mm; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ 1 · 표지 ══════════════════ -->
+<section class="page">
+  <div class="rail">
+    <i class="tally"></i><span class="live">LIVE</span>
+    <span class="mid">종겜스 시뮬레이터 — 게임 소개서</span>
+    <span class="pg">01 / 05</span>
+  </div>
+
+  <div class="cover-top">
+    <span class="logo">JGS<span>.tv</span></span>
+    <span class="cover-org">NAN 2026 · 3인 팀 · 웹 브라우저</span>
+  </div>
+
+  <div class="hero">
+    <h1>당신은 종합게임 스트리머다.<br><span class="k">AI 시청자</span>가 당신의<br>플레이를 보고 떠든다.</h1>
+    <p class="sub">여기서 AI는 배경 장식이 아니라 <b>게임 메커닉 그 자체</b>다.
+      시청자 수가 곧 체력이자 점수이자 화폐이고, 어떤 플레이를 했느냐가 어떤 성향의 관객을
+      불러 모으는지를 정하며, 모인 관객이 다음 방송의 채팅을 바꾼다.</p>
+  </div>
+
+  <div class="seed">
+    <div class="lbl">출발한 질문</div>
+    <div>
+      <p class="q">“유저는 플레이어, AI는 관람객인 상황에서<br>역으로 관람객이 플레이어를 만족시켜줄 수 있는가.”</p>
+      <p class="a">관람객은 보통 <strong class="am">받는</strong> 쪽이다. 이 게임은 화살표를 뒤집는다 —
+        AI는 조작·결정에 손대지 않은 채, 관람석에서 할 수 있는 일만으로 만족을 공급한다.</p>
+    </div>
+  </div>
+
+  <div class="rig">
+    <div class="rig-stage">
+      <div class="cap">무대 — 화력쇼 · 3분 생방송</div>
+      <div class="rig-hud">
+        <span class="big">12,480</span><span class="unit">명 시청 중</span>
+        <span class="big" style="font-size:13pt;color:var(--amber2)">×3</span><span class="unit">연쇄</span>
+      </div>
+      <div class="rig-meter"><i></i></div>
+      <p class="rig-ev">게임이 사실을 발행한다<br>
+        <code>emit('oilfire', { b: 2 })</code><br>
+        <code>emit('rescue_big', { gain: '+1,240' })</code></p>
+    </div>
+    <div class="rig-chat">
+      <div class="cap">AI 시청자 — 실시간 채팅</div>
+      <p class="line fact"><b style="color:#ff8d5a">불멍장인</b> <span>기름 화재!! 2번!!</span></p>
+      <p class="line"><b style="color:#7fd4ff">안전제일</b> <span>꺼!!! 제발 꺼!!!</span></p>
+      <p class="line"><b style="color:#ff8d5a">불멍장인</b> <span>끄지 마 끄지 마 ㅋㅋㅋ</span></p>
+      <p class="line"><b style="color:#ffd27a">10년차주방장</b> <span>1.2초 안에 못 끄면 터진다</span></p>
+      <p class="line fact"><b style="color:#f0a8ff">ㅋㅋ자판기</b> <span>고배율 수습 +1,240!!!</span></p>
+      <p class="line"><b style="color:#c9c4ba">냉정한미식가</b> <span>저걸 살리네;;</span></p>
+      <p class="line"><b style="color:#ffb0c8">응원봉</b> <span>캬아아아 이거지!!!</span></p>
+      <p class="line"><b style="color:#b8f5c4">오늘첫방문</b> <span>이 사람 프로임??</span></p>
+    </div>
+  </div>
+
+  <dl class="strip">
+    <div><dt>플랫폼</dt><dd>웹 브라우저<br><b>설치 0건</b></dd></div>
+    <div><dt>방송할 게임</dt><dd><b>5</b>종<br>패러디 라인업</dd></div>
+    <div><dt>시청자 페르소나</dt><dd><b>100</b>종<br>발화 캐스트 8종</dd></div>
+    <div><dt>한 판</dt><dd><b>3</b>분 · 시즌 <b>30</b>일<br>목표 <b>300,000</b>명</dd></div>
+    <div style="padding-right:0"><dt>외부 의존성</dt><dd><b>0</b>건<br>LLM 없이도 완전 동작</dd></div>
+  </dl>
+
+  <div class="foot"><span>종겜스 시뮬레이터 <b>· 게임 소개서</b></span><span>01</span></div>
+</section>
+
+<!-- ══════════════════ 2 · 핵심 명제와 하루 ══════════════════ -->
+<section class="page">
+  <div class="rail">
+    <i class="tally"></i><span class="live">LIVE</span>
+    <span class="mid">핵심 명제 · 코어 루프</span>
+    <span class="pg">02 / 05</span>
+  </div>
+
+  <div class="body">
+    <div>
+      <p class="eyebrow am">핵심 명제</p>
+      <h2>방송은 사고가 나야 재미있다 —<br><em>안전한 플레이가 최악의 전략이다.</em></h2>
+      <p class="lede" style="margin-top:4mm">완벽하게 해내면 아무도 보지 않는다. 사고를 내고 수습하면 사람이 몰리고,
+        수습에 실패해 판이 터지면 가장 많이 몰린다. 다섯 게임이 전부 이 명제를 서로 다른 리듬으로 구현한다.
+        <strong>지배 전략은 없다</strong> — 한 수만 반복하면 신선도가 깎여 스스로 무너진다.</p>
+    </div>
+
+    <div class="figs">
+      <div><p class="k">화력쇼 · 무사고 완성</p><p class="v" style="color:var(--dim)">+40</p><p class="n">가장 잘한 플레이의 보상</p></div>
+      <div><p class="k">사고 수습</p><p class="v">+180 ~ 900</p><p class="n">실수하고 되살렸을 때</p></div>
+      <div><p class="k">대참사</p><p class="v">+1,400</p><p class="n">주방이 통째로 터졌을 때</p></div>
+      <div><p class="k">주머니 괴수 · 최적 전략</p><p class="v m">×34.4</p><p class="n">안정타만 쓰는 플레이 대비</p></div>
+    </div>
+    <p class="fine">배수는 헤드리스 몬테카를로 실측값이다 — <b class="dim">tools/balance-sim.js</b>, 전략별 20,000회 시행.</p>
+
+    <div>
+      <p class="eyebrow">30일 계약</p>
+      <h3>JGS.tv와 맺은 계약은 30일짜리다. 그 안에 한 방송에서 동시 시청자 300,000명을 찍어야 재계약한다.</h3>
+      <p class="fine" style="margin-top:2mm">못 하면 계약 종료 — 그게 게임 오버다. <strong>하루는 방송 한 판, 또는 휴방 한 번.</strong>
+        쉬는 것도 하루를 쓰기 때문에 “오늘 뭘 방송할까”와 “오늘은 쉴까”가 매번 진짜 선택이 된다.</p>
+    </div>
+
+    <div>
+      <p class="eyebrow">하루의 흐름</p>
+      <ol class="steps">
+        <li><span class="i">01</span><h3>데스크탑</h3><p>페이지 자체가 스트리머의 윈도우 바탕화면이다. 아이콘마다 신선도와 해금 진행도가 붙어 있다. 더블클릭하면 방송이 시작된다.</p></li>
+        <li><span class="i">02</span><h3>브리핑</h3><p>목표·조작법·오늘의 미션이 화면 정중앙에 뜬다. “방송 시작”을 누르면 3·2·1 카운트다운.</p></li>
+        <li><span class="i">03</span><h3>생방송 3분</h3><p>게임을 플레이한다. 우측 채팅창에서 AI 시청자가 실시간으로 반응한다.</p></li>
+        <li><span class="i">04</span><h3>방송 리포트</h3><p>시청자 추이, 원형별 순증감, 구독자 획득, 김 피디의 평가 등급, 미션 정산, 장비 유지비.</p></li>
+        <li style="padding-right:0"><span class="i">05</span><h3>다음 날</h3><p>하루가 지나 있다. 남은 일수를 보고 다음 방송을 고른다.</p></li>
+      </ol>
+    </div>
+
+    <div class="two">
+      <div class="card">
+        <h3>시청자 수 = 체력 · 점수 · 화폐</h3>
+        <p class="fine">셋을 분리하지 않는다. 0명이 되면 송출이 강제 종료되고(체력),
+          방송이 끝나면 최고치가 기록으로 남으며(점수), 일정 수치에 도달하면 새 콘텐츠가 열린다(화폐).
+          숫자 하나가 세 역할을 겸해야 도파민 루프가 흩어지지 않는다.</p>
+      </div>
+      <div class="card">
+        <h3>같은 게임만 하면 물린다</h3>
+        <p class="fine">게임 단위 신선도가 <span class="am num">100 → 70 → 45 → 25 → 10%</span>로 떨어지고,
+          다른 게임을 방송하면 회복된다. <strong>그래서 종합게임을 하는 것이다</strong> —
+          실제 종겜 스트리머가 게임을 돌리는 이유를 그대로 룰로 만들었다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>종겜스 시뮬레이터 <b>· 게임 소개서</b></span><span>02</span></div>
+</section>
+
+<!-- ══════════════════ 3 · 게임 5종 ══════════════════ -->
+<section class="page">
+  <div class="rail">
+    <i class="tally"></i><span class="live">LIVE</span>
+    <span class="mid">방송할 게임 5종</span>
+    <span class="pg">03 / 05</span>
+  </div>
+
+  <div class="body">
+    <div>
+      <p class="eyebrow am">라인업</p>
+      <h2>같은 시청자들이 다섯 게임에서<br><em>완전히 다른 어휘로 반응한다.</em></h2>
+      <p class="lede" style="margin-top:4mm">화력쇼에서는 환호하고, Giving Up On It에서는 조롱하고,
+        주머니 괴수에서는 훈수를 둔다. 게임이 바뀌면 채팅이 바뀐다 — 이것이 이 기획의 최소 증명이다.</p>
+    </div>
+
+    <table>
+      <thead><tr>
+        <th style="width:30mm">게임</th><th style="width:29mm">리듬</th>
+        <th style="width:22mm">채팅의 주연</th><th>보상 구조 — 안전한 플레이는 왜 손해인가</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="g">① 화력쇼<br><span class="fine">3분 요리 생방송</span></td>
+            <td class="w">초 단위 반사</td><td class="n">환호 hype</td>
+            <td>무사고 완성 +40 ≪ 사고 수습 +180~900 ≪ 대참사 +1,400</td></tr>
+        <tr><td class="g">② Giving Up On It<br><span class="fine">곡괭이 등반</span></td>
+            <td class="w">느린 긴장 → 대추락</td><td class="n">조롱 mock</td>
+            <td>등반 1m ≪ 40m 추락 — 큰 낙차 전략이 등반만 파는 것의 <b class="am num">×7.4</b></td></tr>
+        <tr><td class="g">③ 주머니 괴수<br><span class="fine">3마리 연승전</span></td>
+            <td class="w">턴제 수읽기</td><td class="n">훈수 info</td>
+            <td>안정타 ≪ 명중 38% 필살기 ≪ 빈사 역전 KO — 고위험 3종 순환이 <b class="am num">×34.4</b></td></tr>
+        <tr><td class="g">④ 해체쇼<br><span class="fine">폭탄 와이어 절단</span></td>
+            <td class="w">카운트다운 압박</td><td class="n">걱정 worry</td>
+            <td>전(全)판독 해체 +25~40 ≪ 감컷 배당 80~500 ≪ 폭발 구경값 500~1,200</td></tr>
+        <tr><td class="g">⑤ 심연낚시<br><span class="fine">수심 선택 낚시</span></td>
+            <td class="w">정적 → 폭발</td><td class="n">응원 cheer</td>
+            <td>얕은 물 잡어 ≈1,650 ≪ 심해 ≈2,849 — 기다림 자체가 리스크다</td></tr>
+      </tbody>
+    </table>
+
+    <div class="two">
+      <div class="card">
+        <h3>게임은 방송해야 열린다</h3>
+        <p class="fine">화력쇼 하나로 시작한다. 앞 게임을 정해진 횟수만큼 <strong>방송하면</strong> 다음 게임이 열린다 —
+          등급은 보지 않으므로 사고로 끝나도 사슬은 반드시 진행된다.</p>
+        <p class="fine" style="margin-top:3mm;color:var(--amber2);font-variant-numeric:tabular-nums">
+          화력쇼 → <b>2회</b> → Giving Up On It → <b>2회</b> → 주머니 괴수 → <b>3회</b> → 해체쇼 → <b>3회</b> → 심연낚시</p>
+        <p class="fine" style="margin-top:2mm">총 10회. 30일 안에 다섯 게임을 전부 만져볼 수 있도록 설계된 간격이다.</p>
+      </div>
+      <div class="card">
+        <h3>관객은 콘텐츠를 따라온다</h3>
+        <p class="fine">사고 위주 방송은 불구경파를, 정교한 플레이는 분석가를 불러 모은다.
+          관객 구성은 채널에 누적되고, 그에 따라 <strong>다음 방송의 채팅에 등장하는 얼굴이 달라진다.</strong>
+          한쪽으로만 모으면 채널의 색이 고착되고, 골고루 모은 방송일수록 구독자가 더 많이 남는다.</p>
+      </div>
+    </div>
+
+    <div class="axiom am">“게임이 늘수록 채팅의 대비가 두꺼워진다.”
+      <small>새 게임을 붙이는 비용은 <strong>이벤트 어휘 파일 하나 + 게임 파일 하나</strong>다.
+        셸도, 다른 게임도, 채팅 엔진도 건드리지 않는다 — 채팅이 화면이 아니라 이벤트를 읽기 때문에 가능한 구조다.</small></div>
+  </div>
+
+  <div class="foot"><span>종겜스 시뮬레이터 <b>· 게임 소개서</b></span><span>03</span></div>
+</section>
+
+<!-- ══════════════════ 4 · AI 시청자 ══════════════════ -->
+<section class="page">
+  <div class="rail">
+    <i class="tally"></i><span class="live">LIVE</span>
+    <span class="mid">AI 시청자가 메커닉인 구조</span>
+    <span class="pg">04 / 05</span>
+  </div>
+
+  <div class="body">
+    <div>
+      <p class="eyebrow">AI 시청자</p>
+      <h2>AI는 화면을 해석하지 않는다.<br><span class="mt">게임이 사실을 발행하고, 관객이 반응한다.</span></h2>
+    </div>
+
+    <div class="pipe">
+      <div class="pipe-row">
+        <div class="n"><p class="t a">게임 · 룰</p><p class="d">사건이 나면 <b>사실 슬롯</b>을 발행한다.<br>
+          기름 화재, 2번 화구, +1,240명</p></div>
+        <div class="arrow">→</div>
+        <div class="n"><p class="t a">셸 · 무대</p><p class="d"><b>단방향 전달.</b> 캠 표정과 채팅으로 흘려보낸다.
+          되돌아오는 경로는 코드에 없다</p></div>
+        <div class="arrow">→</div>
+        <div class="n"><p class="t m">채팅 · 관객</p><p class="d">공명한 페르소나가 <b>1~4줄</b>로 반응.
+          첫 줄은 사실, 나머지는 리액션</p></div>
+        <div class="arrow">→</div>
+        <div class="n"><p class="t m">LLM · 선택</p><p class="d">리액션 줄만 프록시 경유 생성.
+          <b>1.1초 안에 못 오면 로컬 폴백</b></p></div>
+      </div>
+      <div class="gate">
+        <div><b>① 사실 슬롯 검사</b>룰이 넘긴 수치가 발화 본문에 그대로 없으면 폐기한다. 관객이 없는 숫자를 말할 수 없다</div>
+        <div><b>② 비반복 검사</b>직전 5줄과 토큰 유사도 0.72 이상이면 폐기. 같은 말이 두 번 나오지 않는다</div>
+        <div><b>③ 폐기 시 침묵</b>어색한 반복이나 거짓 수치보다 침묵이 낫다. 게이트는 LLM 바깥에 항상 남는다</div>
+      </div>
+    </div>
+
+    <div class="axiom">“AI 시청자는 관측하고 말만 한다.”
+      <small>채팅은 시청자 수·보상·난이도 어디에도 관여하지 않는다. 그래서 <strong>LLM이 죽어도 게임은 완전하고</strong>,
+        AI가 게임의 일부이면서도 밸런스는 시뮬레이션으로 검증 가능한 상태로 남는다.</small></div>
+
+    <div class="two">
+      <div class="card">
+        <h3>공명 — 사건이 관객을 고른다</h3>
+        <p class="fine">시청자 수를 단일 숫자가 아니라 <strong>관객 원형 4종의 구성 분포</strong>로 둔다.
+          이벤트는 <span class="mint">[위험 · 파괴 · 숙련 · 유머]</span> 자극 벡터를 갖고,
+          원형은 흥미도(얼마나 주목하나)와 호오(어느 쪽으로 반응하나)를 나눠 갖는다.
+          공명은 두 벡터의 내적이고, 임계를 넘은 만큼이 유입 지분이 된다.</p>
+        <p class="fine" style="margin-top:3mm">둘을 분리한 것이 핵심이다 — 걱정 많은 시청자는 위험한 사건에
+          <strong>강하게 주목하면서 부정적으로</strong> 반응한다. 부정 공명으로 온 관객은 미워하며 잠깐 보다 빠져나간다.
+          <strong class="mint">야유는 트래픽을 부르되 남지 않는다.</strong></p>
+      </div>
+      <div class="card">
+        <h3>관객은 판을 넘어 기억한다</h3>
+        <p class="fine"><strong>반응 도감</strong> — 칸 = (시청자 개체 × 사건). 결정론 판정으로 열리고,
+          이번 방송에서 새로 연 칸 수가 구독자 전환에 곱해진다.</p>
+        <p class="fine" style="margin-top:2.5mm"><strong>티키타카</strong> — 한 시청자의 발화에 대립쌍 상대가 받아친다.
+          채팅이 혼잣말 목록에서 대화가 된다.</p>
+        <p class="fine" style="margin-top:2.5mm"><strong>단골의 기억</strong> — “또 화력쇼? 지겹지도 않나 ㅋㅋ”,
+          “지난 방송 그거 아직 회자된다”. 관객이 지난 판을 기억하는 순간
+          <strong>“게임을 켠다”가 “방송을 켠다”로 바뀐다.</strong></p>
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow">두 가지 모드 — 어느 쪽이든 게임은 완전하게 동작한다</p>
+      <table>
+        <tbody>
+          <tr><td class="g" style="width:38mm">LLM 라이브</td>
+              <td>채팅 배지가 <span class="mint">AI 시청자 — LLM 라이브</span>로 바뀐다. 실제 LLM이 매번 다른 말을 생성한다.
+                브라우저는 키를 갖지 않고, 관측 데이터만 프록시로 보낸다</td></tr>
+          <tr><td class="g">오프라인</td>
+              <td>배지가 <span class="dim">AI 시청자 — 로컬 시뮬레이션</span>. 페르소나별 규칙 기반 채팅이 대신 말한다.
+                프록시 미배포·타임아웃·한도 초과 — 어느 경우든 방송은 멈추지 않는다</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="foot"><span>종겜스 시뮬레이터 <b>· 게임 소개서</b></span><span>04</span></div>
+</section>
+
+<!-- ══════════════════ 5 · 채널 성장 · 실행 ══════════════════ -->
+<section class="page">
+  <div class="rail">
+    <i class="tally"></i><span class="live">LIVE</span>
+    <span class="mid">채널 성장 · 실행 방법</span>
+    <span class="pg">05 / 05</span>
+  </div>
+
+  <div class="body">
+    <div>
+      <p class="eyebrow am">방송 사이</p>
+      <h2>한 판이 끝나면 채널이 남는다.</h2>
+      <p class="lede" style="margin-top:4mm">방송 한 회의 목표는 시청자를 최대한 모으는 것이지만,
+        그 과정에서 구독자·채널 색깔·방송 장비가 쌓여 <strong>다음 방송의 출발선</strong>이 된다.</p>
+    </div>
+
+    <div class="two">
+      <div class="card">
+        <h3>미션 · 코인 · 부품</h3>
+        <p class="fine">김 피디가 매일 미션을 내건다. 달성하면 코인과 부품이 나오고,
+          방송용품 상점에서 장비 3계열을 올릴 수 있다.</p>
+        <p class="fine" style="margin-top:3mm">
+          <strong class="am">송출기</strong> — 기본 시청자 보장(출발선)<br>
+          <strong class="am">조명 · 무대</strong> — 획득 배율<br>
+          <strong class="am">도네 알림</strong> — 후원 빈도</p>
+      </div>
+      <div class="card">
+        <h3>장비는 사는 것이 아니라 유지하는 것이다</h3>
+        <p class="fine">장비가 좋을수록 <strong>방송마다 유지비가 나가고</strong>, 김 피디의 평가 기준도 함께 올라간다.
+          유지비는 직전 세 방송의 도네 수입을 따라가므로 채널 규모에 자동으로 붙는다.
+          못 내면 가장 높은 계열이 조용히 한 단계 강등된다.</p>
+        <p class="fine" style="margin-top:3mm"><strong>장비는 버는 돈을 늘려줄 뿐,
+          명성을 대신 벌어주지 않는다.</strong> “다 사면 끝”이 오지 않게 하는 장치다.</p>
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow">종료 조건</p>
+      <table>
+        <tbody>
+          <tr><td class="g" style="width:34mm">방송이 끝난다</td>
+              <td>3분 경과(정상 종료) · <strong>시청자 0명</strong>(강제 종료 — 시청자 수가 곧 체력이다) · 등반 성공(즉시 클리어)</td></tr>
+          <tr><td class="g">시즌 클리어</td>
+              <td>어느 방송에서든 최고 동시 시청자 <b class="num am">300,000</b>명을 넘기면 재계약.
+                30일을 넘겨 달성해도 클리어로 친다 — <strong>달성이 만료를 이긴다</strong></td></tr>
+          <tr><td class="g">게임 오버</td>
+              <td>30일이 지나도록 목표에 못 닿으면 계약 종료. “새 시즌 시작”을 누르면 채널 기록·해금·도감이 초기화된다</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <p class="eyebrow">실행 방법 — 설치가 필요 없다</p>
+      <div class="links">
+        <div><p class="k">플레이</p><p class="v">bjh7536.github.io/JonggemsSim/</p>
+          <p class="n">데스크톱 크롬 · 엣지 최신 버전, 가로 화면 권장</p></div>
+        <div><p class="k">소스 코드</p><p class="v">github.com/BJH7536/JonggemsSim</p>
+          <p class="n">커밋 기록 포함 · 3인 팀 브랜치 · PR 이력</p></div>
+      </div>
+      <p class="fine" style="margin-top:3mm">외부 요청 <strong>0건</strong> — 폰트·CDN·오디오 전부 없다.
+        그래픽은 캔버스 벡터 드로잉과 팀이 생성한 이미지, 효과음은 전부 WebAudio 합성음이다.
+        링크를 클릭하면 브라우저에서 바로 시작된다.</p>
+    </div>
+
+    <div>
+      <p class="eyebrow">3분이면 코어 루프가 한 바퀴 돈다</p>
+      <ol class="steps">
+        <li><span class="i">01</span><h3>화력쇼를 켠다</h3><p>처음부터 열려 있는 게임. 브리핑에서 목표와 오늘의 미션을 확인한다.</p></li>
+        <li><span class="i">02</span><h3>기름 화재를 놔둔다</h3><p>일부러 한 번 놓쳐 본다. 대참사가 나고 채팅이 폭발한다.</p></li>
+        <li><span class="i">03</span><h3>리포트를 본다</h3><p>관객이 어떤 사람들로 채워졌는지, 평가 등급이 어떤지.</p></li>
+        <li style="padding-right:0"><span class="i">04</span><h3>다른 게임을 켠다</h3><p>하루가 지나 있다. 신선도가 회복되고 채팅의 성격이 달라진다.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="foot"><span>종겜스 시뮬레이터 <b>· 게임 소개서</b></span><span>05</span></div>
+</section>
+
+</body>
+</html>

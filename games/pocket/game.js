@@ -146,7 +146,9 @@
       stage.setChain(st.streak);
     }
     function buildPanel() {
-      var m = me(), names = MOVE_NAMES[m.t];
+      // 복귀 중에는 쓰러진 개체가 아니라 **복귀 후 조작하게 될 개체**(항상 0번)의 기술명을
+      // 보여준다. 미리 눌러두라고 해놓고 다른 개체의 기술명을 띄우면 그건 거짓말이다
+      var m = st.phase === 'heal' ? st.bench[0] : me(), names = MOVE_NAMES[m.t];
       // 선입력 (ADR-010): 연출 중에도 버튼은 살아 있다. 지금 누르면 큐에 들어가고
       // 연출이 끝나는 프레임에 소비된다 — 연출 길이를 하나도 줄이지 않고 체감 대기만 없앤다.
       // 복귀 선택 중에는 받지 않는다: 그건 대기가 아니라 결정이라 앞질러 눌러선 안 된다.
@@ -424,8 +426,12 @@
 
         // 게임 내 타이머 — setTimeout 대신 step 구동 (시뮬 테스트 가능·방송 종료 시 자동 중단)
         for (var i = st.timers.length - 1; i >= 0; i--) {
-          st.timers[i].t -= dt;
-          if (st.timers[i].t <= 0) { var fn = st.timers[i].fn; st.timers.splice(i, 1); fn(); }
+          // 콜백이 큐 자체를 비울 수 있다 (전멸 처리가 그렇게 한다). 역순 순회 중에 뒤가
+          // 통째로 사라지면 남은 인덱스는 undefined가 되므로 매번 다시 집는다
+          var tm = st.timers[i];
+          if (!tm) continue;
+          tm.t -= dt;
+          if (tm.t <= 0) { st.timers.splice(i, 1); tm.fn(); }
         }
 
         // 복귀 선택 중에도 샌다 (규약 2 — 조용히). 고민이 공짜면 2지선다가 아니라
