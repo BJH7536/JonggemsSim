@@ -628,6 +628,21 @@
       "prompt": "Square app launcher icon, flat vector style, dark background (#101418) with vivid mint green (#00ffa3) and warm gold (#ffd24a) accents. Subject: a small shop storefront with an awning and a glowing round coin above it. Bold simple shapes, thick clean edges, high contrast, readable at 96 pixels. No text, no letters, no numbers, centered composition with padding."
     },
     {
+      "_": "── 데스크탑 앱 2종 추가분 (캐스트 영입·클립 보관함). 상점 아이콘과 같은 세트로 읽혀야 한다. 표시 크기가 96 → 140px로 커졌으므로(shell.css .dIconArt) 판독 기준도 같이 올린다"
+    },
+    {
+      "id": "icon-cast",
+      "out": "games/shell/img/icon-cast.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square app launcher icon, flat vector style, dark background (#141019) with vivid mint green (#00ffa3) and soft pink (#ffb0c8) accents. Subject: three overlapping rounded chat speech bubbles rising above a small row of simple viewer head silhouettes, the front bubble glowing mint. Bold simple shapes, thick clean edges, high contrast, readable at 140 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
+      "id": "icon-clips",
+      "out": "games/shell/img/icon-clips.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square app launcher icon, flat vector style, dark background (#101214) with vivid mint green (#00ffa3) and warm amber (#ffb447) accents. Subject: a stack of three overlapping video clip cards with a bright mint play triangle on the front card and a small red recording dot at the top corner. Bold simple shapes, thick clean edges, high contrast, readable at 140 pixels. No text, no letters, no numbers, centered composition with padding."
+    },
+    {
       "id": "shop-camgold",
       "out": "games/shell/img/shop-camgold.png",
       "ai_model": "GPT Image 1.5",
