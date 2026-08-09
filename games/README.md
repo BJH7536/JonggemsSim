@@ -8,8 +8,6 @@
 ```
 /index.html               GitHub Pages 진입점 — 링크 클릭 즉시 플레이 (NAN 2026 제출물 1번)
 games/shell/shell.js      셸: 허브(방송 준비)·시청자 경제·신선도·방송 루프·리포트  ← 계약 구현
-games/shell/chat.js       AI 시청자 채팅 엔진 — 검증 게이트 (임시 거처, engine/ 이관 예정)
-games/shell/llm.js        LLM 어댑터 — proxy/ 경유 실제 LLM 발화 (임시 거처, 위와 동일)
 games/shell/config.js     배포 설정 — PROXY_URL 한 칸 (proxy/README.md 절차로 채움)
 games/shell/faces/        스트리머 캠 표정 7종 (팀 자작 — Assets/*/SOURCES.md 승인 기록)
 games/shell/shell.css     플랫폼 크롬(보라) + 무대(앰버) + 게임 조작 UI

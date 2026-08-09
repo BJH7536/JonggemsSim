@@ -1,12 +1,12 @@
 /* AI 시청자 채팅 엔진 — prototypes/05-hwaryeok-show.html의 `Chat`을 게임 비의존으로 일반화.
  *
- * ⚠ 임시 거처. 이 파일은 정훈(관객)의 `engine/` 추출이 착지하면 그쪽으로 이관된다 (ADR-001).
- *   무대가 의존하는 안정 표면은 `Stage.emit(ev, facts)` 하나뿐이므로, 이관 시 셸은
- *   `Chat.load/reset/react/sys`의 호출부만 바꾸면 된다. 페르소나·템플릿은 이관 후
- *   `data/`(소윤)에서 로드된다 — 지금은 게임이 자기 chat-data.js로 들고 있다.
+ * 소유: 관객(정훈, ADR-001). games/shell 임시 거처에서 2026-08-09 이관.
+ *   무대가 의존하는 안정 표면은 `Stage.emit(ev, facts)`와 `Chat.load/reset/react/sys` 뿐이다.
+ *   페르소나 캐스트는 `data/personas/cast.js`(소윤 소유)에서 로드된다 — 이 파일보다 먼저
+ *   포함되어야 한다. 게임별 이벤트 어휘는 아직 게임이 chat-data.js로 들고 있다 (contract.md 1절).
  *
  * C3 원칙: 채팅은 룰 수치(시청자·보상·사고)에 일절 관여하지 않는다 — 관측하고 "말"만 한다.
- * 게이트: 사실 슬롯 포함 검증 / 비반복(직전 3회 유사도 <0.72) / 재실패 시 폐기(어색한 반복보다 침묵).
+ * 게이트: 사실 슬롯 포함 검증 / 비반복(직전 5회 유사도 <0.72) / 재실패 시 폐기(어색한 반복보다 침묵).
  */
 (function (global) {
   'use strict';
@@ -20,17 +20,10 @@
     });
   };
 
-  // 페르소나 8종 — prototypes/05-hwaryeok-personas.md 시트 기반. 게임과 무관한 공용 캐스트.
-  var PERSONAS = [
-    { nick: '불멍장인',     color: '#ff8d5a', tones: ['hype', 'mock'] },
-    { nick: '안전제일',     color: '#7fd4ff', tones: ['worry', 'question'] },
-    { nick: '10년차주방장', color: '#ffd27a', tones: ['info', 'mock'] },
-    { nick: '오늘첫방문',   color: '#b8f5c4', tones: ['question', 'cheer'] },
-    { nick: 'ㅋㅋ자판기',   color: '#f0a8ff', tones: ['hype', 'mock'] },
-    { nick: '냉정한미식가', color: '#c9c4ba', tones: ['mock', 'info'] },
-    { nick: '응원봉',       color: '#ffb0c8', tones: ['cheer', 'hype'] },
-    { nick: '길가던행인',   color: '#a8c8f0', tones: ['question', 'worry', 'cheer'] },
-  ];
+  // 페르소나 캐스트 — 값은 data/personas/cast.js(소윤 소유)가 진실이다. 여기서는 참조만 잡는다.
+  // 부스의 솔로 모드가 이 배열을 제자리 치환하므로 참조를 바꾸지 말 것 (복사 금지).
+  var PERSONAS = global.JONG_CAST || [];
+  if (!PERSONAS.length) console.warn('[chat] data/personas/cast.js가 로드되지 않았다 — 채팅이 침묵한다');
 
   var Chat = {
     T: {}, BURST: {}, personas: PERSONAS,

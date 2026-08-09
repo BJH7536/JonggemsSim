@@ -43,8 +43,11 @@ BURST[ev] = 1..4;                                  // 버스트 무게 (기본 1
 - **v2 예약 필드** (공명 모델 — `docs/resonance-model.md` §5 게이트 통과 후):
   `interest`(흥미도 벡터) · `valence`(호오) · `threshold`(발화 임계) — 판정층 데이터는
   빌드 타임 정적이며 런타임에 LLM 출력으로 생성·수정될 수 없다
-- 이관 계획: engine/ 추출과 함께 `data/personas/*.json`으로 — 값 저작은 소윤,
-  스키마·로더는 관객, 경제 관여 필드의 clamp 범위는 무대가 검증
+- **이관 완료 (2026-08-09)**: 값은 `data/personas/cast.js` — `window.JONG_CAST = [...]`
+  대입문의 우변이 엄격한 JSON 리터럴인 .js 캐리어다. 순수 .json이 아닌 이유는 `file://`
+  제약 (fetch가 CORS로 막힌다 — ADR-002). validate가 우변을 JSON.parse로 검사하므로
+  JSON으로서의 형식은 유지된다. 값 저작은 소윤, 스키마·로더는 관객,
+  경제 관여 필드가 생기면 clamp 범위는 무대가 검증
 
 # 3. 톤 목록 (v1 — 확정)
 
@@ -52,10 +55,11 @@ BURST[ev] = 1..4;                                  // 버스트 무게 (기본 1
 `cheer`(응원·축하) · `question`(질문·뉴비). **추가·변경은 이 문서 개정으로만** —
 톤은 페르소나와 템플릿을 잇는 계약 어휘라 한쪽만 늘리면 침묵하는 페르소나가 생긴다.
 
-# 5. 검증 규칙 (v1 초안 — 관객 소유)
+# 5. 검증 규칙 (v1 — 관객 소유)
 
-현행은 `games/shell/selftest.html`이 검사하고, validate 스크립트 + GitHub Actions로
-이관 예정 (이관 후 `data/` 변경은 통과 시 셀프 머지 — CONTRIBUTING).
+데이터 계약은 `tools/validate.mjs`(`node tools/validate.mjs`)가 검사하고 GitHub Actions
+(`.github/workflows/validate.yml`)가 PR마다 실행한다 — 통과 시 `data/` 변경은 셀프 머지
+(CONTRIBUTING). 게이트 동작(엔진 단위)은 `games/shell/selftest.html`에 남는다.
 
 | 검사 | 내용 |
 |---|---|
@@ -150,8 +154,9 @@ Shell.register({
 
 ## 4.6 v1에서 정훈과 맞출 것 (미결)
 
-- `games/shell/chat.js`·`llm.js`는 **임시 거처**다. `engine/`으로 이관되면 셸은
-  `Chat.load/reset/react/sys` 호출부만 바꾼다 — `stage.emit`은 그대로 유지되는 안정 표면
+- ~~`games/shell/chat.js`·`llm.js`는 임시 거처다~~ → **`engine/chat.js`·`engine/llm.js`로
+  이관 완료 (2026-08-09)**. `stage.emit`·`Chat.load/reset/react/sys`는 변경 없이 유지됐다.
+  페르소나 캐스트도 `data/personas/cast.js`로 분리 — 스크립트 포함 순서는 캐스트 → 엔진
 - **LLM 통합이 1차 착지했다** (`proxy/` + `llm.js`, 설계는 `proxy/README.md`).
   게이트는 클라이언트에 유지·사실 슬롯 줄은 LLM 미사용·실패는 전부 로컬 폴백 —
   이 3원칙은 이관 후에도 계약이다. 프롬프트(서버 소유)는 소윤 페르소나 시트 기반 개정 예정

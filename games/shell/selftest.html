@@ -16,9 +16,10 @@
 그래픽·물리는 대상이 아니다 (눈으로 본다).</p>
 <pre id="out"></pre>
 
+<script src="../../data/personas/cast.js"></script>
 <script src="config.js"></script>
-<script src="chat.js"></script>
-<script src="llm.js"></script>
+<script src="../../engine/chat.js"></script>
+<script src="../../engine/llm.js"></script>
 <script src="shell.js"></script>
 <script src="../hwaryeok/chat-data.js"></script>
 <script src="../hwaryeok/game.js"></script>
@@ -119,6 +120,13 @@ ok('다이아(최고 등급)에선 더 오르지 않는다', TS(4, 99, 'S').tier
 ok('등급 미달 상품은 구매 잠금', Shell.shopBuy({ coins: 99999, gear: {}, tier: 0 }, { id: 'z', price: 1, minTier: 4 }) === 'locked');
 
 // ---- 채팅 검증 게이트 ----
+// 캐스트가 data/에서 로드됐는지부터 — 빠지면 게이트가 아니라 침묵이 온다 (engine/chat.js 경고 참조)
+ok('페르소나 캐스트가 data/personas/cast.js에서 로드된다 (8종 이상)', Chat.personas.length >= 8);
+ok('캐스트 톤이 전부 공인 6종 안이다', Chat.personas.every(function (p) {
+  return p.tones.length && p.tones.every(function (t) {
+    return ['hype', 'worry', 'info', 'mock', 'cheer', 'question'].indexOf(t) >= 0;
+  });
+}));
 Chat.init(document.createElement('div'));
 Chat.load({
   t: { facts: ['수습 +{gain}!!'], flavor: [['hype', '와 미쳤다'], ['mock', '운빨 ㅋㅋ']] },
@@ -290,7 +298,8 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 // 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
-  '../../index.html', 'shell.css', 'config.js', 'chat.js', 'llm.js', 'shell.js',
+  '../../index.html', 'shell.css', 'config.js', 'shell.js',
+  '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js',
   '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
   '../giving-up/chat-data.js', '../giving-up/game.js',
   '../pocket/chat-data.js', '../pocket/game.js',
