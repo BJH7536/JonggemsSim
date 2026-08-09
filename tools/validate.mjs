@@ -17,6 +17,7 @@ const fails = [];
 const bad = (file, msg) => fails.push(`${file}: ${msg}`);
 
 // ---- 1. 페르소나 캐스트 — JSON 리터럴 .js 캐리어 (ADR-002) ----
+const castByNick = new Map(); // 3절(티키타카)이 참조 무결성 검사에 재사용
 {
   const file = 'data/personas/cast.js';
   const src = readFileSync(join(ROOT, file), 'utf8');
@@ -37,12 +38,50 @@ const bad = (file, msg) => fails.push(`${file}: ${msg}`);
         if (!/^#[0-9a-fA-F]{6}$/.test(p.color || '')) bad(file, `${who}: color가 #rrggbb 형식이 아니다`);
         if (!Array.isArray(p.tones) || !p.tones.length) bad(file, `${who}: tones가 비어 있다 — 침묵하는 페르소나`);
         else p.tones.forEach(t => { if (!TONES.includes(t)) bad(file, `${who}: 미공인 톤 '${t}' (contract.md 3절)`); });
+        castByNick.set(p.nick, p);
       });
     }
   }
 }
 
-// ---- 2. 게임 이벤트 어휘 — data/events/<게임>.js (contract.md 1절) ----
+// ---- 2. 티키타카·관계 변수 — data/tikitaka.js (contract.md 6절, ADR-003) ----
+{
+  const file = 'data/tikitaka.js';
+  const src = readFileSync(join(ROOT, file), 'utf8');
+  const m = src.match(/window\.JONG_TIKITAKA\s*=\s*(\{[\s\S]*\});/);
+  let tk = null;
+  if (!m) bad(file, 'window.JONG_TIKITAKA = {...}; 대입문이 없다');
+  else try { tk = JSON.parse(m[1]); }
+  catch (e) { bad(file, `우변이 엄격한 JSON이 아니다 (쌍따옴표·후행 콤마 확인) — ${e.message}`); }
+  if (tk) {
+    const tonesOf = nick => castByNick.has(nick) ? castByNick.get(nick).tones : null;
+    (tk.pairs || []).forEach((r, i) => {
+      const tag = `pairs[${i}] ${r.from}→${r.to}`;
+      if (!tonesOf(r.from)) bad(file, `${tag}: from이 캐스트에 없다`);
+      if (!tonesOf(r.to)) bad(file, `${tag}: to가 캐스트에 없다`);
+      if (r.from === r.to) bad(file, `${tag}: 자문자답 (from === to)`);
+      if (r.chance != null && !(r.chance > 0 && r.chance <= 1)) bad(file, `${tag}: chance ${r.chance} — (0,1] 밖`);
+      if ((r.lines || []).length < 6) bad(file, `${tag}: lines ${(r.lines || []).length}개 — 6개 미만이면 비반복 게이트가 응답을 폐기한다`);
+      (r.lines || []).forEach(l => {
+        const t = tonesOf(r.to);
+        if (t && !t.includes(l[0])) bad(file, `${tag}: 응답 톤 '${l[0]}' — ${r.to}의 톤(${t.join(',')}) 밖 (성격 붕괴)`);
+      });
+    });
+    const seen = new Set();
+    (tk.moments || []).forEach((mo, i) => {
+      const tag = `moments[${i}] ${mo.nick}`;
+      const t = tonesOf(mo.nick);
+      if (!t) bad(file, `${tag}: 캐스트에 없다`);
+      if (!(mo.trust > 0)) bad(file, `${tag}: trust 임계가 양수가 아니다`);
+      if (t && !t.includes((mo.line || [])[0])) bad(file, `${tag}: 발화 톤 '${(mo.line || [])[0]}' — 본인 톤 밖`);
+      const key = mo.nick + '@' + mo.trust;
+      if (seen.has(key)) bad(file, `${tag}: 같은 임계 중복 (${key})`);
+      seen.add(key);
+    });
+  }
+}
+
+// ---- 3. 게임 이벤트 어휘 — data/events/<게임>.js (contract.md 1절) ----
 const slotSet = t => [...new Set((t.match(/\{(\w+)\}/g) || []).map(s => s.slice(1, -1)))].sort().join(',');
 const eventFiles = readdirSync(join(ROOT, 'data/events')).filter(f => f.endsWith('.js'));
 if (!eventFiles.length) bad('data/events', '어휘 파일이 하나도 없다 — 스캔 경로가 틀렸는지 확인');
@@ -74,4 +113,4 @@ if (fails.length) {
   console.error(`VALIDATE FAIL ${fails.length}건\n` + fails.map(f => '  ' + f).join('\n'));
   process.exit(1);
 }
-console.log('VALIDATE PASS — 캐스트 + 게임 어휘 전부 계약(contract.md 1·2·3·5절) 준수');
+console.log('VALIDATE PASS — 캐스트 + 티키타카 + 게임 어휘 전부 계약(contract.md 1·2·3·5·6절) 준수');

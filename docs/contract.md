@@ -70,6 +70,23 @@ BURST[ev] = 1..4;                                  // 버스트 무게 (기본 1
 | 필수 이벤트 | `start`·`end` 존재 |
 | 게이트 동작 | 슬롯 누락 폐기·비반복 폐기·미등록 이벤트 무시 (엔진 단위 검사) |
 
+# 6. 티키타카·관계 변수 데이터 (v1 — 관객 소유, 값 저작은 기획, ADR-003)
+
+`data/tikitaka.js` — `window.JONG_TIKITAKA = { pairs, moments }` (ADR-002 JSON 캐리어).
+**발화층 연출 전용** — 공명 모델(판정층, `docs/resonance-model.md`)의 도입 게이트와 무관하고,
+경제·룰 수치에 관여하지 않는다 (C3 유지).
+
+```js
+pairs:   [{ from, to, chance, lines: [['tone', '응답'], ...] }]  // 2홉: from의 발화가
+         // 화면에 나가면 chance 확률로 to가 받아친다. 응답은 재트리거 없음(2홉 정지),
+         // 쿨다운 2.5초, 같은 verify 게이트 통과 필수. lines ≥ 6, 톤은 to의 tones 안
+moments: [{ nick, trust, line: ['tone', '발화'] }]               // 관계 변수 1회성 발화
+```
+
+관계 변수(trust)는 큰 사건(버스트 무게 ≥3)마다 1 누적되는 localStorage 스칼라
+(`jgs-rel-v1`, 방송 간 유지). moments는 임계 돌파 시 한 번만 말한다 —
+"냉정한미식가의 첫 인정" (페르소나 시트 4.5 우선순위 2).
+
 ---
 
 # 4. 게임↔셸 인터페이스 (v0.1 — 무대 소유, 구현 완료)

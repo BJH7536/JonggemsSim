@@ -32,6 +32,8 @@
   `05-hwaryeok-personas.md` 형식의 마크다운으로 — 시트가 원본, cast.js가 런타임 값
 - 미리보기: `tools/persona-booth.html` — 게임 없이 반응을 바로 확인.
   cast.js 수정 → 저장 → 부스 새로고침이 작업 루프
+- 페르소나 간 대화(티키타카)·관계 변수 발화는 `../tikitaka.js` — 스키마는
+  contract.md 6절, 응답 톤은 응답자의 tones 안이어야 한다 (validate가 검사)
 
 ## PR 규칙
 

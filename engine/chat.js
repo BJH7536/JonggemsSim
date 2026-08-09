@@ -33,6 +33,10 @@
     history: [], N: 5, SIM_MAX: 0.72,
     epoch: 0,     // 방송이 바뀌면 증가 — 예약된 발화를 폐기하는 토큰
     feed: null,
+    // 티키타카·관계 변수 (ADR-003) — 발화층 연출 전용. C3 유지: 경제·판정에 무관여.
+    TIKITAKA: global.JONG_TIKITAKA || { pairs: [], moments: [] },
+    rel: null,        // { trust, said } — localStorage 누적 (방송 간 기억)
+    lastReplyAt: 0,   // 2홉 쿨다운 — 티키타카 도배 방지
     big: false,   // 대형 방송이면 버스트 +1줄
     // 채팅 열기 0~1 — 셸이 시청자 규모(로그 스케일)로 갱신한다. 클수록 버스트가 두껍고
     // 빨라져 "지금 터졌다"가 스크롤 속도로 체감된다. 연출 전용 — C3(수치 무관여) 유지,
@@ -50,6 +54,66 @@
       this.epoch++;
       this.big = false;
       this.heat = 0;
+      this.lastReplyAt = 0;
+    },
+
+    // ---- 관계 변수 (ADR-003) — 신호는 버스트 무게(≥3, 클립 흥미도와 같은 원리)뿐이다.
+    //      게임 의미를 몰라도 되고, 공명 모델(판정층)의 예약 필드와 무관한 연출 전용 스칼라.
+    relLoad: function () {
+      if (!this.rel) {
+        try { this.rel = JSON.parse(localStorage.getItem('jgs-rel-v1')); } catch (e) { /* file://·시크릿 등 */ }
+        if (!this.rel || typeof this.rel.trust !== 'number') this.rel = { trust: 0, said: {} };
+      }
+      return this.rel;
+    },
+    bumpTrust: function () {
+      var r = this.relLoad();
+      r.trust++;
+      var self = this, token = this.epoch, dirty = false;
+      (this.TIKITAKA.moments || []).forEach(function (m) {
+        var key = m.nick + '@' + m.trust;
+        if (r.trust < m.trust || r.said[key]) return;
+        r.said[key] = 1; dirty = true;
+        var p = self.personas.filter(function (q) { return q.nick === m.nick; })[0];
+        if (!p) return;
+        setTimeout(function () {  // 큰 이벤트의 버스트가 지나간 뒤에 (규약 3 — 자극 간격)
+          if (self.epoch !== token) return;
+          self.history.push(m.line[1]);
+          if (self.history.length > 10) self.history.shift();
+          self.push(p, m.line[1]);
+        }, 1600);
+      });
+      try { localStorage.setItem('jgs-rel-v1', JSON.stringify(r)); } catch (e) {}
+      return dirty;
+    },
+
+    // ---- 티키타카 2홉 (ADR-003) — 발화가 화면에 나간 "뒤"에만 확률로 응답한다.
+    //      응답은 재트리거되지 않고(2홉에서 멈춤), 같은 verify 게이트를 통과해야 나온다.
+    maybeReply: function (speaker, token) {
+      var rules = (this.TIKITAKA.pairs || []).filter(function (r) { return r.from === speaker.nick; });
+      if (!rules.length) return;
+      var rule = rules[rnd(0, rules.length - 1)];
+      if (Math.random() > (rule.chance || .35)) return;
+      if (Date.now() - this.lastReplyAt < 2500) return;
+      var to = this.personas.filter(function (q) { return q.nick === rule.to; })[0];
+      if (!to) return; // 부스 솔로 모드 등으로 응답자가 빠져 있으면 침묵
+      this.lastReplyAt = Date.now();
+      var self = this;
+      setTimeout(function () {
+        if (self.epoch !== token) return;
+        var pool = rule.lines.slice();
+        for (var i = pool.length - 1; i > 0; i--) {
+          var j = rnd(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+        }
+        for (var k = 0; k < pool.length; k++) {
+          if (self.verify(pool[k][1], {})) {
+            self.history.push(pool[k][1]);
+            if (self.history.length > 10) self.history.shift();
+            self.push(to, pool[k][1]);
+            return;
+          }
+        }
+      }, 420 + Math.random() * 520); // 사람이 읽고 받아치는 템포
     },
 
     sys: function (text) { this.append('<div class="cline csys">' + text + '</div>'); },
@@ -121,6 +185,7 @@
       if (!T) return; // 게임이 어휘에 없는 이벤트를 쏘면 조용히 무시 (셸이 죽지 않게)
       var self = this, token = this.epoch;
       var n = this.BURST[ev] || 1;
+      if (n >= 3) this.bumpTrust(); // 큰 사건만 기억에 쌓인다 (ADR-003 — 신호는 버스트 무게)
       if (n > 1 && this.big) n = Math.min(4, n + 1);       // 대형 방송은 채팅도 두껍다
       if (n > 1 && this.heat > .55) n = Math.min(5, n + 1); // 열기 높으면 한 줄 더 (도배감)
       var used = {}, usedCount = 0;
@@ -139,7 +204,10 @@
             if (self.epoch !== token) return; // 방송이 바뀌었으면 폐기
             var localPush = function () {
               var text = self.compose(p, ev, facts, wantFact);
-              if (text) self.push(p, text, ev === 'donation' ? 'cdon' : '');
+              if (text) {
+                self.push(p, text, ev === 'donation' ? 'cdon' : '');
+                self.maybeReply(p, token); // 티키타카 2홉 — 화면에 나간 발화만 받아친다
+              }
             };
             // [LLM-INTEGRATION-POINT] LLM 경로 — 대형 이벤트(버스트 무게 ≥2)의 flavor 줄만.
             // 사실 슬롯 줄(wantFact)은 정확성이 생명이라 항상 로컬 템플릿이다.
@@ -157,6 +225,7 @@
                   self.history.push(text);
                   if (self.history.length > 10) self.history.shift();
                   self.push(p, esc(text), ev === 'donation' ? 'cdon' : '');
+                  self.maybeReply(p, token); // LLM 발화도 받아친다 — 2홉 응답은 항상 로컬
                 } else {
                   localPush(); // 게이트 탈락 — 로컬 템플릿이 대신 말한다
                 }

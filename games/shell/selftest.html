@@ -17,6 +17,7 @@
 <pre id="out"></pre>
 
 <script src="../../data/personas/cast.js"></script>
+<script src="../../data/tikitaka.js"></script>
 <script src="config.js"></script>
 <script src="../../engine/chat.js"></script>
 <script src="../../engine/llm.js"></script>
@@ -145,6 +146,35 @@ ok('어휘에 없는 이벤트는 조용히 무시된다 (셸이 죽지 않는�
 Chat.history.length = 0;
 var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', { gain: '9,999' }, true);
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
+
+// ---- 티키타카·관계 변수 (ADR-003) — 연출 전용이지만 조용히 죽으면 채팅이 1홉으로 퇴화한다 ----
+// 주의: trust 검사는 Chat.load로 어휘를 갈아치우므로 위의 어휘 의존 검사들 "뒤"에 있어야 한다.
+ok('티키타카 데이터가 로드된다 (대립쌍 반응 규칙 3개 이상)', Chat.TIKITAKA.pairs.length >= 3);
+ok('응답자가 캐스트에 없으면 조용히 넘어간다 (부스 솔로 모드)', (function () {
+  var saved = Chat.personas.slice();
+  Chat.personas.length = 0;
+  try { Chat.maybeReply({ nick: '불멍장인' }, Chat.epoch); return true; }
+  catch (e) { return false; }
+  finally { saved.forEach(function (p) { Chat.personas.push(p); }); }
+})());
+ok('큰 이벤트(버스트 무게 3+)만 trust를 누적한다', (function () {
+  var savedRel = localStorage.getItem('jgs-rel-v1'); // 검사로 실채널 기억을 오염시키지 않는다
+  try {
+    Chat.rel = null;
+    var before = Chat.relLoad().trust;
+    Chat.load({
+      big_ev: { facts: [], flavor: [['hype', 'a1'], ['hype', 'a2'], ['hype', 'a3'], ['hype', 'a4'], ['hype', 'a5'], ['hype', 'a6']] },
+      small_ev: { facts: [], flavor: [['hype', 'b1']] },
+    }, { big_ev: 3 });
+    Chat.react('big_ev');
+    Chat.react('small_ev');
+    return Chat.relLoad().trust === before + 1;
+  } finally {
+    if (savedRel === null) localStorage.removeItem('jgs-rel-v1');
+    else localStorage.setItem('jgs-rel-v1', savedRel);
+    Chat.rel = null;
+  }
+})());
 
 // ---- 등록된 게임이 계약을 지키는가 ----
 eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket', 'bomb', 'fishing']);
@@ -299,7 +329,7 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
   '../../index.html', 'shell.css', 'config.js', 'shell.js',
-  '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js',
+  '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js', '../../data/tikitaka.js',
   '../../data/events/hwaryeok.js', '../hwaryeok/game.js',
   '../../data/events/giving-up.js', '../giving-up/game.js',
   '../../data/events/pocket.js', '../pocket/game.js',
