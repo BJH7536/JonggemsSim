@@ -210,14 +210,18 @@ body {
   border: 5px double var(--amber); border-radius: 10px; padding: 4px 28px;
   background: rgba(20,13,4,.6); text-shadow: 0 0 26px rgba(255,180,71,.55);
 }
+/* DOM상 #viewport(960×430, overflow:hidden) 안에 있지만 fixed로 앱 창 전체를 덮는다 —
+   absolute였을 때 상점·영입·보관함이 게임 화면 크기에 갇혀 있었다. 오른쪽 300px는 채팅 독, 아래 44px는 작업표시줄 */
 #overlay {
-  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
-  background: rgba(8,5,3,.76); overflow-y: auto;
+  position: fixed; inset: 0 300px 44px 0; z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8,5,3,.76); overflow-y: auto; padding: 20px;
 }
 #overlay.hidden { display: none; }
 .panel {
-  width: min(700px, 94%); background: linear-gradient(#221a10, #150e08);
-  border: 1px solid #4a4232; border-radius: 10px; padding: 22px 28px; box-shadow: 0 18px 56px #000d;
+  width: min(1180px, 96%); max-height: 92vh; overflow-y: auto;
+  background: linear-gradient(#221a10, #150e08);
+  border: 1px solid #4a4232; border-radius: 10px; padding: 26px 32px; box-shadow: 0 18px 56px #000d;
   margin: auto;
 }
 .panel h2 { margin: 0 0 10px; font-family: Georgia, 'Nanum Myeongjo', serif; color: var(--amber); letter-spacing: 3px; }
@@ -328,29 +332,29 @@ body {
   background: rgba(12,10,16,.6); border: 1px solid var(--plat); border-radius: 5px; padding: 2px 8px;
 }
 #restBtn:hover { color: #ece7dd; border-color: var(--amber); }
-.dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px; margin-top: 7px; }
-.dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
-.dexCard b { font-size: 13px; }
-.dexCard .dexDesc { font-size: 11px; color: #c9cdd2; line-height: 1.45; }
-.dexCard .dexTr { font-size: 10px; color: var(--dim); }
-.dexCard .siBuy { margin-top: 3px; background: #241e14; border: 1px solid #4a4232; color: var(--amber2); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-size: 12px; }
+.dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 13px; margin-top: 10px; }
+.dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
+.dexCard b { font-size: 18px; }
+.dexCard .dexDesc { font-size: 15px; color: #c9cdd2; line-height: 1.45; }
+.dexCard .dexTr { font-size: 13px; color: var(--dim); }
+.dexCard .siBuy { margin-top: 3px; background: #241e14; border: 1px solid #4a4232; color: var(--amber2); border-radius: 6px; padding: 9px 10px; cursor: pointer; font-size: 16px; }
 .dexCard .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
-.shopGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 12px 0 4px; }
+.shopGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 16px 0 6px; }
 .shopItem {
-  background: #17191c; border: 1px solid #2c3036; border-radius: 9px;
-  padding: 10px; text-align: center;
+  background: #17191c; border: 1px solid #2c3036; border-radius: 11px;
+  padding: 16px; text-align: center;
 }
 .shopItem.owned { border-color: rgba(0,255,163,.45); }
-.shopItem img { width: 56px; height: 56px; border-radius: 8px; margin-bottom: 6px; }
-.shopItem .siName { font-size: 13px; color: #ece7dd; font-weight: 700; }
-.shopItem .siDesc { font-size: 11px; color: var(--dim); margin: 3px 0 8px; line-height: 1.4; min-height: 30px; }
+.shopItem img { width: 92px; height: 92px; border-radius: 10px; margin-bottom: 10px; }
+.shopItem .siName { font-size: 18px; color: #ece7dd; font-weight: 700; }
+.shopItem .siDesc { font-size: 14px; color: var(--dim); margin: 5px 0 11px; line-height: 1.4; min-height: 40px; }
 .shopItem .siBuy {
-  width: 100%; padding: 6px 0; border-radius: 7px; border: 1px solid #4a4232;
-  background: linear-gradient(#2a2416, #1c1810); color: #ffd24a; font-size: 12px;
+  width: 100%; padding: 9px 0; border-radius: 8px; border: 1px solid #4a4232;
+  background: linear-gradient(#2a2416, #1c1810); color: #ffd24a; font-size: 16px;
   font-weight: 700; cursor: pointer;
 }
 .shopItem .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
-.shopItem .siOwned { font-size: 11.5px; color: var(--plat2); padding: 7px 0; }
+.shopItem .siOwned { font-size: 15px; color: var(--plat2); padding: 9px 0; }
 
 /* ---------- 방송용품 효과 — 전부 순수 장식 (body.g-<id>) ---------- */
 body.g-camgold #camBox { border-color: #ffd24a; box-shadow: 0 0 16px rgba(255,210,74,.45), 0 4px 18px rgba(0,0,0,.6); }
@@ -579,34 +583,41 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 /* "잠시 후 시작합니다" — 실제 방송의 Starting Soon 장면. 오버레이 위에 뜬다 */
 .startSoon {
   position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 10px; text-align: center;
+  align-items: center; justify-content: center; gap: 22px; text-align: center;
+  overflow: auto; padding: 24px 0;   /* 브리핑이 길어져도 잘리지 않는다 */
   background:
-    radial-gradient(520px 260px at 50% 30%, rgba(0,255,163,.16), transparent 70%),
+    radial-gradient(1100px 560px at 50% 30%, rgba(0,255,163,.16), transparent 70%),
     linear-gradient(#141020, #141517);
 }
-.ssTop { font-size: 11px; letter-spacing: 6px; color: var(--plat2); opacity: .8; }
-.startSoon h2 { margin: 0; font-size: 26px; color: var(--ink); font-family: Georgia, serif; }
-.ssGame { font-size: 13px; color: #c9cdd2; }
-.ssGame .cat { margin-right: 8px; }
+.ssTop { font-size: 25px; letter-spacing: 11px; color: var(--plat2); opacity: .8; }
+.startSoon h2 { margin: 0; font-size: 60px; line-height: 1.15; color: var(--ink); font-family: Georgia, serif; }
+.ssGame { font-size: 29px; color: #c9cdd2; }
+.ssGame .cat { margin-right: 14px; padding: 3px 18px; border-radius: 999px; font-size: 22px; }
+/* 브리핑의 시작 버튼 — 카드가 커진 만큼 같이 커져야 눌러야 할 것으로 읽힌다 */
+.startSoon .slab { font-size: 34px; padding: 22px 62px; border-radius: 12px; }
 .ssCount {
-  font: bold 64px Georgia, serif; color: var(--plat2); line-height: 1;
-  text-shadow: 0 0 30px rgba(0,255,163,.6); min-height: 68px;
+  font: bold 150px Georgia, serif; color: var(--plat2); line-height: 1;
+  text-shadow: 0 0 60px rgba(0,255,163,.6); min-height: 158px;
 }
 .ssCount.pop { animation: sspop .65s ease-out; }
 @keyframes sspop { 0% { transform: scale(1.5); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 100% { opacity: 1; } }
-.ssHint { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
+.ssHint { font-size: 23px; color: var(--dim); letter-spacing: 1px; }
 
-/* 브리핑 상자 — 목표·조작·미션. 미션을 정산 리포트에서만 보여주면 뭘 해야 하는지 모르고 3분을 보낸다 */
+/* 브리핑 상자 — 목표·조작·미션. 미션을 정산 리포트에서만 보여주면 뭘 해야 하는지 모르고 3분을 보낸다.
+   작으면 목표가 안 읽힌다 — 이 화면은 방송 전 유일한 지시사항이라 크게 잡는다 */
 .brBox {
-  width: min(620px, 90%); margin: 2px 0; text-align: left;
-  border: 1px solid #2e3138; border-radius: 10px; background: rgba(10,12,14,.55);
+  width: min(1560px, 88%); margin: 4px 0; text-align: left;
+  border: 2px solid #2e3138; border-radius: 18px; background: rgba(10,12,14,.62);
 }
-.brRow { display: flex; gap: 11px; padding: 9px 13px; font-size: 12.5px; line-height: 1.65; color: #c9cdd2; }
-.brRow + .brRow { border-top: 1px solid #23262b; }
-.brRow i { flex: 0 0 34px; font-style: normal; font-size: 10.5px; letter-spacing: 2px; color: var(--plat2); padding-top: 3px; }
+.brRow { display: flex; gap: 26px; padding: 22px 32px; font-size: 28px; line-height: 1.55; color: #c9cdd2; }
+.brRow + .brRow { border-top: 2px solid #23262b; }
+.brRow i {
+  flex: 0 0 86px; font-style: normal; font-size: 22px; letter-spacing: 4px;
+  color: var(--plat2); padding-top: 7px;
+}
 .brRow b { color: var(--ink); }
 .brRow em { font-style: normal; color: var(--amber2); }
-.brRow kbd { border: 1px solid #4a4232; border-radius: 3px; padding: 0 4px; color: var(--ink); }
+.brRow kbd { border: 1px solid #4a4232; border-radius: 6px; padding: 2px 10px; color: var(--ink); }
 
 /* 튜토리얼 팁 — 채팅으로 흘리면 시작 버스트에 묻힌다. 화면에 남고 다음 단계가 덮는다 */
 #tutTip {
@@ -970,7 +981,7 @@ body {
 .pdTier .tpts { color: var(--dim); font-variant-numeric: tabular-nums; }
 #tbTier { font-weight: 700; letter-spacing: 1px; }
 .shopItem.locked { opacity: .55; }
-.shopItem .siLock { font-size: 11.5px; color: var(--dim); padding: 7px 0; }
+.shopItem .siLock { font-size: 15px; color: var(--dim); padding: 9px 0; }
 /* 다이아 오라 — 등급 한정 장식. 네온 간판과 둘 다 있으면 뒤(다이아)가 이긴다 */
 body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
 .rwCap .rwNote { color: var(--dim); font-size: 10px; }
