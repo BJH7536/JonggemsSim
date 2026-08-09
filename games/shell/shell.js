@@ -231,12 +231,18 @@
       var el = $('dayChip');
       if (!el) return;
       var c = Shell.campaign(this.ch);
+      // c.left는 오늘을 포함한 남은 일수 — 마감 당일이 D-DAY다 (D-Day 관용)
+      var dd = c.left - 1;
       el.className = c.left <= 3 ? 'last' : '';
       el.innerHTML =
-        '<b>' + Math.min(c.day, c.days) + '</b><span class="dcOf">/ ' + c.days + '일</span>' +
+        '<div class="dcTop"><b class="dcDday">' + (dd > 0 ? 'D-' + dd : 'D-DAY') + '</b>' +
+        '<span class="dcOf">시즌 ' + Math.min(c.day, c.days) + '일차 / ' + c.days + '일 계약</span></div>' +
         '<i class="dcBar"><i style="width:' + c.pct.toFixed(1) + '%"></i></i>' +
-        '<span class="dcGoal">최고 <b>' + c.best.toLocaleString() + '</b> / ' +
+        '<span class="dcGoal">최고 <b>' + c.best.toLocaleString() + '</b> / 목표 ' +
           c.goal.toLocaleString() + '명</span>';
+      // 미션 쪽지 바로 아래에 붙인다 — 쪽지 높이는 미션 수에 따라 변해서 실측이 맞다
+      var pd = document.querySelector('.pdNote');
+      el.style.top = pd ? Math.round(pd.getBoundingClientRect().bottom + 14) + 'px' : '';
     },
     saveChannel: function () {
       try { localStorage.setItem(STORE_KEY, JSON.stringify(this.ch)); } catch (e) {}
@@ -435,10 +441,10 @@
       // 도네 읽어주기 — 배너가 떠 있는 3.4초 동안만 클릭이 통한다 (CSS pointer-events)
       $('donBanner').addEventListener('click', function () { self2.readDonation(); });
       // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
-      // 한 화면에 한 컷. 클릭으로 넘기고, 마지막 컷에서 서명 버튼이 열린다.
+      // 한 지면에 4컷. 클릭할 때마다 다음 컷이 왼쪽에서 들어와 쌓이고(이전 컷은 남는다),
+      // 4컷이 다 차면 만화가 완성되면서 서명 버튼이 열린다 (사용자 요청).
       var splash = $('introSplash'), cuts = splash.querySelectorAll('.comic figure'), ci = -1;
       function nextCut() {
-        if (ci >= 0) cuts[ci].classList.remove('on');
         cuts[++ci].classList.add('on');
         $('cutNo').textContent = (ci + 1) + ' / ' + cuts.length;
         if (ci === cuts.length - 1) splash.classList.add('done'); // 마지막 컷 = 계약서
@@ -651,6 +657,7 @@
         '</div>' + recent + pdNote;
 
       this.bindHub();
+      this.renderDay(); // 쪽지가 새로 그려졌으니 D-Day 위젯도 그 아래로 다시 맞춘다
       // 시즌 판정은 허브 복귀 시점 한 곳에서만 — 방송 종료도 휴방도 결국 여기로 온다
       var camp = Shell.campaign(this.ch);
       if (camp.state !== 'run') this.showSeasonEnd(camp);
