@@ -30,6 +30,15 @@
 
   // 방송 제목 풀 — 순수 연출. 실제 종겜 스트리머의 "오늘의 각오" 제목 감성.
   // 게임 id 로 찾고, 없으면 태그라인을 쓴다 (새 게임이 등록돼도 깨지지 않는다).
+  // 툴팁 대표컷 — 게임의 실제 배경 아트 (AetherAI, 각 게임이 인게임에서 쓰는 그 컷).
+  // 화력쇼는 배경 아트가 없어 벡터 thumb 폴백. 새 게임이 목록에 없어도 깨지지 않는다.
+  var TIP_ART = {
+    'giving-up': 'games/giving-up/img/sky-bg.jpg',
+    pocket: 'games/pocket/img/arena-bg.jpg',
+    fishing: 'games/fishing/img/sea-bg.jpg',
+    bomb: 'games/bomb/img/bench-bg.jpg',
+  };
+
   var SHOW_TITLES = {
     hwaryeok: ['불 좀 끄고 올게요', '오늘 대참사 0회 도전', '4구 풀가동 각입니다'],
     'giving-up': ['오늘 정상 못 가면 삭발', '항아리 유산소 하는 날', '떨어질수록 커집니다'],
@@ -38,6 +47,68 @@
     bomb: ['판독 없이 갑니다', '오늘 폭발 0회 도전(안 지킴)', '감으로 자르는 남자'],
   };
 
+  // ---------- 공명 판정층 (ADR-004) ----------
+  // 시청자 수는 단일 숫자가 아니라 "누가 보고 있는가"의 분포다. 총량은 게임이 정한 상수
+  // 그대로이고(무변경 — critic 4차 승인 보존), 이 층은 그 유입이 어느 원형으로 갈지 배분만
+  // 정한다. 결정론 데이터 + 상한이라 C3b(비결정 생성물의 경제 유입 금지) 밖이다.
+  // 자극 축: [danger 위험, chaos 파괴, skill 숙련, fun 유머] — resonance-model.md §7.1
+  // v = 흥미도(주목 강도, 0~1) / val = 호오(평가 방향, -1~1).
+  // 둘을 나누는 것이 이 모델의 뿌리다 — 안전제일은 위험에 "강하게 주목하며 부정적으로"
+  // 반응한다(비명도 트래픽이다). 하나로 뭉개면 이 사람은 위험 이벤트에 무반응이어야 한다.
+  // 프로레슬링의 heat(관심량) vs face/heel(정렬) 분리와 동형.
+  var ARCH = [
+    { id: 'thrill', n: '불구경파', c: '#ff8d5a', v: [.9, 1, .2, .6], val: [ .8,  1,  .2,  .6] },
+    { id: 'fan',    n: '팬덤',     c: '#ffb0c8', v: [.6, .4, .5, .5], val: [-.5, -.7,  .8,  .5] },
+    { id: 'expert', n: '분석가',   c: '#ffd27a', v: [.3, .2, 1, .2],  val: [-.2, -.4,  1,   0 ] },
+    { id: 'casual', n: '뜨내기',   c: '#a8c8f0', v: [.5, .5, .4, .8], val: [ .2,  .3,  .2,  .8] },
+  ];
+  var ARCH_START = [.20, .25, .15, .40]; // 새 채널의 구성 — 아직 색이 없어서 뜨내기가 최다
+  var T_ECON = 0.35;  // 경제 기여 임계 — 이만큼 공명해야 유입에 기여한다 (무대 상수)
+  var BETA = 0.15;    // 혼합 바닥 — 어떤 원형도 배분 0이 되지 않는다 (단일문화 방지)
+
+  // ---------- 채널 계층 ----------
+  // 방송 1회가 끝나도 채널은 남는다. 관객 구성이 이월되지 않으면 10번째 방송이 1번째와
+  // 똑같아지고, "채널을 키운다"는 이 게임의 판타지가 성립하지 않는다.
+  var MIX_INHERIT = 0.45; // 방송 결과가 채널 색에 반영되는 비율. 1이면 마지막 방송이 색을
+                          // 통째로 갈아엎어 "정체성"이 아니라 "최신 방송 표시"가 된다.
+                          // 0.45면 같은 장르 2~3회에 확실히 물들고, 한 번으로는 안 뒤집힌다.
+  var SUB_BONUS = 0.4;    // 구독자 1명당 시작 시청자 기여
+  var SUB_BONUS_CAP = 700; // 상한 — 시작 시청자가 무한정 오르면 언락 페이싱이 무너진다
+
+  // 호오가 정하는 것은 "유입의 질"이다. 부정 공명으로 온 관객은 미워하며 잠깐 보다 떠난다
+  // (프로레슬링의 heel heat) — 야유·논란이 트래픽을 부르되 남지는 않는 실제 방송 생리.
+  var FICKLE_DECAY = 0.015; // 뜨내기 유입의 초당 이탈률 (반감기 ≈ 46초)
+  var FICKLE_MAX = 0.55;    // 한 유입에서 뜨내기가 차지할 수 있는 최대 비율 — 안전판
+
+  // 변이 — 원형에서 태어난 시청자가 전부 똑같으면 단조롭다(소윤 원안). 집계 모델에서는
+  // "배분된 몫의 일부가 성향이 가까운 이웃 원형으로 태어난다"로 근사한다.
+  // 덤으로 구성비 0인 원형이 영구 사멸하는 흡수 상태도 사라진다.
+  var MUT_RATE = 0.12;
+
+  // 탐색 보너스 — 관객이 골고루 모인 방송일수록 구독자가 더 남는다. 방송 중 시청자 수에는
+  // 손대지 않고(밸런스 안전) 메타 통화에만 얹는다. 이게 있어야 "포트폴리오 관리"가
+  // 관찰이 아니라 전략이 된다 — 없으면 채널 색을 바꿀 이유가 없다.
+  var DIV_BONUS = 0.6;
+
+  // 원형 간 성향 근접도 (흥미도 벡터 코사인) — 변이가 아무 데로나 흩어지지 않고
+  // "가까운 이웃"으로 흐르게 한다. ARCH가 바뀌면 로드 시 함께 다시 계산된다.
+  function computeSim() {
+    var m = [], norm = ARCH.map(function (a) {
+      return Math.sqrt(a.v[0] * a.v[0] + a.v[1] * a.v[1] + a.v[2] * a.v[2] + a.v[3] * a.v[3]) || 1;
+    });
+    for (var i = 0; i < ARCH.length; i++) {
+      m[i] = [];
+      for (var j = 0; j < ARCH.length; j++) {
+        if (i === j) { m[i][j] = 0; continue; }
+        var d = 0;
+        for (var k = 0; k < 4; k++) d += ARCH[i].v[k] * ARCH[j].v[k];
+        m[i][j] = Math.max(0, d / (norm[i] * norm[j]));
+      }
+    }
+    return m;
+  }
+  var SIM = computeSim();
+
   var Shell = {
     games: [],
     game: null,     // 현재 방송 중인 게임 정의
@@ -45,6 +116,10 @@
     stage: null,
     phase: 'hub',   // hub | live | result
     viewers: 0,
+    comp: [0, 0, 0, 0],       // 원형별 시청자 — 합이 viewers와 같아야 한다 (불변식)
+    compStart: [0, 0, 0, 0],  // 방송 시작 스냅샷 — 리포트의 원형별 순증감용
+    fickle: [0, 0, 0, 0],     // 그중 뜨내기 — 부정 공명으로 온 몫. comp[i] 이하가 불변식
+    _fickleBorn: 0,           // 이번 방송에 발생한 뜨내기 유입 누계 (리포트 표시용)
     timeLeft: 0,
     ch: null,       // 채널 영속 상태 (localStorage)
     ctx: null,
@@ -70,7 +145,37 @@
         gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
         tier: d.tier || 0,          // 파트너 등급 0~4 (브론즈~다이아) — 내려가지 않는다
         tierPts: d.tierPts || 0,    // 등급 게이지 — C/D가 조용히 깎는 유일한 수치 (규약 2)
+        // 채널의 색 — 원형별 구성 비율(합 1). 방송이 끝날 때마다 물든다.
+        // 구 저장분에는 없으므로 기본값으로 이월 (스키마 마이그레이션)
+        mix: (d.mix && d.mix.length === ARCH.length) ? d.mix.slice() : ARCH_START.slice(),
       };
+    },
+    // 구독자가 데려오는 시작 시청자. 채널이 커질수록 출발선이 높아진다 —
+    // 상한이 있는 이유는 이것이 총량에 닿는 유일한 조각이기 때문 (언락 페이싱 보호)
+    subBonus: function () {
+      return clamp(Math.round(this.ch.subs * SUB_BONUS), 0, SUB_BONUS_CAP);
+    },
+    // 방송 결과를 채널 색에 반영. 합 1 불변식을 유지한다
+    absorbMix: function () {
+      var t = this.compTotal(), i, s = 0;
+      if (!(t > 0)) return;
+      for (i = 0; i < ARCH.length; i++) {
+        this.ch.mix[i] = this.ch.mix[i] * (1 - MIX_INHERIT) + (this.comp[i] / t) * MIX_INHERIT;
+        s += this.ch.mix[i];
+      }
+      for (i = 0; i < ARCH.length; i++) this.ch.mix[i] /= s; // 부동소수 드리프트 보정
+    },
+    mixTop: function () {
+      var best = 0;
+      for (var i = 1; i < ARCH.length; i++) if (this.ch.mix[i] > this.ch.mix[best]) best = i;
+      return ARCH[best];
+    },
+    // 4색 비율 막대 — 라이브 게이지와 같은 시각 언어로 채널의 색을 보여준다
+    mixBar: function (mix) {
+      return '<i class="mixbar">' + ARCH.map(function (a, i) {
+        return '<i style="flex-grow:' + Math.max(0.01, mix[i]) + ';background:' + a.c +
+          '" title="' + a.n + ' ' + Math.round(mix[i] * 100) + '%"></i>';
+      }).join('') + '</i>';
     },
     updateTopbar: function () {
       $('tbSubs').textContent = this.ch.subs.toLocaleString();
@@ -92,6 +197,167 @@
     freshStep: function (id) { return this.ch.fresh[id] || 0; },
     freshMult: function (id) { return FRESH_MULT[this.freshStep(id)]; },
 
+    // ---------- 공명 배분 (ADR-004 결정 2) ----------
+    compTotal: function () { return this.comp[0] + this.comp[1] + this.comp[2] + this.comp[3]; },
+    // 채팅 캐스팅이 읽는 유일한 창구. 단방향이다 — 채팅이 되돌려 쓰는 경로는 없다 (C3)
+    archShare: function (id) {
+      var t = this.compTotal();
+      if (!(t > 0)) return 1 / ARCH.length;
+      for (var i = 0; i < ARCH.length; i++) if (ARCH[i].id === id) return this.comp[i] / t;
+      return 0;
+    },
+    // 배분 가중치 = 공명이 경제 임계를 넘은 만큼 + 혼합 바닥.
+    // 현재 구성비를 곱하지 않는다 — 곱하면 복제자 동역학이 되어 몇 방송 만에 한 원형이
+    // 전체를 먹고 되돌릴 수 없게 된다 (검증 실증: 8방송 95%). resonance-model.md §3
+    stimWeights: function (stim) {
+      var w = [];
+      for (var i = 0; i < ARCH.length; i++) {
+        var a = ARCH[i].v;
+        var res = stim[0] * a[0] + stim[1] * a[1] + stim[2] * a[2] + stim[3] * a[3];
+        w[i] = Math.max(0, res - T_ECON) + BETA;
+      }
+      return w;
+    },
+    archWeights: function (ev) {
+      var stim = (this.game && this.game.chat && this.game.chat.STIM) ? this.game.chat.STIM[ev] : null;
+      if (stim) return this.stimWeights(stim);
+      // 중립(도네·미태깅) — 현재 구성비대로. 채널의 색을 바꾸지 않는 유입이다
+      var w = [], t = this.compTotal();
+      for (var i = 0; i < ARCH.length; i++) w[i] = t > 0 ? this.comp[i] / t : 1;
+      return w;
+    },
+    // 변이 — 배분된 몫의 일부가 성향이 가까운 이웃 원형으로 태어난다. 총량은 보존된다.
+    // 소윤 원안("한 원형에서 나온 시청자가 전부 같으면 단조롭다")의 집계 근사이자,
+    // 구성비 0인 원형이 영원히 되살아나지 못하는 흡수 상태를 없애는 장치이기도 하다.
+    mutate: function (part) {
+      var out = part.slice(), i, j;
+      for (i = 0; i < ARCH.length; i++) {
+        var move = part[i] * MUT_RATE;
+        if (!(move > 0)) continue;
+        var sw = 0;
+        for (j = 0; j < ARCH.length; j++) sw += SIM[i][j];
+        if (!(sw > 0)) continue;
+        out[i] -= move;
+        for (j = 0; j < ARCH.length; j++) out[j] += move * SIM[i][j] / sw;
+      }
+      return out;
+    },
+    // 유입을 원형별로 나눠 담는다. Σ배분 = total 불변식 (최대잔여법으로 구조적으로 보장)
+    compAdd: function (total, ev) {
+      var w = this.archWeights(ev), sw = 0, i;
+      for (i = 0; i < w.length; i++) sw += w[i];
+      if (!(sw > 0)) { for (i = 0; i < w.length; i++) w[i] = 1; sw = w.length; }
+      // 최대잔여법 — floor로 깔고 남은 몫을 잔여가 큰 순서로 1씩 나눠준다.
+      // Σ배분 = total이 구조적으로 보장되므로 clamp가 필요 없다.
+      // (이전 구현은 반올림 잔차를 최대 가중 원형에 몰아주고 max(0,…)로 잘랐는데, 잔차가
+      //  음수이고 그 몫이 더 작으면 clamp가 삼킨 만큼 합이 늘었다 — total=2·균등 가중치에서
+      //  합 3. 실제 게임에서는 도달 불가한 잠복 결함이었고 현재의 PR #4 리뷰가 잡았다.)
+      var part = [], rem = [], used = 0;
+      for (i = 0; i < w.length; i++) {
+        var exact = total * w[i] / sw;
+        part[i] = Math.floor(exact);
+        rem[i] = exact - part[i];
+        used += part[i];
+      }
+      var left = total - used, b;
+      while (left >= 1) {
+        b = 0;
+        for (i = 1; i < rem.length; i++) if (rem[i] > rem[b]) b = i;
+        part[b]++; rem[b] -= 1; left -= 1;
+      }
+      if (left > 1e-9) { // total이 정수가 아닐 때의 잔차 — 지금 호출부는 정수지만 방어
+        b = 0;
+        for (i = 1; i < rem.length; i++) if (rem[i] > rem[b]) b = i;
+        part[b] += left;
+      }
+
+      // 변이는 "자극에 이끌려 새로 온 사람"에게만 적용한다. 중립 유입(도네·미태깅)은
+      // 현재 구성을 그대로 비추는 것이므로 변이를 걸면 신호 없이 구성이 서서히 드리프트한다.
+      var stim = (this.game && this.game.chat && this.game.chat.STIM) ? this.game.chat.STIM[ev] : null;
+      if (stim) part = this.mutate(part);
+
+      // 호오 — 같은 사건이라도 원형마다 감정의 방향이 다르다. 부정 공명으로 온 몫은
+      // "미워하며 잠깐 보는" 뜨내기다 (heel heat). 대참사가 팬덤·분석가를 잠깐 불러 모으되
+      // 남기지는 못하는 이유가 여기서 나온다.
+      for (i = 0; i < ARCH.length; i++) {
+        this.comp[i] += part[i];
+        if (!(part[i] > 0) || !stim) continue;
+        var vv = ARCH[i].val;
+        var vres = stim[0] * vv[0] + stim[1] * vv[1] + stim[2] * vv[2] + stim[3] * vv[3];
+        if (vres < 0) {
+          var born = part[i] * Math.min(FICKLE_MAX, -vres / 2);
+          this.fickle[i] += born;
+          this._fickleBorn += born; // 리포트용 — 이번 방송에 "미워하며 본" 관객이 얼마였나
+        }
+      }
+    },
+    // 이탈은 중립 — 구성비대로 비례 차감. 손실이 채널의 색까지 바꾸지는 않는다 (규약 2).
+    // 뜨내기도 같은 비율로 줄어든다 (fickle ≤ comp 불변식)
+    compSub: function (n) {
+      var t = this.compTotal();
+      if (!(t > 0)) return;
+      for (var i = 0; i < ARCH.length; i++) {
+        var before = this.comp[i];
+        if (!(before > 0)) { this.fickle[i] = 0; continue; }
+        var after = Math.max(0, before - n * (before / t));
+        this.comp[i] = after;
+        this.fickle[i] = Math.min(after, this.fickle[i] * (after / before));
+      }
+    },
+    // 뜨내기는 스스로 빠져나간다 — 조용히 (규약 2). "버즈는 오지만 남지 않는다"
+    drainFickle: function (dt) {
+      if (this.phase !== 'live') return;
+      var out = 0, i;
+      for (i = 0; i < ARCH.length; i++) {
+        if (!(this.fickle[i] > 0)) continue;
+        var d = Math.min(this.fickle[i], this.comp[i], this.fickle[i] * FICKLE_DECAY * dt);
+        this.fickle[i] -= d;
+        this.comp[i] -= d;
+        out += d;
+      }
+      if (!(out > 0)) return;
+      this.viewers = Math.max(0, this.viewers - out);
+      this.renderViewers();
+      if (this.viewers <= 0) this.endShow('dead');
+    },
+    fickleTotal: function () { return this.fickle[0] + this.fickle[1] + this.fickle[2] + this.fickle[3]; },
+    // 관객이 얼마나 골고루 모였는가 — 정규화 엔트로피 (0 = 한 원형 쏠림, 1 = 완전 균등)
+    diversity: function () {
+      var t = this.compTotal(), h = 0;
+      if (!(t > 0)) return 0;
+      for (var i = 0; i < ARCH.length; i++) {
+        var p = this.comp[i] / t;
+        if (p > 0) h -= p * Math.log(p);
+      }
+      return h / Math.log(ARCH.length);
+    },
+    // 허브 카드의 관객 프로필 — 이 게임을 방송하면 누가 특히 모이는가.
+    // 자극 평균의 내적으로 구하면 벡터 크기가 큰 원형(불구경파)이 모든 게임에서 이겨
+    // 변별이 사라진다(실측). 그래서 ① 실제 배분 산식을 이벤트마다 돌려 버스트 무게로
+    // 가중하고 ② 시작 구성비 대비 상대 강세로 본다 — "평소보다 더 오는 사람"이 답이다.
+    // 반환: { rel: 원형별 상대 강세(1 = 평범), top: 최다 원형 }
+    // ⚠ 현재 3게임은 프로필이 서로 비슷하다(전부 "위험→큰 보상" 구조). 그래서 라벨 하나로
+    //   단정하지 않고 막대로 그대로 보여준다 — 갈라지면 갈라진 대로 보이는 게 정직하다.
+    //   STIM 태깅으로 게임 색을 더 벌리는 것은 기획(소윤) 튜닝 과제다.
+    archProfile: function (g) {
+      var S = (g.chat && g.chat.STIM) || {}, B = (g.chat && g.chat.BURST) || {};
+      var keys = Object.keys(S), acc = [0, 0, 0, 0], i, k;
+      if (!keys.length) return null;
+      for (k = 0; k < keys.length; k++) {
+        var w = this.stimWeights(S[keys[k]]), sw = 0;
+        for (i = 0; i < ARCH.length; i++) sw += w[i];
+        var mult = B[keys[k]] || 1; // 큰 사건일수록 방송의 색을 더 많이 정한다
+        for (i = 0; i < ARCH.length; i++) acc[i] += mult * w[i] / sw;
+      }
+      var tot = 0, rel = [], best = null;
+      for (i = 0; i < ARCH.length; i++) tot += acc[i];
+      for (i = 0; i < ARCH.length; i++) {
+        rel[i] = (acc[i] / tot) / ARCH_START[i];
+        if (!best || rel[i] > best.s) best = { a: ARCH[i], s: rel[i] };
+      }
+      return { rel: rel, top: best.a };
+    },
+
     // ---------- 부팅 ----------
     boot: function () {
       this.ctx = $('scene').getContext('2d');
@@ -111,10 +377,18 @@
       this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
       this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
+      if (Shell.Dex) Shell.Dex.init(); // 영입된 캐스트를 채팅에 복원 (ADR-006)
       this.applyGear(); // 보유 방송용품(장식)을 화면에 반영
       var self2 = this;
       $('followBtn').addEventListener('click', function () {
         self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
+      });
+      // 도네 읽어주기 — 배너가 떠 있는 3.4초 동안만 클릭이 통한다 (CSS pointer-events)
+      $('donBanner').addEventListener('click', function () { self2.readDonation(); });
+      // 스트리머 표현 축 (§6.4) — 리액션 버튼. 방송 중에만 보인다
+      $('reactBar').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-tag]');
+        if (b) self2.express(b.getAttribute('data-tag'));
       });
       // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
       $('introSplash').classList.remove('hidden');
@@ -133,13 +407,15 @@
       surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall',
                  'bite', 'hook', 'new_bomb'],
       panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death',
-              'line_snap', 'boom'],
+              'line_snap', 'boom', 'streamer_scream'],
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
             'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
-            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up'],
+            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up',
+            'streamer_joy'],
       confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
-                  'strike_miss', 'escape', 'trash', 'timeout_boom'],
+                  'strike_miss', 'escape', 'trash', 'timeout_boom', 'streamer_selfmock'],
       thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
+      silence: ['streamer_silence'],
       question: ['milestone'],
     },
     camReact: function (ev) {
@@ -151,6 +427,24 @@
           if (f && f.complete && f.naturalWidth) $('camImg').src = f.src;
           return;
         }
+      }
+    },
+
+    // ---- 스트리머 표현 축 (시뮬 레이어 v0.2 §6.4) — 방송 중 능동 리액션 ----
+    // 플레이어 입력이 관측 가능한 사건(streamer_* 태그)이 되어 판정층에 들어간다.
+    // 관객은 여전히 관측만 하므로 C3 위반이 아니다. 마우스 전용 — 게임 키와 충돌 없음 (§11.4).
+    // 쿨다운은 규약 3(자극 간격)의 확장 — 연타로 도감을 긁는 것을 막는다.
+    REACT_CD: 6,
+    express: function (tag) {
+      if (this.phase !== 'live' || !Shell.Dex || !this.game) return;
+      if (this.now - (this._lastReactAt || -99) < this.REACT_CD) return;
+      this._lastReactAt = this.now;
+      Shell.Dex.judge(this.game.id, tag); // 결정론 판정 — 칸·파장 (메타 통화만)
+      this.camReact(tag);                 // 캠이 표정으로 응답한다 (연출)
+      var bar = $('reactBar');
+      if (bar) {
+        bar.classList.add('cool');
+        setTimeout(function () { bar.classList.remove('cool'); }, this.REACT_CD * 1000);
       }
     },
 
@@ -207,6 +501,9 @@
       $('tallyR').textContent = '오프라인';
       $('chainMeter').classList.add('hidden');
       $('viewerCount').textContent = '0';
+      this.comp = [0, 0, 0, 0];
+      this.fickle = [0, 0, 0, 0];
+      this.renderComp();
       Chat.reset();
       Chat.sys('— 방송 대기 중 —');
 
@@ -238,6 +535,9 @@
         '<span class="dIconName">방송용품 상점</span>' +
         '<span class="dIconFresh">' + this.ch.coins.toLocaleString() + '💰</span>' +
         '</button>';
+      // 캐스트 영입 (반응 도감) — 구독자·코인을 소비해 채팅 캐스트를 늘린다 (ADR-006)
+      if (Shell.Dex) icons += Shell.Dex.deskIcon();
+      $('reactBar').classList.add('hidden'); // 표현 축은 방송 중 전용
 
       var recent = this.ch.log.length
         ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
@@ -271,6 +571,20 @@
         '<div id="dTip"></div>' +
         '<div class="deskStat">구독자 <b>' + this.ch.subs.toLocaleString() + '</b> · 방송 <b>' +
           this.ch.shows + '</b>회 · 더블클릭 = 바로 방송</div>' +
+        // 채널 색깔 (공명 판정층) — 게임을 고르기 전에 보여야 선택이 전략이 된다
+        (typeof this.mixBar === 'function'
+          ? '<div class="deskStat chanmix"><span>채널 색깔</span>' + this.mixBar(this.ch.mix) +
+            '<b style="color:' + this.mixTop().c + '">' + this.mixTop().n + ' 채널</b></div>'
+          : '') +
+        // 텐션 (§7) — 게임을 고르기 전에 보여야 "쉴까 방송할까"가 전략이 된다. 회복은 휴방뿐
+        (Shell.Dex
+          ? '<div class="deskStat simTension' + (Shell.Dex.tension() <= 30 ? ' low' : '') + '">텐션 <b>' +
+            Math.round(Shell.Dex.tension()) + '%</b><span class="tenNote">' +
+            (Shell.Dex.tension() <= 30 ? '지쳤다 — 새 반응(파장)이 잘 나오지 않는다' : '파장 대역폭 ×' +
+              Shell.Dex.tensionMult().toFixed(2)) + '</span>' +
+            (Shell.Dex.tension() < 100 ? '<button id="restBtn" type="button">휴방 (+25)</button>' : '') +
+            '</div>'
+          : '') +
         pdNote + recent;
 
       this.bindHub();
@@ -314,6 +628,14 @@
         if (!btn) return;
         if (btn.hasAttribute('data-game')) self.start(btn.getAttribute('data-game'));
         else if (btn.getAttribute('data-app') === 'shop') self.openShop();
+        else if (btn.getAttribute('data-app') === 'cast' && Shell.Dex) Shell.Dex.openPanel();
+      });
+      // 휴방 (§7) — 하루를 쉬고 텐션을 회복한다. 시청자 수에는 아무 일도 일어나지 않는다
+      var rest = $('restBtn');
+      if (rest) rest.addEventListener('click', function () {
+        Shell.Dex.rest();
+        self.showHub(); // 텐션 표시 갱신
+        self.showTicker('휴방했다 — 컨디션이 돌아온다 (텐션 ' + Math.round(Shell.Dex.tension()) + '%)');
       });
     },
 
@@ -342,8 +664,11 @@
       }
 
       var tip = $('dTip');
+      var art = TIP_ART[g.id]; // 실제 게임 아트 컷 — 없으면(화력쇼) 벡터 thumb 폴백
       tip.innerHTML =
-        '<canvas class="gthumb" data-thumb width="280" height="126"></canvas>' +
+        (art
+          ? '<img class="gthumb" data-tipimg src="' + art + '" alt="">'
+          : '<canvas class="gthumb" data-thumb width="280" height="126"></canvas>') +
         '<div class="dwInfo">' +
           '<b class="tipTitle">' + g.title + '</b>' +
           '<p class="gd">' + g.tagline + '</p>' +
@@ -355,15 +680,25 @@
         '</div>' +
         '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>';
 
-      // 썸네일은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
-      var cv = tip.querySelector('[data-thumb]');
-      var c = cv.getContext('2d');
-      if (g.thumb) g.thumb(c, cv.width, cv.height);
-      else {
-        c.fillStyle = '#1e2023'; c.fillRect(0, 0, cv.width, cv.height);
-        c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
-        c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
-      }
+      // 벡터 썸네일 — 아트가 없는 게임은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
+      var drawVec = function (cv) {
+        var c = cv.getContext('2d');
+        if (g.thumb) g.thumb(c, cv.width, cv.height);
+        else {
+          c.fillStyle = '#1e2023'; c.fillRect(0, 0, cv.width, cv.height);
+          c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
+          c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
+        }
+      };
+      var cv0 = tip.querySelector('[data-thumb]');
+      if (cv0) drawVec(cv0);
+      // 아트 미배포 환경(파일 누락) — 조용히 벡터 썸네일로 강등, 툴팁은 항상 그림을 가진다
+      var im = tip.querySelector('[data-tipimg]');
+      if (im) im.addEventListener('error', function () {
+        var c2 = document.createElement('canvas');
+        c2.className = 'gthumb'; c2.width = 280; c2.height = 126;
+        im.replaceWith(c2); drawVec(c2);
+      });
       // 위치 — 아이콘 오른쪽. 렌더된 실제 높이로 화면 아래 잘림을 보정한다
       var r = btn.getBoundingClientRect();
       tip.style.left = (r.right + 14) + 'px';
@@ -426,7 +761,14 @@
 
       this.game = g;
       this.phase = 'live';
-      this.viewers = g.startViewers;
+      // 시작 시청자 = 게임 기본값 + 구독자 기여분, 관객 구성은 채널의 색을 물려받는다.
+      // 이월이 없으면 10번째 방송이 1번째와 똑같아진다 — 채널이 성장하지 않는다
+      var start0 = g.startViewers + this.subBonus();
+      this.viewers = start0;
+      this.comp = this.ch.mix.map(function (r) { return start0 * r; });
+      this.compStart = this.comp.slice();
+      this.fickle = [0, 0, 0, 0];
+      this._fickleBorn = 0;
       this.timeLeft = g.duration;
       this._fxQueue.length = 0;
       this._shake = 0; this._flash = 0;
@@ -445,12 +787,16 @@
       $('panel').innerHTML = '';
       $('camBox').classList.remove('hidden');
       this._camMood = 'silence'; $('camImg').src = 'games/shell/faces/adventurer_silence.png';
-      this._graph = [{ t: 0, v: g.startViewers }]; this._graphT = 0; this._upT = 0;
+      this._graph = [{ t: 0, v: start0 }]; this._graphT = 0; this._upT = 0;
       this.updateTopbar();
 
       Chat.reset();
       Chat.load(g.chat.T, g.chat.BURST);
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
+      if (Shell.Dex) {
+        Shell.Dex.newShow(g.id);             // 반응 도감 — 파장 리셋 + 저텐션 fatigue 발행 (ADR-006·§7.2)
+        $('reactBar').classList.remove('hidden'); // 스트리머 표현 축 (§6.4) — 방송 중에만
+      }
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
       // file:// 직접 실행 안내 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 녹화가
       // 막힌다 (클립 영상·리플레이 비활성). 한 번만, 조용히.
@@ -466,7 +812,7 @@
       $('obsDot').classList.add('live');
 
       this._marks.length = 0; this._shownV = 0;
-      this._recordStamped = false; this._lastGainAt = this.now;
+      this._recordStamped = false; this._paceTagged = false; this._lastGainAt = this.now;
       $('liveBar').classList.remove('cold');
       $('paceChip').classList.add('hidden');
       $('donBanner').classList.remove('show');
@@ -496,6 +842,18 @@
         });
       }
 
+      // 단골 인사 — 채널 기록(지난 방송·최고 기록)을 시청자가 기억하고 언급한다 (연출 전용 C3).
+      // 시작 버스트가 지나간 뒤 최대 2줄, 순차 방출 (규약 3 — 자극 간격). 데이터: data/regulars.js
+      var last = this.ch.log[0], mem = [];
+      if (!this.ch.shows) mem.push(['first', {}]);
+      else {
+        if (last && last.g === g.title) mem.push(['same_again', { game: g.title }]);
+        else if (last && last.d) mem.push(['after_dead', {}]);
+        if (this.ch.best[g.id]) mem.push(['best', { best: this.ch.best[g.id].toLocaleString() }]);
+        if (!mem.length && this.ch.shows >= 3) mem.push(['regular', { shows: String(this.ch.shows + 1) }]);
+      }
+      mem.slice(0, 2).forEach(function (m2, i) { Chat.memory(m2[0], m2[1], null, 2600 + i * 3200); });
+
       this.stage = this.makeStage();
       this.inst = g.start(this.stage);
       this.renderViewers();
@@ -514,13 +872,16 @@
         // 신선도가 적용된 뒤의 실제 반영량. 게임은 "얼마를 벌 만한 플레이였나"만 말하고,
         // 시청자 수를 실제로 얼마나 움직일지는 셸이 정한다 (규약 1·4는 무대 소유).
         // label이 없으면 FX 팝업을 띄우지 않는다 — 소액 획득까지 큐를 먹으면 큰 자극이 밀린다.
-        gain: function (n, label) {
+        // ev는 총량이 아니라 배분에만 쓰인다 (ADR-004 결정 2 — 총량 산식 무변경).
+        // 생략하면 중립 배분이라 기존 호출은 그대로 동작한다 (contract 4.2)
+        gain: function (n, label, ev) {
           if (!(n > 0) || self.phase !== 'live') return 0;
           var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id)));
           self.viewers += actual;
           self._surgeAcc += actual;                          // 흥미도의 급증 신호 (클립)
           self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
           if (actual >= 150) self._marks.push(self._upT);    // 전폭 그래프의 스파이크 마커
+          self.compAdd(actual, ev);                          // 공명 판정층 — 원형별 배분 (ADR-004)
           self.renderViewers();
           // 획득은 과하게 (규약 2). 단 도네는 전용 배너가 연출을 전담한다 — 중앙 팝업까지
           // 겹치면 큰 자극 두 개가 서로를 잡아먹는다 (규약 3)
@@ -535,6 +896,7 @@
           if (ev === 'donation') self.showDonation(facts);
           self.camReact(ev); Chat.react(ev, facts);
           self.maybeClip(ev); // 관측 전용 — 흥미도 판정·클립 캡처 (수치 무관여, C3)
+          if (Shell.Dex) Shell.Dex.judge(self.game.id, ev); // 반응 도감 — 결정론 칸 판정 (메타 통화만, ADR-006)
         },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
@@ -553,22 +915,39 @@
     renderViewers: function () {
       // 0.x명일 때 조기 '0명' 표시 방지 (L-8)
       var v = Math.ceil(this.viewers);
-      var el = $('viewerCount');
-      el.textContent = v.toLocaleString();
-      $('infoViewers').textContent = v.toLocaleString();
+      var el = $('viewerCount'); // 검사 하네스에는 DOM이 없다 — 전부 널 가드
+      if (el) el.textContent = v.toLocaleString();
+      var iv = $('infoViewers');
+      if (iv) iv.textContent = v.toLocaleString();
       // 심박 — 숫자가 움직일 때마다 살짝 튄다. 시청자 수가 곧 체력바(규약 1)라는 걸
       // 눈이 아니라 몸이 알게 하는 장치다
-      if (v !== this._shownV) {
+      if (el && v !== this._shownV) {
         var cls = v > this._shownV ? 'up' : 'down';
         el.classList.remove('up', 'down'); void el.offsetWidth; el.classList.add(cls);
         this._shownV = v;
       }
       // 채팅 열기 — 시청자 규모를 0~1로 눌러 관객 엔진에 넘긴다 (연출 전용, C3 무관)
       Chat.heat = Math.max(0, Math.min(1, Math.log10(Math.max(v, 1) / 150) / 2.3));
+      this.renderComp();
+    },
+    // 관객 구성 게이지 — "지금 누가 보고 있는가"를 색으로. 콘텐츠 선택이 관객을 바꾼다는 게
+    // 숫자가 아니라 눈으로 읽혀야 포트폴리오 관리가 전략이 된다
+    renderComp: function () {
+      var el = $('compBar');
+      if (!el) return;
+      var t = this.compTotal();
+      if (!(t > 0)) { el.innerHTML = ''; return; }
+      var html = '';
+      for (var i = 0; i < ARCH.length; i++) {
+        html += '<i style="flex-grow:' + Math.max(0.0001, this.comp[i]) + ';background:' + ARCH[i].c +
+          '" title="' + ARCH[i].n + ' ' + Math.round(this.comp[i] / t * 100) + '%"></i>';
+      }
+      el.innerHTML = html;
     },
     loseViewers: function (n) {
       if (this.phase !== 'live' || !(n > 0)) return;
       this.viewers = Math.max(0, this.viewers - n);
+      this.compSub(n);
       this.renderViewers();
       if (this.viewers <= 0) this.endShow('dead');
     },
@@ -592,7 +971,14 @@
     // 양념이니 연출은 화려하게, 수치 관여는 없음). 배너끼리는 큐로 3.4초 간격 방출 (규약 3).
     // 닉네임은 채팅 페르소나를 빌려 쓴다 — 후원자가 관객석에 실재하는 인물로 읽히게.
     DON_MSG: ['오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
-              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁'],
+              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁',
+              '아니 이걸 이렇게 한다고? ㅋㅋ', '방금 장면 클립 각이던데', '구독 박고 갑니다'],
+    // 후원자 — 대부분 채팅 페르소나(관객석에 실재하는 인물로 읽히게), 가끔 익명 (치지직 문법)
+    pickSponsor: function () {
+      return Math.random() < .3
+        ? { nick: '익명의 후원자', color: '#b8c4cc' }
+        : Chat.personas[Math.floor(Math.random() * Chat.personas.length)];
+    },
     showDonation: function (facts) {
       // 코인 적립 — 이번 방송 누계로 모았다가 정산(endShow) 때 잔액에 더한다.
       // 시청자 수치는 게임이 이미 gain으로 반영했다 — 코인은 별도 통화라 규약 1과 무관.
@@ -600,7 +986,7 @@
       if (amt > 0) this._showCoins += amt;
       this._donQ.push({
         amt: (facts && facts.d) ? String(facts.d) : '1,000',
-        who: Chat.personas[Math.floor(Math.random() * Chat.personas.length)],
+        who: this.pickSponsor(),
         msg: this.DON_MSG[Math.floor(Math.random() * this.DON_MSG.length)],
       });
       this.drainDon();
@@ -611,17 +997,45 @@
       this._donBusy = true;
       var el = $('donBanner');
       // 금액 단위는 '코인'(플랫폼 화폐) — 게임이 넘기는 값이 시청자 환산 수치라
-      // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법)
-      el.innerHTML = '<img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
+      // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법).
+      // 형식은 치지직 후원 배너: "{이름}님이 {n}코인 후원!" 머리줄 + 아래 도네 내용 줄.
+      el.innerHTML = '<div class="dhead"><img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
         '<b style="color:' + d.who.color + '">' + d.who.nick + '</b>님이 <b class="amt">' +
-        d.amt + ' 코인</b> 후원! <span class="dmsg">' + d.msg + '</span>';
-      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-      // 도네 팡파레 (상점 용품) — 배너 위에 소리만 얹는다. 수치 무관, 순수 장식
+        d.amt + '코인</b> 후원!</div>' +
+        '<div class="dmsg">' + d.msg + '</div>' +
+        '<div class="dhint">클릭해서 읽어주기</div>';
+      d.read = false; this._donShown = d; // 읽어주기 대상 — 배너가 사라지면 기회도 사라진다
+      el.classList.remove('show', 'read'); void el.offsetWidth; el.classList.add('show');
+      // 도네 알림음은 기본 — 코인 딸랑 두 음. 팡파레(상점 용품)는 그 위에 얹는다 (순수 장식)
+      Shell.sfx.tone(1175, .07, 'triangle', .06); Shell.sfx.tone(1568, .1, 'triangle', .05, .07);
       if (this.ch.gear.fanfare) {
         Shell.sfx.tone(1047, .09, 'triangle', .07); Shell.sfx.tone(1319, .1, 'triangle', .06, .08);
         Shell.sfx.tone(1568, .18, 'triangle', .06, .16);
       }
-      setTimeout(function () { self._donBusy = false; self.drainDon(); }, 3400);
+      setTimeout(function () {
+        self._donBusy = false; self._donShown = null;
+        $('donBanner').classList.remove('show', 'read'); // 애니메이션 종료 시점 — 시각적 무변화
+        self.drainDon();
+      }, 3400);
+    },
+
+    // ---------- 도네 읽어주기 (응답 루프 — 연출 전용) ----------
+    // 실제 스트리머의 핵심 기술은 "플레이하면서 채팅을 상대하는 것" — 배너를 클릭하는 손이
+    // 잠깐 게임에서 떨어지는 것 자체가 비용이자 몰입 장치다. 읽어주면 후원자가 반갑게
+    // 반응하고(don_read, 화자 = 후원자 본인) trust(방송 간 관계 변수, ADR-003)가 쌓인다.
+    // ponytail: 경제 무관여 — 시청자·코인 이득 없음. 유입을 붙이려면 공명 모델 게이트(§5) 뒤에.
+    readDonation: function () {
+      var d = this._donShown;
+      if (!d || d.read || this.phase !== 'live') return;
+      d.read = true;
+      var el = $('donBanner');
+      el.classList.add('read');
+      var h = el.querySelector('.dhint'); if (h) h.textContent = '읽어줬다 — 후원자가 답한다';
+      this.camReact('donation'); // aha 표정 — 도네를 보고 웃는 얼굴
+      this.showTicker('"' + d.msg + '" — ' + d.who.nick + '님 감사합니다!');
+      Chat.memory('don_read', {}, d.who, 700 + Math.random() * 500); // 사람이 읽고 답하는 템포
+      Chat.bumpTrust(); // 소통도 큰 사건이다 — 방송 간 관계에 쌓인다
+      Shell.sfx.tone(880, .08, 'triangle', .07); Shell.sfx.tone(1319, .12, 'triangle', .06, .09);
     },
 
     // ---------- 상점 (방송용품) ----------
@@ -796,12 +1210,25 @@
       var media = clip.vid
         ? '<video src="' + clip.vid + '" autoplay muted playsinline></video>'
         : '<img src="' + clip.img + '" alt="">';
+      // 클립 후원 (치지직 문법) — 터진 장면에 시청자가 지갑을 연다. 영상 밑에
+      // "{이름}님이 {n}코인 후원!" 한 줄. 연출 전용 — 코인 적립 없음 (클립은 수치
+      // 무관여, contract 4.6 — 연출이 경제를 만드는 경로를 열지 않는다).
+      var don = '';
+      if (label === 'INSTANT REPLAY') {
+        var spon = this.pickSponsor();
+        var damt = [500, 1000, 1000, 2000, 3000, 5000, 10000][Math.floor(Math.random() * 7)];
+        // 코인 아이콘 없이 글자만 — 클립 창의 주인공은 영상이다 (사용자 피드백)
+        don = '<div class="rwDon"><b style="color:' + spon.color + '">' + spon.nick +
+          '</b>님이 <b class="amt">' + damt.toLocaleString() + '코인</b> 후원!</div>';
+        // 클립 캡처 효과음 — 도네 딸랑과 겹치지 않는 낮은 촬칵+윙
+        Shell.sfx.tone(660, .05, 'square', .04); Shell.sfx.tone(990, .09, 'triangle', .05, .05);
+      }
       el.innerHTML = '<div class="rwHead"><i class="recDot"></i>' + label +
         '<span class="rwSave">클립 저장됨</span></div>' + media +
         '<div class="rwCap"><b>' + (clip.game ? clip.game + ' · ' : '') + Shell.util.fmtTime(clip.t) +
         '</b> ' + clip.mood + ' · 흥미도 ' + Math.round(clip.s * 100) + '%' +
         (!clip.vid && location.protocol === 'file:' ? ' <span class="rwNote">영상은 배포판·로컬 서버에서</span>' : '') +
-        '</div>';
+        '</div>' + don;
       if (label !== 'INSTANT REPLAY') el.querySelector('.rwSave').style.display = 'none';
       // 하이라이트 지점 직전부터 재생 — 프리롤(세그먼트 앞부분)을 건너뛴다.
       // MediaRecorder WebM은 duration이 Infinity로 나오는 경우가 있어(크롬) 그땐 처음부터.
@@ -923,9 +1350,15 @@
       var txt = '', hot = false;
       if (best > 0 && v > best) {
         txt = '★ 신기록 갱신 중'; hot = true;
-        if (!this._recordStamped) { this._recordStamped = true; this.showStamp('★ 신기록'); }
+        if (!this._recordStamped) {
+          this._recordStamped = true; this.showStamp('★ 신기록');
+          // 단골이 종전 기록을 기억하고 있다 — 스탬프(큰 자극)와 겹치지 않게 한 박자 뒤 (규약 3)
+          Chat.memory('record_live', { best: best.toLocaleString() }, null, 900);
+        }
+        this.paceTag();
       } else if (best > 0 && v > best * 0.8) {
         txt = '신기록 페이스 — 기록 ' + best.toLocaleString();
+        this.paceTag();
       } else {
         for (var i = 0; i < this.MILESTONES.length; i++) {
           var m = this.MILESTONES[i];
@@ -936,6 +1369,14 @@
       chip.innerHTML = txt.replace(/★/g, STAR); // 내부 상수만 들어온다
       chip.classList.toggle('hidden', !txt);
       chip.classList.toggle('hot', hot);
+    },
+
+    // 신기록 페이스 = 셸만 아는 판 상태 — 방송당 1회 record_pace 태그 발행 (도감 §6.2 ⚠ 처방).
+    // 관측단 스프레드시트파·통계인용러의 칸이 여기서 열린다. 메타 통화만 — 시청자 수 무관여
+    paceTag: function () {
+      if (this._paceTagged || !Shell.Dex || !this.game) return;
+      this._paceTagged = true;
+      Shell.Dex.judge(this.game.id, 'record_pace');
     },
 
     showTicker: function (text, muted) {
@@ -989,7 +1430,21 @@
       var bestClip = null;
       for (var bc = 0; bc < clips.length; bc++) if (!bestClip || clips[bc].s > bestClip.s) bestClip = clips[bc];
 
-      var newSubs = Math.floor(final / 100); // 최종 시청자의 1%가 채널에 남는다
+      // 방송이 채널의 색을 물들인다 — 이월의 핵심. 저장 전에 반영한다
+      var mixBefore = this.ch.mix.slice();
+      this.absorbMix();
+
+      // 탐색 보너스 — 관객이 골고루 모인 방송일수록 구독자가 더 남는다.
+      // 방송 중 시청자 수에는 손대지 않고 메타 통화에만 얹으므로 승인 밸런스와 충돌하지
+      // 않으면서, "채널 색을 관리할 이유"가 처음으로 생긴다 (ADR-004 결정 7)
+      var div = this.diversity(), divMult = 1 + DIV_BONUS * div;
+      // 파장 — 이번 방송에 처음 들은 반응 칸 수 (ADR-006). 다양성과 같은 원리로 메타 통화에만.
+      // 텐션(§7)은 파장 배율 안에서 대역폭으로 곱해진다 — 감쇠(settleShow)는 배율을 읽은 뒤
+      var waveNew = Shell.Dex ? Shell.Dex.waveNew : 0;
+      var waveMult = Shell.Dex ? Shell.Dex.waveMult() : 1;
+      var tensionAfter = 0;
+      if (Shell.Dex) { Shell.Dex.settleShow(g.id); tensionAfter = Math.round(Shell.Dex.tension()); }
+      var newSubs = Math.floor(final / 100 * divMult * waveMult); // 최종 시청자의 1% × 다양성 × 파장
       this.ch.subs += newSubs;
       this.ch.shows++;
       var earned = this._showCoins || 0;
@@ -1016,11 +1471,28 @@
       else if (!isDead && (evGrade.grade === 'S' || evGrade.grade === 'A')) this.showStamp('파트너 평가 ' + evGrade.grade);
       // 최고 흥미도 클립 1장이 채널 기록에 남는다 (240x108 JPEG ≈ 8KB — localStorage 부담 미미)
       this.ch.log.unshift({ g: g.title, v: final, r: isRecord,
+        d: isDead ? 1 : 0, // 강제 종료 여부 — 다음 방송의 단골 인사(after_dead)가 읽는다
         c: bestClip ? bestClip.img : 0,
         cm: bestClip ? bestClip.mood + ' · ' + Shell.util.fmtTime(bestClip.t) : '' });
       if (this.ch.log.length > 4) this.ch.log.length = 4;
       this.saveChannel();
       this.updateTopbar();
+
+      // 원형별 순증감 — "오늘 방송이 어떤 사람들을 데려왔나"가 리포트의 새 축이다
+      var archRows = ARCH.map(function (a, i) {
+        var d = Math.round(self.comp[i] - self.compStart[i]);
+        return '<span style="color:' + a.c + '">' + a.n + '</span> <b>' +
+          (d >= 0 ? '+' : '') + d.toLocaleString() + '</b>';
+      }).join(' · ');
+
+      // 채널이 어느 쪽으로 물들었나 + 다음 출발선 — "방송이 채널에 남는다"를 보여주는 두 줄
+      var mixTop = this.mixTop();
+      var movedI = 0, mixD = this.ch.mix.map(function (v, i) { return v - mixBefore[i]; });
+      for (var mi = 1; mi < ARCH.length; mi++) if (mixD[mi] > mixD[movedI]) movedI = mi;
+      var moved = ARCH[movedI], movedD = mixD[movedI];
+      var bonus = this.subBonus();
+      var nextStart = g.startViewers + bonus;
+      var fickleBorn = Math.round(this._fickleBorn);
 
       var nextPct = Math.round(FRESH_MULT[this.ch.fresh[g.id]] * 100);
       var other = this.games.filter(function (o) { return o.id !== g.id; })[0];
@@ -1096,9 +1568,23 @@
           '<span>최종 시청자</span><b>' + final.toLocaleString() + '명 ' +
             (isRecord ? '<span class="rec">' + STAR + ' 신기록</span>' : '(기록 ' + Math.max(prevBest, final).toLocaleString() + ')') + '</b>' +
           rows +
-          '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명</b>' +
+          '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명' +
+            ' <span class="' + (divMult >= 1.3 ? 'rec' : 'fine') + '">다양성 ×' + divMult.toFixed(2) + '</span></b>' +
           '<span>도네 수익</span><b>+' + earned.toLocaleString() + ' 코인 → 잔액 ' + this.ch.coins.toLocaleString() + '</b>' +
+          (waveNew > 0 ? '<span>반응 도감</span><b>처음 들은 반응 ' + waveNew + '칸 <span class="rec">파장 ×' +
+            waveMult.toFixed(2) + '</span></b>' : '') +
+          (Shell.Dex ? '<span>컨디션</span><b>텐션 ' + tensionAfter + '%' +
+            (tensionAfter <= 30 ? ' <span class="fine">— 지쳤다. 휴방이 새 반응을 되살린다</span>' : '') + '</b>' : '') +
         '</div>' +
+        '<div class="archline">오늘 모인 사람들 — ' + archRows +
+          (fickleBorn >= 10 ? '<br><span class="fine">이 중 <b>' + fickleBorn.toLocaleString() +
+            '명</b>은 야유하러 온 뜨내기였다 — 버즈는 오지만 남지 않는다</span>' : '') + '</div>' +
+        '<div class="chanmix"><span>채널 색깔</span>' + this.mixBar(this.ch.mix) +
+          '<b style="color:' + mixTop.c + '">' + mixTop.n + ' 채널</b></div>' +
+        '<p class="fine">이번 방송으로 <b style="color:' + moved.c + '">' + moved.n + '</b> 비중이 ' +
+          (movedD >= 0.005 ? '늘었다' : '거의 그대로다') + ' · 다음 방송은 <b>' +
+          nextStart.toLocaleString() + '명</b>에서 시작한다' +
+          (bonus > 0 ? ' (구독자 기여 +' + bonus.toLocaleString() + ')' : '') + '</p>' +
         '<p class="fine">다음 <b>' + g.title + '</b> 방송의 신선도는 <b>' + nextPct + '%</b>' +
           (nextPct < 100 && other ? ' — <b>' + other.title + '</b>을(를) 한 번 방송하면 회복된다. 이게 종겜을 하는 이유다.' : '.') +
         '</p>' +
@@ -1110,6 +1596,7 @@
       $('btnHub').onclick = function () { self.showHub(); };
       this.drawReport($('repGraph'));
       $('camBox').classList.add('hidden');
+      $('reactBar').classList.add('hidden');
     },
 
     // ---------- 루프 ----------
@@ -1144,6 +1631,7 @@
       if (this.phase === 'live' && this.inst) {
         try { this.inst.step(dt); } catch (e) { this._crash(e); }
       }
+      if (this.phase === 'live') this.drainFickle(dt); // 뜨내기는 스스로 빠져나간다
       if (this.phase === 'live') {
         // 시청자 그래프 표본 (1초 간격) + 업타임 + 스파크라인
         this._graphT += dt; this._upT += dt;
@@ -1393,5 +1881,16 @@
   };
 
   Shell.FRESH_MULT = FRESH_MULT;
+  Shell.ARCH = ARCH;               // 채팅 캐스팅·selftest·샌드박스가 읽는다 (읽기 전용)
+  Shell.ARCH_START = ARCH_START;
+  Shell.SIM = SIM;
+  // 샌드박스에서 흥미도 벡터를 슬라이더로 만지면 근접도도 따라 바뀌어야 한다
+  Shell.recomputeSim = function () { SIM = computeSim(); Shell.SIM = SIM; };
+  // 판정층 상수 — 무대 소유(ADR-004 결정 4). 도구·검사가 읽는다
+  Shell.TUNE = {
+    T_ECON: T_ECON, BETA: BETA, MIX_INHERIT: MIX_INHERIT,
+    SUB_BONUS: SUB_BONUS, SUB_BONUS_CAP: SUB_BONUS_CAP,
+    FICKLE_DECAY: FICKLE_DECAY, FICKLE_MAX: FICKLE_MAX, MUT_RATE: MUT_RATE, DIV_BONUS: DIV_BONUS,
+  };
   global.Shell = Shell;
 })(window);

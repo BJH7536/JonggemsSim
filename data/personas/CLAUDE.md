@@ -25,12 +25,18 @@
 
 ## 형식
 
-- `docs/contract.md` v1 확정 **전**: `05-hwaryeok-personas.md`의 캐릭터 시트 형식
-  (정체성/동기/말투/대표 발화/LLM 프로필 초안/확장 훅)으로 마크다운 작성
-- 확정 **후**: 이 디렉터리에 페르소나별 JSON — 스키마는 contract.md가 진실
-- 미리보기: `tools/persona-booth.html` (정훈 제작 예정) — 게임 없이 반응을 바로 확인
+- **캐스트 값의 진실은 `cast.js`다** — `window.JONG_CAST = [...]` 대입문의 우변은
+  엄격한 JSON 리터럴 (쌍따옴표·후행 콤마 금지, 이유는 ADR-002). 스키마는
+  `docs/contract.md` 2절: `{ "nick", "color", "tones" }`
+- 설계 시트(정체성/동기/말투/대표 발화/LLM 프로필 초안/확장 훅)는 계속
+  `05-hwaryeok-personas.md` 형식의 마크다운으로 — 시트가 원본, cast.js가 런타임 값
+- 미리보기: `tools/persona-booth.html` — 게임 없이 반응을 바로 확인.
+  cast.js 수정 → 저장 → 부스 새로고침이 작업 루프
+- 페르소나 간 대화(티키타카)·관계 변수 발화는 `../tikitaka.js` — 스키마는
+  contract.md 6절, 응답 톤은 응답자의 tones 안이어야 한다 (validate가 검사)
 
 ## PR 규칙
 
-`data/` 변경은 validate 통과 시 셀프 머지 가능 (validate 도입 전까지는 정훈 확인).
+`data/` 변경은 validate 통과 시 셀프 머지 가능 — PR을 올리면 GitHub Actions가
+`node tools/validate.mjs`를 자동 실행한다 (로컬에서도 같은 명령으로 미리 확인 가능).
 자세한 것은 루트 `CONTRIBUTING.md`.

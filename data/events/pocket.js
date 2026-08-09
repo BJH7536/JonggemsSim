@@ -3,7 +3,7 @@
  * 이 게임의 존재 이유는 "훈수"다. 턴제는 관객이 수를 같이 읽는 장르라
  * info/mock 톤이 처음으로 주연이 된다 — 화력쇼(환호)·GUOI(조롱)와 세 번째 결.
  *
- * 소윤(기획) 접점. 스키마 확정 후 data/events/pocket.json 으로 이관 (contract.md 1절).
+ * 소윤(기획) 소유 — 2026-08-09 games/에서 data/events/로 이관 완료 (contract.md 1절, ADR-002).
  * 톤 6종 = hype / worry / info / mock / cheer / question. 이벤트당 flavor 6개 이상.
  */
 window.POCKET_CHAT = {
@@ -77,4 +77,15 @@ window.POCKET_CHAT = {
   },
   BURST: { comeback: 4, ultra_hit: 3, crit: 3, wipe: 3, enemy_ko: 2, risky_hit: 2, faint: 2,
            advantage: 2, near_death: 2, start: 2, end: 2 },
+  // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)
+  // 이 게임의 결은 **수읽기**다 — 관객이 같이 계산한다. 숙련을 세우고 파괴는 최소로
+  // (2차 태깅: 게임 간 관객 프로필이 겹치던 문제 교정. resonance-model.md §6)
+  STIM: {
+    risky_hit: [.5, 0, .75, .25], ultra_hit: [.7, .1, .9, .35], crit: [.4, .1, .65, .4],
+    miss: [.25, .05, .1, .5], enemy_ko: [.15, 0, .85, .15], comeback: [.9, .1, 1, .25],
+    player_hit: [.4, .1, .15, .1], near_death: [.85, .05, .35, .1], faint: [.25, .25, .1, .3],
+    wipe: [.3, .5, .05, .4], revive: [0, 0, .3, .25], advantage: [0, 0, .95, .1],
+    disadvantage: [.15, 0, .55, .3], safe_spam: [0, 0, .1, .35], new_foe: [.15, 0, .4, .15],
+    donation: [0, 0, 0, .5], milestone: [0, 0, .25, .35],
+  },
 };

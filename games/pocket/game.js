@@ -206,13 +206,16 @@
           floater(660, 170, '-' + dmg, crit ? '#e0342a' : '#2f3a46');
           var gain = Math.round(mv.gain * adv * fm * (crit ? 2.2 : 1));
           if (i >= 2 || crit) {
-            var actual = stage.gain(gain, crit ? '급소!!' : (i === 3 ? '필살기 적중!!' : '도박수 적중!'));
+            var actual = stage.gain(gain, crit ? '급소!!' : (i === 3 ? '필살기 적중!!' : '도박수 적중!'),
+              crit ? 'crit' : (i === 3 ? 'ultra_hit' : 'risky_hit'));
             stage.shake(i === 3 ? 10 : 6); stage.flash(i === 3 ? .25 : .15);
             if (i === 3) sfxBig(); else sfxHit();
             stage.emit(crit ? 'crit' : (i === 3 ? 'ultra_hit' : 'risky_hit'),
               { mv: name, dmg: dmg, gain: actual.toLocaleString() });
           } else {
-            stage.gain(gain, null); // 안전한 딜은 조용한 소액 — 티커로만
+            // 안전한 딜은 조용한 소액 — 티커로만. 이벤트 인자도 없다(중립 배분):
+            // 안정타는 채널의 색을 바꿀 만한 사건이 아니라는 뜻이다 (ADR-004)
+            stage.gain(gain, null);
             sfxHit();
             stage.ticker(name + ' 적중 — ' + dmg + ' 피해', false);
           }
@@ -234,7 +237,8 @@
       var nearDeath = me().hp / me().max < 0.2;
       var base = nearDeath ? 1200 : 350;
       var gain = Math.round(base * st.streak);
-      var actual = stage.gain(gain, nearDeath ? '빈사 역전 KO!!!' : 'KO! ' + st.wins + '연승');
+      var actual = stage.gain(gain, nearDeath ? '빈사 역전 KO!!!' : 'KO! ' + st.wins + '연승',
+        nearDeath ? 'comeback' : 'enemy_ko');
       if (nearDeath) { st.comebacks++; stage.stamp('빈사 역전'); stage.flash(.4); }
       st.streak = Math.min(3, st.streak + .5);
       st.maxStreak = Math.max(st.maxStreak, st.streak);
@@ -304,7 +308,7 @@
       sfxSwap();
       var adv = typeMult(me().t, st.enemy.t);
       if (adv > 1) {
-        var actual = stage.gain(120, '영리한 교체!');
+        var actual = stage.gain(120, '영리한 교체!', 'advantage');
         stage.emit('advantage', { name: me().n });
       } else {
         stage.ticker(me().n + ' 교체', false);
@@ -367,7 +371,7 @@
           st.donT = 9 + Math.random() * 7;
           if (Math.random() < .45) {
             var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var a = stage.gain(d, '익명의 도네');
+            var a = stage.gain(d, '익명의 도네', 'donation');
             stage.emit('donation', { d: a.toLocaleString() });
           }
         }

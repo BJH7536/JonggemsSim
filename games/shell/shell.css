@@ -111,17 +111,21 @@ body {
 /* 도네 배너 — 화면 우상단으로 슬라이드 인 (규약 5: 양념은 화려하게) */
 #donBanner {
   position: absolute; top: 76px; right: -420px; z-index: 3; max-width: 380px;
-  display: flex; align-items: center; gap: 8px;
   background: linear-gradient(100deg, rgba(48,36,10,.95), rgba(26,20,8,.95));
   border: 1px solid var(--amber); border-left-width: 4px; border-radius: 9px;
   padding: 9px 14px; font-size: 13px; color: #ffedc4;
   box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(255,180,71,.25);
   pointer-events: none; opacity: 0;
 }
+#donBanner .dhead { display: flex; align-items: center; gap: 7px; font-weight: 700; }
 #donBanner .uiIco { width: 20px; height: 20px; }
 #donBanner .amt { color: #ffdf9e; font-size: 15px; }
-#donBanner .dmsg { color: #d8cdb4; font-size: 12px; margin-left: 4px; }
-#donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; }
+#donBanner .dmsg { color: #d8cdb4; font-size: 12px; margin-top: 4px; }
+#donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; pointer-events: auto; cursor: pointer; }
+/* 도네 읽어주기 — 배너가 떠 있는 동안 클릭 가능. 읽으면 민트 확인 (응답 루프, 연출 전용) */
+#donBanner .dhint { margin-top: 4px; font-size: 10.5px; color: #9fd8ff; opacity: .85; }
+#donBanner.read { border-color: #00ffa3; box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(0,255,163,.3); }
+#donBanner.read .dhint { color: #7dffd0; }
 @keyframes donin {
   0% { right: -420px; opacity: 0; }
   9% { right: 12px; opacity: 1; }
@@ -133,6 +137,11 @@ body {
   position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 34px; z-index: 1;
   pointer-events: none; opacity: .9;
 }
+/* 관객 구성 게이지 (ADR-004 공명 판정층) — "지금 누가 보고 있는가"를 색으로 상시 노출.
+   콘텐츠 선택이 관객을 바꾼다는 사실이 숫자가 아니라 눈으로 읽혀야 포트폴리오가 전략이 된다 */
+#compBar { display: inline-flex; width: 66px; height: 9px; border-radius: 5px; overflow: hidden; border: 1px solid #4a4232; vertical-align: middle; margin-left: 7px; }
+#compBar:empty { display: none; }
+#compBar i { display: block; min-width: 0; transition: flex-grow .45s ease-out; }
 #tallyUp { font-weight: 400; opacity: .85; margin-left: 6px; font-variant-numeric: tabular-nums; }
 
 /* ---------- 스트리머 캠 — 게임 이벤트에 반응하는 얼굴 (연출 전용) ---------- */
@@ -142,6 +151,16 @@ body {
   padding: 5px 5px 2px; box-shadow: 0 4px 18px rgba(0,0,0,.6);
 }
 #camBox.hidden { display: none; }
+/* 스트리머 표현 축 (§6.4) — 캠 옆의 리액션 버튼 열. 방송 중 전용, 쿨다운 동안 흐려진다 */
+#reactBar { position: absolute; left: 100px; bottom: 40px; z-index: 2; display: flex; gap: 4px; }
+#reactBar.hidden { display: none; }
+#reactBar button {
+  font: inherit; font-size: 11px; color: var(--plat2); cursor: pointer;
+  background: rgba(12,10,16,.78); border: 1px solid var(--plat); border-radius: 6px; padding: 4px 8px;
+}
+#reactBar button:hover { color: #ece7dd; border-color: var(--amber); }
+#reactBar.cool { opacity: .35; pointer-events: none; }
+body.fullshow #reactBar { bottom: 235px; }
 #camBox img { display: block; width: 74px; height: 74px; border-radius: 5px; }
 #camBox span { font-size: 8.5px; letter-spacing: 2px; color: var(--plat2); }
 .vpopup {
@@ -258,6 +277,13 @@ body {
 }
 .gcard .gt { font-size: 16px; font-weight: 700; color: var(--ink); margin: 10px 14px 0; }
 .gcard .gd { font-size: 11.5px; color: var(--dim); margin: 5px 14px 0; line-height: 1.55; min-height: 3.1em; }
+/* 관객 프로필 — 이 게임이 특히 불러 모으는 원형. 라벨 하나로 단정하지 않고 막대를 함께
+   두는 이유는 게임 간 프로필이 실제로 비슷할 수 있기 때문이다 (그때는 비슷하게 보여야 한다).
+   .gcard 접두사를 떼서 데스크탑 툴팁(#dTip)의 프로필 행에도 같은 규칙이 적용되게 한다 */
+.gaud { font-size: 11px; color: var(--dim); margin: 7px 0 0; display: flex; align-items: center; gap: 7px; }
+.gaud b { font-weight: 700; white-space: nowrap; }
+.gaudbar { flex: 1; display: flex; height: 7px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
+.gaudbar i { display: block; min-width: 0; }
 .gcard .gf { font-size: 11px; margin: 8px 14px 0; color: #c9cdd2; display: flex; justify-content: space-between; }
 .gcard .gf b { font-variant-numeric: tabular-nums; }
 .gcard .gf.warn b { color: #ff8d7a; }
@@ -266,6 +292,11 @@ body {
 .freshbar i.warn { background: #ff8d7a; }
 .chanline { font-size: 12.5px; color: var(--dim); margin-top: 10px; }
 .chanline b { color: var(--plat2); font-variant-numeric: tabular-nums; }
+/* 채널 색깔 — 관객 구성 이월의 얼굴. 라이브 게이지(#compBar)와 같은 시각 언어를 쓴다 */
+.chanmix { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 11.5px; color: var(--dim); }
+.chanmix b { white-space: nowrap; font-weight: 700; }
+.mixbar { flex: 1; max-width: 200px; display: flex; height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
+.mixbar i { display: block; min-width: 0; transition: flex-grow .45s ease-out; }
 .recent { margin-top: 14px; border-top: 1px solid #26292e; padding-top: 10px; }
 .recent .rlab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin-bottom: 6px; }
 .recent .rrow { display: flex; justify-content: space-between; font-size: 12px; color: #c9cdd2; padding: 2px 0; }
@@ -289,6 +320,31 @@ body {
 .shopWin h2 { display: flex; align-items: center; gap: 9px; }
 .shopWin .shopH { width: 30px; height: 30px; border-radius: 6px; }
 .shopBal b { color: #ffd24a; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+/* ---------- 캐스트 영입 · 반응 도감 (ADR-006) ---------- */
+.dexList { margin-top: 8px; }
+.dexRow { display: flex; align-items: center; gap: 9px; font-size: 12px; padding: 3px 0; }
+.dexRow b { flex: 0 0 96px; white-space: nowrap; }
+.dexBar { flex: 1; max-width: 220px; height: 6px; background: rgba(0,0,0,.4); border: 1px solid #2a2437; border-radius: 3px; overflow: hidden; }
+.dexBar i { display: block; height: 100%; background: var(--amber); border-radius: 3px; }
+.dexN { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.dexObs { flex: 0 0 auto; font-size: 9px; font-style: normal; letter-spacing: 1px; color: var(--dim); border: 1px solid #2a2437; border-radius: 3px; padding: 0 4px; }
+/* 텐션 (§7) — 허브 표시. 손실은 숫자만 조용히 (규약 2) — 저텐션도 색만 바뀐다 */
+.deskStat.simTension { display: flex; align-items: center; gap: 8px; }
+.deskStat.simTension.low b { color: #ff6b5a; }
+.tenNote { color: var(--dim); font-size: 11px; }
+#restBtn {
+  font: inherit; font-size: 11px; cursor: pointer; color: var(--plat2);
+  background: rgba(12,10,16,.6); border: 1px solid var(--plat); border-radius: 5px; padding: 2px 8px;
+}
+#restBtn:hover { color: #ece7dd; border-color: var(--amber); }
+.dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px; margin-top: 7px; }
+.dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
+.dexCard b { font-size: 13px; }
+.dexCard .dexDesc { font-size: 11px; color: #c9cdd2; line-height: 1.45; }
+.dexCard .dexTr { font-size: 10px; color: var(--dim); }
+.dexCard .siBuy { margin-top: 3px; background: #241e14; border: 1px solid #4a4232; color: var(--amber2); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-size: 12px; }
+.dexCard .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 12px 0 4px; }
 .shopItem {
   background: #17191c; border: 1px solid #2c3036; border-radius: 9px;
@@ -324,7 +380,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 /* 리플레이 창 — 진짜 스트리머의 OBS 리플레이 소스. 게임 위 좌상단에서 클립 영상이
    실제로 재생된다 (INSTANT REPLAY / 하이라이트 다시보기 공용). 면은 AetherAI 플레이트 */
 #replayWin {
-  position: absolute; top: 76px; left: -460px; z-index: 3; width: 300px;
+  position: absolute; top: 76px; left: -720px; z-index: 3; width: 680px;
   border: 1px solid rgba(0,255,163,.55); border-radius: 9px; overflow: hidden;
   box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 26px rgba(0,255,163,.2);
   pointer-events: none; opacity: 0;
@@ -335,19 +391,26 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   font-size: 10px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
 }
 .rwHead .rwSave { margin-left: auto; color: #c8ffe8; font-weight: 400; letter-spacing: 0; }
-#replayWin video, #replayWin img { display: block; width: 100%; height: 133px; object-fit: cover; background: #000; }
+#replayWin video, #replayWin img { display: block; width: 100%; height: 266px; object-fit: cover; background: #000; }
 .rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
 .rwCap b { color: #7dffd0; }
+/* 클립 하단 후원 줄 (치지직 문법) — 연출 전용, 코인 무관 */
+/* 클립 하단 후원 줄 — 아이콘 없이 한 줄. 클립 창의 주인공은 영상이다 (사용자 피드백) */
+.rwDon { display: flex; align-items: center; gap: 4px; padding: 0 9px 6px; font-size: 11px; color: #ffedc4; }
+.rwDon .amt { color: #ffdf9e; }
 #replayWin .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
 /* 리플레이가 실제로 재생될 시간을 준다 — 6.6초 (진입 + 재생 ~5.6 + 퇴장) */
 #replayWin.show { animation: rwin 6.6s cubic-bezier(.2,.9,.3,1) forwards; }
 @keyframes rwin {
-  0% { left: -460px; opacity: 0; }
+  0% { left: -720px; opacity: 0; }
   5% { left: 12px; opacity: 1; }
   92% { left: 12px; opacity: 1; }
   100% { left: 12px; opacity: 0; transform: translateY(-8px); }
 }
 @keyframes clipRec { to { opacity: .25; } }
+/* 원형별 순증감 — 오늘 방송이 어떤 사람들을 데려왔나 (공명 판정층 리포트 줄) */
+.archline { font-size: 12.5px; color: #cfc7b8; margin: 4px 0 2px; line-height: 1.7; }
+.archline b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
@@ -492,6 +555,8 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 }
 #dTip:empty { display: none; }
 #dTip .gthumb { display: block; width: 100%; height: auto; }
+/* 대표컷 이미지 — 로드 전에도 툴팁 높이가 흔들리지 않게 고정 (위치 계산이 offsetHeight를 읽는다) */
+#dTip img.gthumb { height: 126px; object-fit: cover; }
 .dwInfo { padding: 10px 12px 4px; }
 .dwInfo .tipTitle { display: block; font-size: 14px; color: var(--plat2); margin-bottom: 5px; }
 .dwInfo .gd { font-size: 11.5px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }
@@ -886,7 +951,7 @@ body.fullshow #chatCol { background: transparent; }
 
 /* 클립 미디어 비율 — 합성 녹화(1260:430)와 구판 스틸(960:430)이 섞이므로 비율 고정 대신 auto */
 .clipCard img, .clipCard video { height: auto; }
-#replayWin video, #replayWin img { height: auto; max-height: 140px; }
+#replayWin video, #replayWin img { height: auto; max-height: 300px; } /* 영상이 창의 주인공 — 2배 확대 (사용자 피드백). 300 상한 = 구판 스틸(960:430)이 뷰포트 바닥을 안 뚫는 선 */
 /* 전체화면에선 하단 HUD(패널+풋)가 캠 자리를 덮는다 — 캠을 HUD 위로 올린다 */
 body.fullshow #camBox { bottom: 235px; }
 

@@ -6,8 +6,9 @@
 
 # 1. 이벤트 스키마 (v1 초안 — 관객 소유)
 
-게임(무대)이 발행하고 채팅(관객)이 소비하는 단위. 게임별 어휘 파일(`games/<id>/chat-data.js`,
-추후 `data/events/<id>.json`)이 이 스키마의 인스턴스다.
+게임(무대)이 발행하고 채팅(관객)이 소비하는 단위. 게임별 어휘 파일 `data/events/<id>.js`
+(2026-08-09 games/<id>/chat-data.js에서 이관 — ADR-002의 JSON 리터럴은 아니고 기존
+`window.*_CHAT` JS 리터럴 그대로, 캐리어 원리는 동일)가 이 스키마의 인스턴스다.
 
 ```js
 T[ev] = {
@@ -34,17 +35,23 @@ BURST[ev] = 1..4;                                  // 버스트 무게 (기본 1
 현행 구현(`games/shell/chat.js`의 `PERSONAS`)의 명문화. 캐스트는 전 게임 공유 8종.
 
 ```js
-{ nick: '불멍장인', color: '#ff8d5a', tones: ['hype', 'mock'] }
+{ nick: '불멍장인', color: '#ff8d5a', tones: ['hype', 'mock'], arch: 'thrill' }
 ```
 
 - `tones`는 3절 6종의 부분집합 — 페르소나는 자기 톤이 달린 템플릿만 말한다 (성격의 실체)
+- `arch`는 소속 경제 원형 (공명 판정층 ADR-004 §7.2 다대일 매핑 — `thrill`/`fan`/`expert`/`casual`).
+  **발화 캐스팅 가중치에만** 쓰인다 — 경제(관객 구성)가 누가 말할지를 정하는 단방향 (C3 유지).
+  누락 시 캐스팅은 균등 폴백으로 동작한다 (침묵하지 않는다)
 - 설계 시트(정체성·동기·말투·LLM 프로필 초안)는 `prototypes/05-hwaryeok-personas.md`가 원본.
   신규 페르소나는 시트의 3축 덮개(위험 선호/정보 깊이/애정 온도) 자리를 명시할 것
 - **v2 예약 필드** (공명 모델 — `docs/resonance-model.md` §5 게이트 통과 후):
   `interest`(흥미도 벡터) · `valence`(호오) · `threshold`(발화 임계) — 판정층 데이터는
   빌드 타임 정적이며 런타임에 LLM 출력으로 생성·수정될 수 없다
-- 이관 계획: engine/ 추출과 함께 `data/personas/*.json`으로 — 값 저작은 소윤,
-  스키마·로더는 관객, 경제 관여 필드의 clamp 범위는 무대가 검증
+- **이관 완료 (2026-08-09)**: 값은 `data/personas/cast.js` — `window.JONG_CAST = [...]`
+  대입문의 우변이 엄격한 JSON 리터럴인 .js 캐리어다. 순수 .json이 아닌 이유는 `file://`
+  제약 (fetch가 CORS로 막힌다 — ADR-002). validate가 우변을 JSON.parse로 검사하므로
+  JSON으로서의 형식은 유지된다. 값 저작은 소윤, 스키마·로더는 관객,
+  경제 관여 필드가 생기면 clamp 범위는 무대가 검증
 
 # 3. 톤 목록 (v1 — 확정)
 
@@ -52,10 +59,11 @@ BURST[ev] = 1..4;                                  // 버스트 무게 (기본 1
 `cheer`(응원·축하) · `question`(질문·뉴비). **추가·변경은 이 문서 개정으로만** —
 톤은 페르소나와 템플릿을 잇는 계약 어휘라 한쪽만 늘리면 침묵하는 페르소나가 생긴다.
 
-# 5. 검증 규칙 (v1 초안 — 관객 소유)
+# 5. 검증 규칙 (v1 — 관객 소유)
 
-현행은 `games/shell/selftest.html`이 검사하고, validate 스크립트 + GitHub Actions로
-이관 예정 (이관 후 `data/` 변경은 통과 시 셀프 머지 — CONTRIBUTING).
+데이터 계약은 `tools/validate.mjs`(`node tools/validate.mjs`)가 검사하고 GitHub Actions
+(`.github/workflows/validate.yml`)가 PR마다 실행한다 — 통과 시 `data/` 변경은 셀프 머지
+(CONTRIBUTING). 게이트 동작(엔진 단위)은 `games/shell/selftest.html`에 남는다.
 
 | 검사 | 내용 |
 |---|---|
@@ -64,6 +72,45 @@ BURST[ev] = 1..4;                                  // 버스트 무게 (기본 1
 | 톤 유효성 | 모든 톤 태그가 3절 6종 안 |
 | 필수 이벤트 | `start`·`end` 존재 |
 | 게이트 동작 | 슬롯 누락 폐기·비반복 폐기·미등록 이벤트 무시 (엔진 단위 검사) |
+
+# 6. 티키타카·관계 변수 데이터 (v1 — 관객 소유, 값 저작은 기획, ADR-003)
+
+`data/tikitaka.js` — `window.JONG_TIKITAKA = { pairs, moments }` (ADR-002 JSON 캐리어).
+**발화층 연출 전용** — 공명 모델(판정층, `docs/resonance-model.md`)의 도입 게이트와 무관하고,
+경제·룰 수치에 관여하지 않는다 (C3 유지).
+
+```js
+pairs:   [{ from, to, chance, lines: [['tone', '응답'], ...] }]  // 2홉: from의 발화가
+         // 화면에 나가면 chance 확률로 to가 받아친다. 응답은 재트리거 없음(2홉 정지),
+         // 쿨다운 2.5초, 같은 verify 게이트 통과 필수. lines ≥ 6, 톤은 to의 tones 안
+moments: [{ nick, trust, line: ['tone', '발화'] }]               // 관계 변수 1회성 발화
+```
+
+관계 변수(trust)는 큰 사건(버스트 무게 ≥3)마다 1 누적되는 localStorage 스칼라
+(`jgs-rel-v1`, 방송 간 유지). moments는 임계 돌파 시 한 번만 말한다 —
+"냉정한미식가의 첫 인정" (페르소나 시트 4.5 우선순위 2).
+
+# 7. 반응 도감·캐스트 해금 데이터 (v1 — 공동 소유, 값 저작은 기획, ADR-006)
+
+`data/dex.js` — `window.JONG_DEX = { base_triggers, unlocks }` (ADR-002 JSON 캐리어).
+판정·해금 로직은 `games/shell/dex.js`(무대), 데이터 스키마는 관객, 값은 기획 소유.
+시뮬 레이어 v0.2 §5·§8의 최소 실장 — **칸 = (개체, 태그)** (2026-08-09 태그 승격, ADR-006 예고분).
+이벤트 → 태그 번역은 `data/events/tagmap.js`(v0.2 §6.2 초안, §11.2-2 미결)가 맡고,
+판정층 로스터에는 100종 데이터(`data/personas/viewers.js`)의 **불멸 관측단 12종**이
+발화 없이 합류한다 (발화층/판정층 분리 — `data/personas/README.md`).
+
+```js
+base_triggers: { "닉": ["태그", ...] }            // 기본 캐스트 8종의 반응 칸 (36태그)
+unlocks: [{ nick, color, tones, arch,             // cast.js와 같은 페르소나 스키마 +
+            cost: { subs?, coins? },              // 해금 비용 — 구독자(시청자 파생)·코인(도네 파생) 소비
+            triggers: [...], repellents: [...],   // 반응 칸 — tagmap이 발행하는 36태그만 (validate가 도달 가능성 검사)
+            desc }]
+```
+
+**규칙**: 칸은 이벤트 발생 + 결정론 판정이 연다 — 발화 성공 여부 무관 (C3b). 파장(방송당
+신규 칸 수)은 구독자 전환에만 곱해진다: `× (1 + 0.15 × min(파장, 8))` — 방송 중 시청자 수
+무관여. 해금은 선택지 개방만 — 시작 시청자↑·배율↑·임계↓·벌칙↓ 금지 (v0.2 §8.4).
+저장: localStorage `jgs-dex-v1`.
 
 ---
 
@@ -107,7 +154,7 @@ Shell.register({
 | `timeLeft` (읽기) | 남은 방송 시간(초) |
 | `now` (읽기) | 방송 시작 이후 경과 시간(초) — 애니메이션 위상용 |
 | `live` (읽기) | 방송 진행 중인가. **시청자를 잃은 뒤 루프를 계속 돌리면 안 된다** |
-| `gain(n, label)` | 시청자 획득. **신선도 배수를 곱한 실제 반영량을 반환한다** — 표시·채팅에는 반환값을 쓸 것. `label`이 있으면 FX 팝업, 없으면 조용히 |
+| `gain(n, label, ev)` | 시청자 획득. **신선도 배수를 곱한 실제 반영량을 반환한다** — 표시·채팅에는 반환값을 쓸 것. `label`이 있으면 FX 팝업, 없으면 조용히. `ev`(선택)는 **총량이 아니라 원형별 배분에만** 쓰인다 — 그 이벤트의 자극 벡터(`chat-data.js`의 `STIM`)로 누가 유입될지 정한다. 생략하면 중립 배분(현재 구성비대로)이라 기존 호출은 그대로 동작한다 (ADR-004) |
 | `lose(n)` | 시청자 손실. 연출·효과음 없음(규약 2). 0명이 되면 셸이 방송을 끝낸다 |
 | `emit(ev, facts)` | 채팅 이벤트 발행. 어휘에 없는 `ev`는 조용히 무시된다 |
 | `hud(html)` | 뷰포트 좌상단 명판 내용 |
@@ -142,7 +189,7 @@ Shell.register({
 
 ## 4.5 새 게임 추가 절차
 
-1. `games/<id>/chat-data.js` — 이벤트 어휘 (소윤 협의)
+1. `data/events/<id>.js` — 이벤트 어휘 (소윤 협의, `window.<ID>_CHAT = { T, BURST }`)
 2. `games/<id>/game.js` — `Shell.register(...)`
 3. `index.html`에 `<script>` 두 줄 추가
 
@@ -150,11 +197,13 @@ Shell.register({
 
 ## 4.6 v1에서 정훈과 맞출 것 (미결)
 
-- `games/shell/chat.js`·`llm.js`는 **임시 거처**다. `engine/`으로 이관되면 셸은
-  `Chat.load/reset/react/sys` 호출부만 바꾼다 — `stage.emit`은 그대로 유지되는 안정 표면
+- ~~`games/shell/chat.js`·`llm.js`는 임시 거처다~~ → **`engine/chat.js`·`engine/llm.js`로
+  이관 완료 (2026-08-09)**. `stage.emit`·`Chat.load/reset/react/sys`는 변경 없이 유지됐다.
+  페르소나 캐스트도 `data/personas/cast.js`로 분리 — 스크립트 포함 순서는 캐스트 → 엔진
 - **LLM 통합이 1차 착지했다** (`proxy/` + `llm.js`, 설계는 `proxy/README.md`).
   게이트는 클라이언트에 유지·사실 슬롯 줄은 LLM 미사용·실패는 전부 로컬 폴백 —
-  이 3원칙은 이관 후에도 계약이다. 프롬프트(서버 소유)는 소윤 페르소나 시트 기반 개정 예정
+  이 3원칙은 이관 후에도 계약이다. 프롬프트(서버 소유)는 소윤 페르소나 시트의 프로필
+  8종을 반영 완료 (2026-08-09, `proxy/api/chat.js` PROFILES — 미등록 닉은 톤 규칙 폴백)
 - 페르소나 8종이 게임과 무관하게 공유된다. 현행 캐스트는 화력쇼 태생이라 이름이
   주방에 묶여 있다(`10년차주방장` 등) — 게임 중립 캐스트로 갈지, 게임별 캐스트를 둘지 미결
 - 사실 슬롯 이스케이프는 현재 셸이 `Chat.react` 진입부에서 1회 수행한다. 이관 시 유지할 것

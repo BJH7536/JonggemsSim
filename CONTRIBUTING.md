@@ -17,7 +17,8 @@
 ## 브랜치·PR 규칙 (딱 두 줄)
 
 1. `engine/`·`games/`의 구조 변경과 `docs/contract.md` 변경 → **다른 엔지니어 리뷰 후 머지**
-2. `data/` 변경 → **validate 통과 시 셀프 머지 가능** (validate 도입 전까지는 정훈 확인)
+2. `data/` 변경 → **validate 통과 시 셀프 머지 가능** (`node tools/validate.mjs` —
+   PR마다 GitHub Actions가 자동 실행)
 
 브랜치는 짧게: `feat/…`, `game/…`, `data/persona-…`. 작업 단위마다 잘게 커밋한다 —
 커밋 기록이 곧 해커톤 제출 증빙이다.

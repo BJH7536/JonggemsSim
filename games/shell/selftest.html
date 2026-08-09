@@ -16,19 +16,26 @@
 그래픽·물리는 대상이 아니다 (눈으로 본다).</p>
 <pre id="out"></pre>
 
+<script src="../../data/personas/cast.js"></script>
+<script src="../../data/tikitaka.js"></script>
+<script src="../../data/regulars.js"></script>
+<script src="../../data/dex.js"></script>
+<script src="../../data/personas/viewers.js"></script>
+<script src="../../data/events/tagmap.js"></script>
 <script src="config.js"></script>
-<script src="chat.js"></script>
-<script src="llm.js"></script>
+<script src="../../engine/chat.js"></script>
+<script src="../../engine/llm.js"></script>
 <script src="shell.js"></script>
-<script src="../hwaryeok/chat-data.js"></script>
+<script src="dex.js"></script>
+<script src="../../data/events/hwaryeok.js"></script>
 <script src="../hwaryeok/game.js"></script>
-<script src="../giving-up/chat-data.js"></script>
+<script src="../../data/events/giving-up.js"></script>
 <script src="../giving-up/game.js"></script>
-<script src="../pocket/chat-data.js"></script>
+<script src="../../data/events/pocket.js"></script>
 <script src="../pocket/game.js"></script>
-<script src="../bomb/chat-data.js"></script>
+<script src="../../data/events/bomb.js"></script>
 <script src="../bomb/game.js"></script>
-<script src="../fishing/chat-data.js"></script>
+<script src="../../data/events/fishing.js"></script>
 <script src="../fishing/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
@@ -119,6 +126,13 @@ ok('다이아(최고 등급)에선 더 오르지 않는다', TS(4, 99, 'S').tier
 ok('등급 미달 상품은 구매 잠금', Shell.shopBuy({ coins: 99999, gear: {}, tier: 0 }, { id: 'z', price: 1, minTier: 4 }) === 'locked');
 
 // ---- 채팅 검증 게이트 ----
+// 캐스트가 data/에서 로드됐는지부터 — 빠지면 게이트가 아니라 침묵이 온다 (engine/chat.js 경고 참조)
+ok('페르소나 캐스트가 data/personas/cast.js에서 로드된다 (8종 이상)', Chat.personas.length >= 8);
+ok('캐스트 톤이 전부 공인 6종 안이다', Chat.personas.every(function (p) {
+  return p.tones.length && p.tones.every(function (t) {
+    return ['hype', 'worry', 'info', 'mock', 'cheer', 'question'].indexOf(t) >= 0;
+  });
+}));
 Chat.init(document.createElement('div'));
 Chat.load({
   t: { facts: ['수습 +{gain}!!'], flavor: [['hype', '와 미쳤다'], ['mock', '운빨 ㅋㅋ']] },
@@ -137,6 +151,162 @@ ok('어휘에 없는 이벤트는 조용히 무시된다 (셸이 죽지 않는�
 Chat.history.length = 0;
 var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', { gain: '9,999' }, true);
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
+
+// ---- 티키타카·관계 변수 (ADR-003) — 연출 전용이지만 조용히 죽으면 채팅이 1홉으로 퇴화한다 ----
+// 주의: trust 검사는 Chat.load로 어휘를 갈아치우므로 위의 어휘 의존 검사들 "뒤"에 있어야 한다.
+ok('티키타카 데이터가 로드된다 (대립쌍 반응 규칙 3개 이상)', Chat.TIKITAKA.pairs.length >= 3);
+ok('응답자가 캐스트에 없으면 조용히 넘어간다 (부스 솔로 모드)', (function () {
+  var saved = Chat.personas.slice();
+  Chat.personas.length = 0;
+  try { Chat.maybeReply({ nick: '불멍장인' }, Chat.epoch); return true; }
+  catch (e) { return false; }
+  finally { saved.forEach(function (p) { Chat.personas.push(p); }); }
+})());
+ok('큰 이벤트(버스트 무게 3+)만 trust를 누적한다', (function () {
+  var savedRel = localStorage.getItem('jgs-rel-v1'); // 검사로 실채널 기억을 오염시키지 않는다
+  try {
+    Chat.rel = null;
+    var before = Chat.relLoad().trust;
+    Chat.load({
+      big_ev: { facts: [], flavor: [['hype', 'a1'], ['hype', 'a2'], ['hype', 'a3'], ['hype', 'a4'], ['hype', 'a5'], ['hype', 'a6']] },
+      small_ev: { facts: [], flavor: [['hype', 'b1']] },
+    }, { big_ev: 3 });
+    Chat.react('big_ev');
+    Chat.react('small_ev');
+    return Chat.relLoad().trust === before + 1;
+  } finally {
+    if (savedRel === null) localStorage.removeItem('jgs-rel-v1');
+    else localStorage.setItem('jgs-rel-v1', savedRel);
+    Chat.rel = null;
+  }
+})());
+
+// ---- 단골 기억 발화 — 방송 간 기억의 연출층 (data/regulars.js). 조용히 죽으면 기억이 침묵한다 ----
+ok('단골 기억 데이터가 로드된다 (키 7종 · 각 6줄 이상)',
+   ['first', 'same_again', 'after_dead', 'best', 'regular', 'record_live', 'don_read']
+     .every(function (k) { return (Chat.MEMORY[k] || []).length >= 6; }));
+ok('기억 발화 톤이 전부 공인 6종 안이다', (function () {
+  var TONES = ['hype', 'worry', 'info', 'mock', 'cheer', 'question'];
+  return Object.keys(Chat.MEMORY).every(function (k) {
+    return Chat.MEMORY[k].every(function (l) { return TONES.indexOf(l[0]) >= 0; });
+  });
+})());
+ok('슬롯 키는 모든 줄이 슬롯을 포함한다 (contract 1절과 같은 규칙)', (function () {
+  var SLOTS = { same_again: ['game'], best: ['best'], regular: ['shows'], record_live: ['best'] };
+  return Object.keys(SLOTS).every(function (k) {
+    return Chat.MEMORY[k].every(function (l) {
+      return SLOTS[k].every(function (s) { return l[1].indexOf('{' + s + '}') >= 0; });
+    });
+  });
+})());
+ok('기억 발화가 사실 슬롯을 채워 나간다', (function () {
+  Chat.history.length = 0;
+  var t = Chat.memoryNow('best', { best: '9,999' });
+  Chat.history.length = 0;
+  return !!t && t.indexOf('9,999') >= 0;
+})());
+ok('없는 키는 조용히 침묵한다', Chat.memoryNow('없는키', {}) === null);
+
+// ---- 반응 도감·파장·캐스트 해금 (ADR-006) — 조용히 틀리면 구독자가 새거나 해금이 공짜가 된다 ----
+(function () {
+  var savedDex = localStorage.getItem('jgs-dex-v1'); // 검사로 실채널 도감을 오염시키지 않는다
+  var savedStore = localStorage.getItem('jonggems-channel-v1'); // hire가 saveChannel을 부른다
+  var savedCh = Shell.ch, savedLen = Chat.personas.length;
+  var savedTop = Shell.updateTopbar;
+  Shell.updateTopbar = function () {}; // 하네스 DOM에는 탑바가 없다
+  try {
+    Shell.Dex.st = null; localStorage.removeItem('jgs-dex-v1');
+    Shell.Dex.newShow();
+    // 태그 승격 후: disaster → catastrophic_fail (tagmap) →
+    // 발화 캐스트 불멍장인·ㅋㅋ자판기 + 관측단 V-051·V-076 = 4칸 (잠수함·밈제조기는 미영입)
+    ok('트리거 매치가 칸을 열고 파장을 올린다 (태그 판정)', (function () {
+      Shell.Dex.judge('hwaryeok', 'disaster');
+      return Shell.Dex.waveNew === 4;
+    })());
+    ok('같은 칸 반복은 파장을 다시 올리지 않는다 (미개봉→들음 전이만)', (function () {
+      Shell.Dex.judge('hwaryeok', 'disaster');
+      return Shell.Dex.waveNew === 4;
+    })());
+    ok('매핑에 없는 이벤트·게임은 조용히 무시된다', (function () {
+      try {
+        Shell.Dex.judge('hwaryeok', '없는이벤트');
+        Shell.Dex.judge('없는게임', 'disaster');
+        return Shell.Dex.waveNew === 4;
+      } catch (e) { return false; }
+    })());
+    ok('streamer_* 태그는 번역 없이 직접 판정된다 (표현축 경로)', (function () {
+      // streamer_scream trigger는 관측단 V-051(절규수집가)뿐 — 1칸
+      Shell.Dex.judge('hwaryeok', 'streamer_scream');
+      return Shell.Dex.waveNew === 5;
+    })());
+    ok('파장 배율 = 1 + 0.15×칸, 상한 8칸', (function () {
+      var m2 = Math.abs(Shell.Dex.waveMult() - 1.75) < 1e-9; // 5칸
+      Shell.Dex.waveNew = 99;
+      var mCap = Math.abs(Shell.Dex.waveMult() - 2.2) < 1e-9;
+      return m2 && mCap;
+    })());
+    ok('record_pace(셸 직접 발행)는 관측단의 칸을 연다', (function () {
+      var hit = Shell.Dex.judge('hwaryeok', 'record_pace');
+      return hit.indexOf('스프레드시트파') >= 0 && hit.indexOf('통계인용러') >= 0;
+    })());
+    // 해금 — 구독자·코인 소비 계약
+    Shell.ch = { subs: 20, coins: 0, gear: {} };
+    ok('재화 부족은 거부·잔액 불변', Shell.Dex.hire('안티') === 'poor' && Shell.ch.subs === 20);
+    ok('영입 성공 시 정확히 차감 + 채팅 캐스트 합류', (function () {
+      var r = Shell.Dex.hire('유목민'); // cost subs 15
+      var joined = Chat.personas.some(function (p) { return p.nick === '유목민'; });
+      return r === 'ok' && Shell.ch.subs === 5 && joined;
+    })());
+    ok('중복 영입은 거부·잔액 불변', Shell.Dex.hire('유목민') === 'owned' && Shell.ch.subs === 5);
+    ok('영입 캐스트·관측단 repellent 칸도 열린다 (§5.1)', (function () {
+      Shell.Dex.newShow();
+      // stuck → no_stakes: 길가던행인 + 유목민(영입) + 관측단 repellent 6
+      // (V-001·V-006·V-051·V-071·V-076·V-090) = 8칸
+      Shell.Dex.judge('giving-up', 'stuck');
+      return Shell.Dex.waveNew === 8;
+    })());
+  } finally {
+    Shell.ch = savedCh;
+    Shell.updateTopbar = savedTop;
+    Chat.personas.length = savedLen; // 검사로 합류한 캐스트 제거
+    if (savedDex === null) localStorage.removeItem('jgs-dex-v1');
+    else localStorage.setItem('jgs-dex-v1', savedDex);
+    if (savedStore === null) localStorage.removeItem('jonggems-channel-v1');
+    else localStorage.setItem('jonggems-channel-v1', savedStore);
+    Shell.Dex.st = null; Shell.Dex.waveNew = 0;
+  }
+})();
+
+// ---- 텐션 (§7) — 조용히 틀리면 파장 경제가 소리 없이 좁아지거나 회복이 공짜가 된다 ----
+(function () {
+  var savedDex = localStorage.getItem('jgs-dex-v1');
+  try {
+    Shell.Dex.st = null; localStorage.removeItem('jgs-dex-v1');
+    ok('초기 텐션 100 · 대역폭 ×1.0', Shell.Dex.tension() === 100 && Math.abs(Shell.Dex.tensionMult() - 1) < 1e-9);
+    Shell.Dex.settleShow('a');
+    ok('방송 −12, 안 하던 게임 첫 방송 +8 → 96', Shell.Dex.tension() === 96);
+    Shell.Dex.settleShow('a');
+    ok('같은 게임 연속은 −18', Shell.Dex.tension() === 78);
+    Shell.Dex.settleShow('b');
+    ok('게임을 바꾸면 −12 (+첫 방송 8)', Shell.Dex.tension() === 74);
+    Shell.Dex.st.tension = 5; Shell.Dex.settleShow('a');
+    ok('바닥 0 · 대역폭 하한 ×0.4', Shell.Dex.tension() === 0 && Math.abs(Shell.Dex.tensionMult() - 0.4) < 1e-9);
+    Shell.Dex.rest();
+    ok('휴방 +25', Shell.Dex.tension() === 25);
+    Shell.Dex.st.tension = 90; Shell.Dex.rest();
+    ok('회복 상한 100', Shell.Dex.tension() === 100);
+    Shell.Dex.st.tension = 50; Shell.Dex.waveNew = 4;
+    ok('파장 배율 = 1 + 0.15×칸×대역폭', Math.abs(Shell.Dex.waveMult() - (1 + 0.15 * 4 * 0.7)) < 1e-9);
+    ok('저텐션 방송 시작은 streamer_fatigue를 발행한다 (현 로스터 보유 0 — 무해)', (function () {
+      Shell.Dex.st.tension = 20; Shell.Dex.newShow('hwaryeok');
+      return Shell.Dex.waveNew === 0; // fatigue trigger 개체는 전원 Q1 미영입 (§7.3) — 확장 시 살아난다
+    })());
+  } finally {
+    if (savedDex === null) localStorage.removeItem('jgs-dex-v1');
+    else localStorage.setItem('jgs-dex-v1', savedDex);
+    Shell.Dex.st = null; Shell.Dex.waveNew = 0;
+  }
+})();
 
 // ---- 등록된 게임이 계약을 지키는가 ----
 eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket', 'bomb', 'fishing']);
@@ -177,6 +347,194 @@ Shell.games.forEach(function (g) {
   });
   eq(g.title + ': 사실 템플릿들이 같은 슬롯 집합을 쓴다', slotBad, []);
 });
+
+// ---- 공명 판정층 (ADR-004) ----
+// 배분이 조용히 틀리면 "관객 구성"이라는 코어가 통째로 거짓말이 된다 — 총량 보존과
+// 공명 방향(어떤 자극이 어떤 원형을 부르는가) 두 가지를 계산으로 못박는다.
+eq('경제 원형 4종', Shell.ARCH.map(function (a) { return a.id; }), ['thrill', 'fan', 'expert', 'casual']);
+ok('시작 구성비 합이 1', Math.abs(Shell.ARCH_START.reduce(function (a, b) { return a + b; }, 0) - 1) < 1e-9);
+var ARCH_IDS = Shell.ARCH.map(function (a) { return a.id; });
+eq('페르소나 8종이 전부 유효한 원형에 매핑된다',
+   Chat.personas.filter(function (p) { return ARCH_IDS.indexOf(p.arch) < 0; })
+     .map(function (p) { return p.nick; }), []);
+
+Shell.games.forEach(function (g) {
+  var S = (g.chat && g.chat.STIM) || {};
+  var badVec = Object.keys(S).filter(function (ev) {
+    var v = S[ev];
+    return !(v instanceof Array) || v.length !== 4 ||
+      v.filter(function (x) { return !(x >= 0 && x <= 1); }).length > 0;
+  });
+  eq(g.title + ': STIM이 4축 0~1 범위다', badVec, []);
+  var unknown = Object.keys(S).filter(function (ev) { return !g.chat.T[ev]; });
+  eq(g.title + ': STIM 키가 전부 실제 이벤트다', unknown, []);
+});
+
+(function () {
+  var saveGame = Shell.game, saveComp = Shell.comp, saveFickle = Shell.fickle, savePhase = Shell.phase;
+  Shell.game = Shell.games[0]; // 화력쇼 어휘로 검사
+  var BASE = [60, 75, 45, 120];
+  var reset = function (comp) {
+    Shell.comp = comp.slice(); Shell.fickle = [0, 0, 0, 0]; Shell._fickleBorn = 0;
+  };
+  var delta = function (total, ev) {
+    reset(BASE);
+    Shell.compAdd(total, ev);
+    return Shell.comp.map(function (v, i) { return v - BASE[i]; });
+  };
+  var top = function (d) { return Shell.ARCH[d.indexOf(Math.max.apply(null, d))].id; };
+
+  // 총량 보존 — 새거나 늘면 시청자 수와 구성 합이 어긋난다 (변이 이후 소수점이 생기므로 오차 허용)
+  var bad = [];
+  [1, 2, 3, 5, 7, 40, 520, 1401, 33333].forEach(function (total) {
+    ['rescue_big', 'disaster', 'done', '__untagged__'].forEach(function (ev) {
+      var sum = delta(total, ev).reduce(function (a, b) { return a + b; }, 0);
+      if (Math.abs(sum - total) > 1e-6) bad.push(ev + '@' + total + '→' + sum);
+    });
+  });
+  eq('배분 총합이 항상 총량과 같다 (Σ배분 = total)', bad, []);
+
+  // 균등 가중치 + 작은 총량 — 구 구현(잔차를 최대 원형에 몰아주고 clamp)이 여기서 깨졌다.
+  // total=2에서 네 칸이 각각 round(0.5)=1로 올라 합이 3이 됐다 (현재의 PR #4 리뷰 지적).
+  // 최대잔여법은 floor로 깔고 잔여 순으로 1씩 나눠주므로 구조적으로 어긋날 수 없다.
+  var badEq = [];
+  [1, 2, 3, 4, 5, 6, 7, 9, 13].forEach(function (total) {
+    reset([250, 250, 250, 250]); // 완전 균등 → 중립 가중치도 균등
+    var before = Shell.compTotal();
+    Shell.compAdd(total, '__untagged__');
+    var sum = Shell.compTotal() - before;
+    if (Math.abs(sum - total) > 1e-6) badEq.push(total + '→' + sum);
+  });
+  eq('균등 가중치·작은 총량에서도 Σ배분 = total (최대잔여법 회귀)', badEq, []);
+
+  // 공명 방향 — 자극 축이 원형을 실제로 갈라야 모델이 의미를 가진다
+  eq('rescue_big(숙련 자극) → 분석가에게 최다 배분', top(delta(1000, 'rescue_big')), 'expert');
+  eq('disaster(파괴 자극) → 불구경파에게 최다 배분', top(delta(1000, 'disaster')), 'thrill');
+
+  // 변이 — 자극에 이끌린 유입도 이웃 원형에 씨를 뿌린다. 없으면 구성비 0인 원형이 영원히
+  // 되살아나지 못하는 흡수 상태가 생긴다 (검증에서 지적된 치명 결함)
+  var dd = delta(1000, 'disaster');
+  ok('변이: 자극이 약한 원형도 몫을 받는다 (분석가 ' + dd[2].toFixed(1) + ')', dd[2] > 0);
+  reset([1000, 0, 0, 0]);
+  Shell.compAdd(1000, 'rescue_big');
+  ok('구성비 0인 원형도 되살아난다 (흡수 상태 없음)', Shell.comp[1] > 0 && Shell.comp[3] > 0);
+
+  // 호오 — 같은 사건이 원형마다 다른 감정을 부르고, 그것이 유입의 질을 정한다
+  reset(BASE);
+  Shell.compAdd(1000, 'disaster');
+  ok('대참사: 불구경파는 정착한다 (뜨내기 ' + Shell.fickle[0].toFixed(0) + '명)', Shell.fickle[0] === 0);
+  ok('대참사: 팬덤은 미워하며 잠깐 본다 (뜨내기 ' + Shell.fickle[1].toFixed(0) + '명)', Shell.fickle[1] > 0);
+  ok('대참사: 분석가도 뜨내기로 온다', Shell.fickle[2] > 0);
+  var badF = [];
+  for (var fi = 0; fi < Shell.ARCH.length; fi++) if (Shell.fickle[fi] > Shell.comp[fi] + 1e-9) badF.push(fi);
+  eq('뜨내기는 그 원형 시청자 수를 넘지 않는다 (fickle ≤ comp)', badF, []);
+
+  // 뜨내기 이탈 — 버즈는 오지만 남지 않는다
+  var beforeT = Shell.compTotal(), beforeF = Shell.fickleTotal();
+  Shell.viewers = beforeT; Shell.phase = 'live';
+  for (var s = 0; s < 60; s++) Shell.drainFickle(1);
+  ok('뜨내기는 시간이 지나면 빠져나간다 (' + beforeF.toFixed(0) + ' → ' +
+     Shell.fickleTotal().toFixed(0) + '명)', Shell.fickleTotal() < beforeF * 0.7);
+  ok('정착 관객은 남는다 (총 ' + beforeT.toFixed(0) + ' → ' + Shell.compTotal().toFixed(0) + '명)',
+     Shell.compTotal() > beforeT - beforeF - 1);
+  Shell.phase = savePhase;
+
+  // 미태깅·중립 유입은 채널의 색을 바꾸지 않는다 (변이도 걸지 않는다)
+  reset([100, 100, 100, 100]);
+  Shell.compAdd(400, '__untagged__');
+  ok('미태깅 이벤트는 구성비를 바꾸지 않는다', Shell.comp.join() === '200,200,200,200');
+
+  // 이탈도 중립 (규약 2 — 손실은 색까지 바꾸지 않는다)
+  reset([100, 200, 300, 400]);
+  Shell.compSub(500);
+  var t = Shell.compTotal();
+  ok('이탈은 비례 차감 — 구성비가 유지된다',
+     Math.abs(t - 500) < 1e-6 && Math.abs(Shell.comp[3] / t - 0.4) < 1e-6);
+
+  // 다양성 — 탐색 보너스의 입력. 이게 있어야 채널 색을 관리할 이유가 생긴다
+  reset([250, 250, 250, 250]);
+  ok('완전 균등 구성의 다양성은 1', Math.abs(Shell.diversity() - 1) < 1e-9);
+  reset([1000, 0, 0, 0]);
+  ok('완전 쏠림 구성의 다양성은 0', Shell.diversity() < 1e-9);
+
+  Shell.game = saveGame; Shell.comp = saveComp; Shell.fickle = saveFickle; Shell.phase = savePhase;
+})();
+
+// 게임 명제 유지 — 호오 도입으로 대참사 유입의 일부가 빠져나간다. 이건 의도된 것이지만
+// (야유는 트래픽을 부르되 남지 않는다) 순서까지 뒤집히면 critic 4차 승인이 깨진 것이다.
+// 화력쇼의 명제: 무사고 완성 ≪ 수습 ≪ 대참사.
+(function () {
+  var saveGame = Shell.game, saveComp = Shell.comp, saveFickle = Shell.fickle;
+  var savePhase = Shell.phase, saveV = Shell.viewers;
+  Shell.game = Shell.games[0];
+  var net = function (amount, ev, seconds) {
+    Shell.comp = [60, 75, 45, 120]; Shell.fickle = [0, 0, 0, 0]; Shell._fickleBorn = 0;
+    var before = Shell.compTotal();
+    Shell.compAdd(amount, ev);
+    Shell.viewers = Shell.compTotal(); Shell.phase = 'live';
+    for (var s = 0; s < seconds; s++) Shell.drainFickle(1);
+    Shell.phase = savePhase;
+    return Shell.compTotal() - before;
+  };
+  var done = net(40, 'done', 90), rescue = net(900, 'rescue_big', 90), dis = net(1400, 'disaster', 90);
+  ok('90초 뒤 실질 유입 순서 유지 — 완성 ' + done.toFixed(0) + ' ≪ 수습 ' + rescue.toFixed(0) +
+     ' ≪ 대참사 ' + dis.toFixed(0), done < rescue && rescue < dis);
+  ok('수습은 실력 유입이라 거의 그대로 남는다', rescue > 900 * 0.95);
+  ok('대참사는 야유 유입분이 빠져나간다 (' + Math.round((1 - dis / 1400) * 100) + '% 이탈)',
+     dis < 1400 && dis > 1400 * 0.75);
+  Shell.game = saveGame; Shell.comp = saveComp; Shell.fickle = saveFickle;
+  Shell.phase = savePhase; Shell.viewers = saveV;
+})();
+
+// 캐스팅이 관객 구성을 반영하는가 — "구성이 바뀌면 채팅이 바뀐다"는 이 게임의 코어 주장이라
+// 조용히 평탄해지면 공명 모델이 화면에서 사라진다. 확률 검사지만 기대 격차가 30배라 안전하다.
+(function () {
+  var saveComp = Shell.comp;
+  var draw = function (comp) {
+    Shell.comp = comp.slice();
+    var tally = { thrill: 0, fan: 0, expert: 0, casual: 0 };
+    for (var i = 0; i < 2000; i++) tally[Chat.pickPersona({}).arch]++;
+    return tally;
+  };
+  var t1 = draw([100, 100, 800, 100]);
+  ok('분석가가 지배하면 그쪽 페르소나가 압도한다 (expert ' + t1.expert + ' vs casual ' + t1.casual + ')',
+     t1.expert > t1.casual * 1.8);
+  var t2 = draw([800, 100, 100, 100]);
+  ok('불구경파가 지배하면 그쪽 페르소나가 압도한다 (thrill ' + t2.thrill + ' vs expert ' + t2.expert + ')',
+     t2.thrill > t2.expert * 1.8);
+  ok('소수 원형도 완전히 침묵하지는 않는다 (바닥 가중치)', t2.expert > 0);
+  Shell.comp = saveComp;
+})();
+
+// ---- 채널 계층 — 이월과 구독자 ----
+// 이월이 없으면 10번째 방송이 1번째와 똑같아진다. 반대로 이월이 고착되면 초반 선택 실수가
+// 회복 불능이 된다 — 둘 다 게임을 망치므로 "물든다 + 되돌릴 수 있다"를 함께 못박는다.
+(function () {
+  var saveCh = Shell.ch, saveComp = Shell.comp;
+  Shell.ch = { subs: 0, shows: 0, fresh: {}, best: {}, log: [], mix: Shell.ARCH_START.slice() };
+
+  eq('구독자 0명 → 시작 보너스 0', Shell.subBonus(), 0);
+  Shell.ch.subs = 500;
+  eq('구독자 500명 → 시작 관객 +200', Shell.subBonus(), 200);
+  Shell.ch.subs = 99999;
+  ok('구독자 보너스에 상한이 있다 (언락 페이싱 보호) — ' + Shell.subBonus(), Shell.subBonus() === 700);
+  Shell.ch.subs = 0;
+
+  Shell.comp = [900, 50, 25, 25]; // 불구경파가 지배한 방송
+  var before = Shell.ch.mix.slice();
+  Shell.absorbMix();
+  ok('이월 후에도 채널 구성비 합이 1',
+     Math.abs(Shell.ch.mix.reduce(function (a, b) { return a + b; }, 0) - 1) < 1e-9);
+  ok('불구경파 방송 뒤 채널이 그쪽으로 물든다 (' + before[0].toFixed(2) + ' → ' +
+     Shell.ch.mix[0].toFixed(2) + ')', Shell.ch.mix[0] > before[0]);
+  ok('한 방송으로 채널 색이 통째로 갈아엎이지는 않는다', Shell.ch.mix[0] < 0.9);
+  eq('채널 색 최다는 불구경파', Shell.mixTop().id, 'thrill');
+
+  for (var k = 0; k < 3; k++) { Shell.comp = [25, 25, 900, 50]; Shell.absorbMix(); }
+  eq('분석가 방송을 3회 하면 채널 색이 돌아온다 (고착 없음)', Shell.mixTop().id, 'expert');
+
+  Shell.ch = saveCh; Shell.comp = saveComp;
+})();
 
 // ---- Giving Up On It: 물리 상수끼리 모순되지 않는가 ----
 // 초판 버그: "낙하속도 700 이상"과 "높이 손실 3m 미만"을 동시에 요구해 clutch가 영원히 안 터졌다.
@@ -290,12 +648,14 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 // 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
-  '../../index.html', 'shell.css', 'config.js', 'chat.js', 'llm.js', 'shell.js',
-  '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
-  '../giving-up/chat-data.js', '../giving-up/game.js',
-  '../pocket/chat-data.js', '../pocket/game.js',
-  '../bomb/chat-data.js', '../bomb/game.js',
-  '../fishing/chat-data.js', '../fishing/game.js',
+  '../../index.html', 'shell.css', 'config.js', 'shell.js', 'dex.js',
+  '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js', '../../data/tikitaka.js',
+  '../../data/regulars.js', '../../data/dex.js',
+  '../../data/events/hwaryeok.js', '../hwaryeok/game.js',
+  '../../data/events/giving-up.js', '../giving-up/game.js',
+  '../../data/events/pocket.js', '../pocket/game.js',
+  '../../data/events/bomb.js', '../bomb/game.js',
+  '../../data/events/fishing.js', '../fishing/game.js',
 ];
 // 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
 var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']

@@ -59,7 +59,7 @@
   <div id="viewport">
     <canvas id="scene" width="960" height="430"></canvas>
     <div id="tally"><span>● ON AIR <b id="tallyUp"></b></span><span id="tallyR">—</span></div>
-    <div id="liveBar"><img class="uiIco" src="games/shell/img/ui-eye.png" alt="시청자"> <b id="viewerCount">0</b>명</div>
+    <div id="liveBar"><img class="uiIco" src="games/shell/img/ui-eye.png" alt="시청자"> <b id="viewerCount">0</b>명 <span id="compBar" title="관객 구성"></span></div>
     <div id="paceChip" class="hidden"></div>
     <div id="donBanner"></div>
     <canvas id="liveGraph" width="960" height="34"></canvas>
@@ -68,6 +68,13 @@
     <div id="replayWin"></div>
     <div class="vpopup" id="vpopup"></div>
     <div id="camBox" class="hidden"><img id="camImg" src="games/shell/faces/adventurer_silence.png" alt="스트리머 캠"><span>LIVE CAM</span></div>
+    <!-- 스트리머 표현 축 (시뮬 레이어 v0.2 §6.4) — 방송 중 능동 리액션. 마우스 전용 (게임 키와 무충돌) -->
+    <div id="reactBar" class="hidden">
+      <button type="button" data-tag="streamer_scream" title="비명을 지른다">비명</button>
+      <button type="button" data-tag="streamer_joy" title="환호한다">환호</button>
+      <button type="button" data-tag="streamer_selfmock" title="자조한다">자조</button>
+      <button type="button" data-tag="streamer_silence" title="말없이 화면만 본다">침묵</button>
+    </div>
     <div id="ticker"></div>
     <div id="bigStamp"><div id="bigStampText"></div></div>
     <div id="overlay" class="hidden"></div>
@@ -114,21 +121,29 @@
   <span class="dTray"><i id="dRec">● REC</i><i><img class="uiIco" src="games/shell/img/ui-sound.png" alt="소리"></i><i><img class="uiIco" src="games/shell/img/ui-net.png" alt="네트워크"></i><i id="dClock"></i></span>
 </div>
 
-<!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 -->
+<!-- 관객(engine/) — 페르소나 캐스트(data/, 소윤)를 먼저, 그걸 읽는 채팅 엔진·LLM 어댑터 순 -->
+<script src="data/personas/cast.js"></script>
+<script src="data/tikitaka.js"></script>
+<script src="data/regulars.js"></script>
+<script src="data/dex.js"></script>
+<script src="data/personas/viewers.js"></script>
+<script src="data/events/tagmap.js"></script>
 <script src="games/shell/config.js"></script>
-<script src="games/shell/chat.js"></script>
-<script src="games/shell/llm.js"></script>
+<script src="engine/chat.js"></script>
+<script src="engine/llm.js"></script>
+<!-- 셸(무대) — 시청자 경제·게임 단위 신선도·방송 루프 + 반응 도감·캐스트 해금(dex) -->
 <script src="games/shell/shell.js"></script>
+<script src="games/shell/dex.js"></script>
 <!-- 게임 — 각자 자기 이벤트 어휘(chat-data)와 룰(game)을 가지고 셸에 등록한다 -->
-<script src="games/hwaryeok/chat-data.js"></script>
+<script src="data/events/hwaryeok.js"></script>
 <script src="games/hwaryeok/game.js"></script>
-<script src="games/giving-up/chat-data.js"></script>
+<script src="data/events/giving-up.js"></script>
 <script src="games/giving-up/game.js"></script>
-<script src="games/pocket/chat-data.js"></script>
+<script src="data/events/pocket.js"></script>
 <script src="games/pocket/game.js"></script>
-<script src="games/bomb/chat-data.js"></script>
+<script src="data/events/bomb.js"></script>
 <script src="games/bomb/game.js"></script>
-<script src="games/fishing/chat-data.js"></script>
+<script src="data/events/fishing.js"></script>
 <script src="games/fishing/game.js"></script>
 <script>Shell.boot();</script>
 

@@ -89,12 +89,11 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
       <div id="log"></div>
     </div>
     <div class="note">
-      · 이 페이지는 실제 엔진(<code>games/shell/chat.js</code>)과 실제 게임 어휘(<code>chat-data.js</code>)를
-      그대로 사용한다 — 여기서 보이는 그대로 게임에서 나온다.<br>
+      · 이 페이지는 실제 엔진(<code>engine/chat.js</code>)·실제 캐스트(<code>data/personas/cast.js</code>)·
+      실제 게임 어휘(<code>data/events/*.js</code>)를 그대로 사용한다 — 여기서 보이는 그대로 게임에서 나온다.<br>
       · 사실 슬롯 값은 실제 게임이 넘기는 형태의 표본값이다 (숫자는 매번 무작위).<br>
       · LLM 경로는 부스에 없다 — 템플릿·페르소나 작업 확인용. LLM 발화는 게임(<code>index.html</code>)에서.<br>
-      · 어휘 수정 → 저장 → 이 페이지 새로고침. (<code>data/</code> 스키마 확정 전까지는
-      <code>games/*/chat-data.js</code>를 직접 수정한다)
+      · 어휘 수정 → 저장 → 이 페이지 새로고침. 머지 전 <code>node tools/validate.mjs</code>로 검증.
     </div>
   </div>
 
@@ -104,10 +103,14 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
   </div>
 </div>
 
-<script src="../games/shell/chat.js"></script>
-<script src="../games/hwaryeok/chat-data.js"></script>
-<script src="../games/giving-up/chat-data.js"></script>
-<script src="../games/pocket/chat-data.js"></script>
+<script src="../data/personas/cast.js"></script>
+<script src="../data/tikitaka.js"></script>
+<script src="../engine/chat.js"></script>
+<script src="../data/events/hwaryeok.js"></script>
+<script src="../data/events/giving-up.js"></script>
+<script src="../data/events/pocket.js"></script>
+<script src="../data/events/bomb.js"></script>
+<script src="../data/events/fishing.js"></script>
 <script>
 (function () {
   'use strict';
@@ -141,6 +144,29 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
       fall_big: function () { return { d: String(rnd(15, 29)), gain: fmt(rnd(3000, 12000)) }; },
       fall_legend: function () { return { d: String(rnd(30, 48)), gain: fmt(rnd(18000, 40000)) }; },
       summit: function () { return { gain: fmt(rnd(30000, 60000)) }; },
+      donation: function () { return { d: fmt(rnd(10, 900)) }; },
+      milestone: function () { return { v: fmt(pick([1000, 5000, 15000, 60000])) }; },
+    } },
+    bomb: { title: '해체쇼', data: window.BOMB_CHAT, facts: {
+      new_bomb: function () { return { wires: rnd(3, 6), limit: rnd(8, 20) }; },
+      scan_reveal: function () { return { result: pick(['함정', '안전']) }; },
+      cut_paid: function () { return { gain: fmt(rnd(300, 1500)) }; },
+      defused: function () { return { gain: fmt(rnd(400, 2000)) }; },
+      defused_clutch: function () { return { sec: (rnd(2, 29) / 10).toFixed(1), gain: fmt(rnd(1500, 6000)) }; },
+      boom: function () { return { gain: fmt(rnd(1200, 5000)) }; },
+      chain_up: function () { return { x: (rnd(12, 40) / 10).toFixed(1) }; },
+      donation: function () { return { d: fmt(rnd(10, 900)) }; },
+      milestone: function () { return { v: fmt(pick([1000, 5000, 15000, 60000])) }; },
+    } },
+    fishing: { title: '심연낚시', data: window.FISHING_CHAT, facts: {
+      cast: function () { return { zone: pick(['연안', '근해', '심해']) }; },
+      tension_edge: function () { return { t: rnd(80, 99) }; },
+      land_small: function () { return { name: pick(['피라미', '구피', '멸치']), gain: fmt(rnd(100, 500)) }; },
+      land_mid: function () { return { name: pick(['잉어', '메기', '가물치']), gain: fmt(rnd(500, 2000)) }; },
+      land_big: function () { return { name: pick(['상어', '돌고래', '개복치']), gain: fmt(rnd(2000, 8000)) }; },
+      land_legend: function () { return { name: pick(['리바이어던', '심연군주', '유령해파리']), gain: fmt(rnd(10000, 40000)) }; },
+      trash: function () { return { name: pick(['조개', '소라', '불가사리']) }; },
+      line_snap: function () { return { gain: fmt(rnd(800, 4000)) }; },
       donation: function () { return { d: fmt(rnd(10, 900)) }; },
       milestone: function () { return { v: fmt(pick([1000, 5000, 15000, 60000])) }; },
     } },

@@ -1,0 +1,4774 @@
+/* 시청자 100종 캐리어 — 생성 파일. 원본(정본)은 viewer_personas_100_v02.json (소윤 소유).
+ * file:// 제약으로 fetch 불가 → JSON 리터럴 .js 캐리어 (ADR-002). 우변은 원본 JSON 그대로다.
+ * 재생성: python 한 줄 — 원본 수정 시 이 파일을 다시 만든다 (수동 편집 금지).
+ *   python -c "import json;raw=open('data/personas/viewer_personas_100_v02.json',encoding='utf-8').read();json.loads(raw);open('data/personas/viewers.js','w',encoding='utf-8',newline='
+').write(HEADER+'window.JONG_VIEWERS = '+raw.strip()+';
+')"
+ */
+window.JONG_VIEWERS = {
+ "schema_version": "0.2",
+ "axes": {
+  "x": {
+   "label": "자극원",
+   "neg": "숙련(MASTERY)",
+   "pos": "혼돈(CHAOS)"
+  },
+  "y": {
+   "label": "몰입 대상",
+   "neg": "판(BOARD)",
+   "pos": "사람(STREAMER)"
+  }
+ },
+ "quadrants": {
+  "Q1": "장인의 팬 (숙련 × 사람)",
+  "Q2": "분석가 (숙련 × 판)",
+  "Q3": "리액션 사냥꾼 (혼돈 × 사람)",
+  "Q4": "사고 구경꾼 (혼돈 × 판)"
+ },
+ "immortal_observers": [
+  "V-001",
+  "V-006",
+  "V-022",
+  "V-034",
+  "V-026",
+  "V-044",
+  "V-051",
+  "V-071",
+  "V-058",
+  "V-076",
+  "V-090",
+  "V-084"
+ ],
+ "personas": [
+  {
+   "id": "V-001",
+   "name": "첫방부터봄",
+   "q": "Q1",
+   "x": -0.92,
+   "y": 0.88,
+   "triggers": [
+    "retry_success",
+    "streamer_story",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.1,
+   "patience": 0.95,
+   "donate": 0.85,
+   "spawn": 0.25,
+   "volume": 0.35,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~는데",
+     "~었는데"
+    ],
+    "lexicon": [
+     "결국",
+     "사연",
+     "빌드완성"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "이 사람 처음엔 이거 근처도 못 갔었는데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.11,
+     "lexicon": 0.17,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-002",
+   "name": "연습벌레응원단",
+   "q": "Q1",
+   "x": -0.78,
+   "y": 0.62,
+   "triggers": [
+    "retry_success",
+    "clean_execution",
+    "streamer_fatigue"
+   ],
+   "repellents": [
+    "rng_jackpot"
+   ],
+   "arrival": 0.25,
+   "patience": 0.88,
+   "donate": 0.8,
+   "spawn": 0.3,
+   "volume": 0.5,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~하다",
+     "~단하다"
+    ],
+    "lexicon": [
+     "결국",
+     "클린",
+     "체력"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "몇 번째 시도야 이거, 진짜 대단하다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.13,
+     "lexicon": 0.21,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-003",
+   "name": "손가락장인숭배",
+   "q": "Q1",
+   "x": -0.85,
+   "y": 0.35,
+   "triggers": [
+    "clean_execution",
+    "no_hit",
+    "skill_comeback"
+   ],
+   "repellents": [
+    "rng_jackpot",
+    "bug_glitch"
+   ],
+   "arrival": 0.4,
+   "patience": 0.7,
+   "donate": 0.65,
+   "spawn": 0.45,
+   "volume": 0.3,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~거야"
+    ],
+    "lexicon": [
+     "클린",
+     "무피",
+     "역전"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "방금 그 입력 손이 어떻게 된 거야",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.15,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-004",
+   "name": "도전기록원",
+   "q": "Q1",
+   "x": -0.6,
+   "y": 0.55,
+   "triggers": [
+    "retry_success",
+    "record_pace",
+    "streamer_promise"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.3,
+   "patience": 0.9,
+   "donate": 0.55,
+   "spawn": 0.4,
+   "volume": 0.65,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~니다",
+     "~입니다"
+    ],
+    "lexicon": [
+     "결국",
+     "기록",
+     "공약"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "지금 47번째 시도입니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.16,
+     "lexicon": 0.24,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-005",
+   "name": "클리어각서",
+   "q": "Q1",
+   "x": -0.45,
+   "y": 0.8,
+   "triggers": [
+    "streamer_promise",
+    "streamer_joy",
+    "retry_success"
+   ],
+   "repellents": [
+    "streamer_fatigue"
+   ],
+   "arrival": 0.35,
+   "patience": 0.85,
+   "donate": 0.9,
+   "spawn": 0.35,
+   "volume": 0.55,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~믿어"
+    ],
+    "lexicon": [
+     "공약",
+     "환희",
+     "결국"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "오늘 안에 된다니까 그냥 믿어",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.18,
+     "lexicon": 0.22,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-006",
+   "name": "눈물버튼",
+   "q": "Q1",
+   "x": -0.55,
+   "y": 0.92,
+   "triggers": [
+    "retry_success",
+    "streamer_joy",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.2,
+   "patience": 0.75,
+   "donate": 0.95,
+   "spawn": 0.3,
+   "volume": 0.4,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~하냐",
+     "~컥하냐"
+    ],
+    "lexicon": [
+     "결국",
+     "환희",
+     "빌드완성"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "아 왜 내가 울컥하냐",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.17,
+     "lexicon": 0.18,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-007",
+   "name": "야근하고왔다",
+   "q": "Q1",
+   "x": -0.3,
+   "y": 0.7,
+   "triggers": [
+    "skill_comeback",
+    "streamer_joy",
+    "clean_execution"
+   ],
+   "repellents": [
+    "menu_long",
+    "idle"
+   ],
+   "arrival": 0.45,
+   "patience": 0.55,
+   "donate": 0.7,
+   "spawn": 0.25,
+   "volume": 0.25,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~했다",
+     "~근했다"
+    ],
+    "lexicon": [
+     "역전",
+     "환희",
+     "클린"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "이거 보려고 퇴근했다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.21,
+     "lexicon": 0.14,
+     "quirks": 0.1
+    }
+   }
+  },
+  {
+   "id": "V-008",
+   "name": "스승님소리절로",
+   "q": "Q1",
+   "x": -0.88,
+   "y": 0.28,
+   "triggers": [
+    "optimal_line",
+    "build_shown",
+    "clean_execution"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.4,
+   "patience": 0.8,
+   "donate": 0.6,
+   "spawn": 0.55,
+   "volume": 0.45,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~세요",
+     "~주세요"
+    ],
+    "lexicon": [
+     "정석",
+     "덱",
+     "클린"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "형 그거 어떻게 하는 건지만 알려주세요",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.19,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-009",
+   "name": "은근한후원자",
+   "q": "Q1",
+   "x": -0.5,
+   "y": 0.45,
+   "triggers": [
+    "retry_success",
+    "streamer_fatigue",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.15,
+   "patience": 0.92,
+   "donate": 0.98,
+   "spawn": 0.1,
+   "volume": 0.05,
+   "speech": {
+    "register": "minimal",
+    "endings": [],
+    "lexicon": [
+     "결국",
+     "체력",
+     "빌드완성"
+    ],
+    "quirks": [
+     "한 세션에 두세 번만 말한다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "…",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.17,
+     "lexicon": 0.09,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-010",
+   "name": "컨디션체크맨",
+   "q": "Q1",
+   "x": -0.35,
+   "y": 0.85,
+   "triggers": [
+    "streamer_fatigue",
+    "streamer_tilt",
+    "streamer_silence"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.3,
+   "patience": 0.85,
+   "donate": 0.75,
+   "spawn": 0.2,
+   "volume": 0.7,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~아요",
+     "~찮아요"
+    ],
+    "lexicon": [
+     "체력",
+     "멘탈",
+     "정적"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "오늘 목소리 좀 잠긴 것 같은데 괜찮아요?",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.2,
+     "lexicon": 0.26,
+     "quirks": 0.1
+    }
+   }
+  },
+  {
+   "id": "V-011",
+   "name": "실패도응원",
+   "q": "Q1",
+   "x": -0.4,
+   "y": 0.75,
+   "triggers": [
+    "catastrophic_fail",
+    "streamer_tilt",
+    "retry_success"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.25,
+   "patience": 0.9,
+   "donate": 0.8,
+   "spawn": 0.3,
+   "volume": 0.6,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~빴어",
+     "~나빴어"
+    ],
+    "lexicon": [
+     "대참사",
+     "멘탈",
+     "결국"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "괜찮아 방금 건 판이 나빴어",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.19,
+     "lexicon": 0.23,
+     "quirks": 0.1
+    }
+   }
+  },
+  {
+   "id": "V-012",
+   "name": "완주보증인",
+   "q": "Q1",
+   "x": -0.65,
+   "y": 0.4,
+   "triggers": [
+    "longplan_paid",
+    "record_pace",
+    "efficient_resource"
+   ],
+   "repellents": [
+    "idle",
+    "menu_long"
+   ],
+   "arrival": 0.35,
+   "patience": 0.96,
+   "donate": 0.6,
+   "spawn": 0.35,
+   "volume": 0.2,
+   "speech": {
+    "register": "minimal",
+    "endings": [],
+    "lexicon": [
+     "빌드완성",
+     "기록",
+     "효율"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "한 세션에 두세 번만 말한다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "끝까지 볼 거니까 천천히 해도 돼",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.13,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-013",
+   "name": "기념일챙김",
+   "q": "Q1",
+   "x": -0.2,
+   "y": 0.94,
+   "triggers": [
+    "record_pace",
+    "streamer_story",
+    "streamer_joy"
+   ],
+   "repellents": [
+    "repeat_content"
+   ],
+   "arrival": 0.2,
+   "patience": 0.8,
+   "donate": 0.92,
+   "spawn": 0.4,
+   "volume": 0.55,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~는데",
+     "~었는데"
+    ],
+    "lexicon": [
+     "기록",
+     "사연",
+     "환희"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "작년 오늘 첫 클리어했었는데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.22,
+     "lexicon": 0.22,
+     "quirks": 0.11
+    }
+   }
+  },
+  {
+   "id": "V-014",
+   "name": "목소리톤감별",
+   "q": "Q1",
+   "x": -0.48,
+   "y": 0.9,
+   "triggers": [
+    "streamer_silence",
+    "streamer_tilt",
+    "streamer_joy"
+   ],
+   "repellents": [
+    "menu_long"
+   ],
+   "arrival": 0.35,
+   "patience": 0.72,
+   "donate": 0.7,
+   "spawn": 0.35,
+   "volume": 0.75,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~티남"
+    ],
+    "lexicon": [
+     "정적",
+     "멘탈",
+     "환희"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "지금 긴장한 거 목소리에서 다 티남",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.18,
+     "lexicon": 0.27,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-015",
+   "name": "노력의증명",
+   "q": "Q1",
+   "x": -0.82,
+   "y": 0.5,
+   "triggers": [
+    "retry_success",
+    "efficient_resource",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "rng_jackpot"
+   ],
+   "arrival": 0.4,
+   "patience": 0.88,
+   "donate": 0.72,
+   "spawn": 0.45,
+   "volume": 0.35,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~준다",
+     "~쳐준다"
+    ],
+    "lexicon": [
+     "결국",
+     "효율",
+     "빌드완성"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "운으로 이긴 판은 안 쳐준다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.13,
+     "lexicon": 0.17,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-016",
+   "name": "손떨림공감",
+   "q": "Q1",
+   "x": -0.7,
+   "y": 0.68,
+   "triggers": [
+    "no_hit",
+    "clean_execution",
+    "streamer_silence"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.42,
+   "patience": 0.65,
+   "donate": 0.68,
+   "spawn": 0.35,
+   "volume": 0.62,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~는데",
+     "~나는데"
+    ],
+    "lexicon": [
+     "무피",
+     "클린",
+     "정적"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "나까지 손에 땀나는데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.23,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-017",
+   "name": "첫클리어각인",
+   "q": "Q1",
+   "x": -0.58,
+   "y": 0.3,
+   "triggers": [
+    "retry_success",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "repeat_content",
+    "no_stakes"
+   ],
+   "arrival": 0.55,
+   "patience": 0.6,
+   "donate": 0.88,
+   "spawn": 0.5,
+   "volume": 0.3,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "결국",
+     "빌드완성"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "최초 순간만 보러 왔습니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.16,
+     "lexicon": 0.15,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-018",
+   "name": "복습러",
+   "q": "Q1",
+   "x": -0.75,
+   "y": 0.22,
+   "triggers": [
+    "build_shown",
+    "optimal_line",
+    "retry_success"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.3,
+   "patience": 0.9,
+   "donate": 0.45,
+   "spawn": 0.6,
+   "volume": 0.15,
+   "speech": {
+    "register": "minimal",
+    "endings": [
+     "~어요",
+     "~봤어요"
+    ],
+    "lexicon": [
+     "덱",
+     "정석",
+     "결국"
+    ],
+    "quirks": [
+     "한 세션에 두세 번만 말한다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "이 구간 다시보기로 세 번 봤어요",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.14,
+     "lexicon": 0.12,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-019",
+   "name": "정주행팬",
+   "q": "Q1",
+   "x": -0.38,
+   "y": 0.58,
+   "triggers": [
+    "streamer_story",
+    "longplan_paid",
+    "record_pace"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.22,
+   "patience": 0.93,
+   "donate": 0.78,
+   "spawn": 0.45,
+   "volume": 0.4,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "사연",
+     "빌드완성",
+     "기록"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "시즌1부터 다 봤습니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.19,
+     "lexicon": 0.18,
+     "quirks": 0.1
+    }
+   }
+  },
+  {
+   "id": "V-020",
+   "name": "성장곡선관찰",
+   "q": "Q1",
+   "x": -0.9,
+   "y": 0.18,
+   "triggers": [
+    "clean_execution",
+    "optimal_line",
+    "retry_success"
+   ],
+   "repellents": [
+    "rng_jackpot",
+    "bug_glitch"
+   ],
+   "arrival": 0.45,
+   "patience": 0.85,
+   "donate": 0.5,
+   "spawn": 0.55,
+   "volume": 0.25,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~졌다",
+     "~라졌다"
+    ],
+    "lexicon": [
+     "클린",
+     "정석",
+     "결국"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "확실히 한 달 전보다 판단이 빨라졌다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.14,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-021",
+   "name": "새벽까지동행",
+   "q": "Q1",
+   "x": -0.25,
+   "y": 0.65,
+   "triggers": [
+    "streamer_fatigue",
+    "retry_success",
+    "streamer_promise"
+   ],
+   "repellents": [
+    "menu_long"
+   ],
+   "arrival": 0.18,
+   "patience": 0.98,
+   "donate": 0.82,
+   "spawn": 0.2,
+   "volume": 0.45,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~어요",
+     "~잤어요"
+    ],
+    "lexicon": [
+     "체력",
+     "결국",
+     "공약"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "네 시네요 저도 안 잤어요",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.21,
+     "lexicon": 0.19,
+     "quirks": 0.11
+    }
+   }
+  },
+  {
+   "id": "V-022",
+   "name": "조용한자부심",
+   "q": "Q1",
+   "x": -0.68,
+   "y": 0.78,
+   "triggers": [
+    "clean_execution",
+    "streamer_joy",
+    "no_hit"
+   ],
+   "repellents": [
+    "streamer_selfmock"
+   ],
+   "arrival": 0.28,
+   "patience": 0.87,
+   "donate": 0.9,
+   "spawn": 0.15,
+   "volume": 0.08,
+   "speech": {
+    "register": "minimal",
+    "endings": [],
+    "lexicon": [
+     "클린",
+     "환희",
+     "무피"
+    ],
+    "quirks": [
+     "한 세션에 두세 번만 말한다",
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "(조용히 후원)",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.1,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-023",
+   "name": "도전권선물",
+   "q": "Q1",
+   "x": -0.52,
+   "y": 0.52,
+   "triggers": [
+    "catastrophic_fail",
+    "streamer_tilt",
+    "streamer_promise"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.32,
+   "patience": 0.82,
+   "donate": 0.94,
+   "spawn": 0.3,
+   "volume": 0.5,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~낸다"
+    ],
+    "lexicon": [
+     "대참사",
+     "멘탈",
+     "공약"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "한 판만 더 가자 비용은 내가 낸다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.17,
+     "lexicon": 0.21,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-024",
+   "name": "명장면수집",
+   "q": "Q1",
+   "x": -0.8,
+   "y": 0.42,
+   "triggers": [
+    "skill_comeback",
+    "no_hit",
+    "improbable_survival"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.48,
+   "patience": 0.7,
+   "donate": 0.55,
+   "spawn": 0.75,
+   "volume": 0.35,
+   "speech": {
+    "register": "casual",
+    "endings": [],
+    "lexicon": [
+     "역전",
+     "무피",
+     "기적"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "지금 그거 잘라서 올려야 함",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.13,
+     "lexicon": 0.17,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-025",
+   "name": "은퇴막았다",
+   "q": "Q1",
+   "x": -0.15,
+   "y": 0.96,
+   "triggers": [
+    "streamer_fatigue",
+    "streamer_tilt",
+    "streamer_story"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.2,
+   "patience": 0.99,
+   "donate": 0.96,
+   "spawn": 0.25,
+   "volume": 0.68,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~세요",
+     "~마세요"
+    ],
+    "lexicon": [
+     "체력",
+     "멘탈",
+     "사연"
+    ],
+    "quirks": [
+     "2인칭으로 직접 말을 건다"
+    ],
+    "exemplars": {
+     "spike": "그만둔다는 말만 하지 마세요",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.23,
+     "lexicon": 0.25,
+     "quirks": 0.11
+    }
+   }
+  },
+  {
+   "id": "V-026",
+   "name": "빌드감별사",
+   "q": "Q2",
+   "x": -0.9,
+   "y": -0.85,
+   "triggers": [
+    "synergy_found",
+    "build_shown",
+    "optimal_line"
+   ],
+   "repellents": [
+    "explanation_absent",
+    "rng_jackpot"
+   ],
+   "arrival": 0.45,
+   "patience": 0.82,
+   "donate": 0.18,
+   "spawn": 0.78,
+   "volume": 0.3,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~잖아",
+     "~이잖아"
+    ],
+    "lexicon": [
+     "시너지",
+     "덱",
+     "정석"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "그 카드 왜 안 집었지, 시너지 보이잖아"
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.15,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-027",
+   "name": "확률계산기",
+   "q": "Q2",
+   "x": -0.72,
+   "y": -0.92,
+   "triggers": [
+    "numbers_revealed",
+    "meta_choice",
+    "efficient_resource"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.5,
+   "patience": 0.88,
+   "donate": 0.12,
+   "spawn": 0.7,
+   "volume": 0.4,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~해임",
+     "~손해임"
+    ],
+    "lexicon": [
+     "수치",
+     "분기",
+     "효율"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "기댓값 돌려보면 그쪽이 12% 손해임"
+    },
+    "mutation": {
+     "endings": 0.14,
+     "lexicon": 0.18,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-028",
+   "name": "프레임단위검사",
+   "q": "Q2",
+   "x": -0.95,
+   "y": -0.4,
+   "triggers": [
+    "clean_execution",
+    "no_hit",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "bug_glitch"
+   ],
+   "arrival": 0.62,
+   "patience": 0.75,
+   "donate": 0.1,
+   "spawn": 0.65,
+   "volume": 0.2,
+   "speech": {
+    "register": "minimal",
+    "endings": [
+     "~았음",
+     "~남았음"
+    ],
+    "lexicon": [
+     "클린",
+     "무피",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "한 세션에 두세 번만 말한다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "저거 회피 판정 두 프레임 남았음"
+    },
+    "mutation": {
+     "endings": 0.11,
+     "lexicon": 0.13,
+     "quirks": 0.05
+    }
+   }
+  },
+  {
+   "id": "V-029",
+   "name": "패치노트암기",
+   "q": "Q2",
+   "x": -0.55,
+   "y": -0.78,
+   "triggers": [
+    "numbers_revealed",
+    "meta_choice",
+    "build_shown"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.4,
+   "patience": 0.85,
+   "donate": 0.15,
+   "spawn": 0.8,
+   "volume": 0.55,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~어요",
+     "~됐어요"
+    ],
+    "lexicon": [
+     "수치",
+     "분기",
+     "덱"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "그거 지난 패치에서 너프됐어요"
+    },
+    "mutation": {
+     "endings": 0.17,
+     "lexicon": 0.22,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-030",
+   "name": "덱리스트요구",
+   "q": "Q2",
+   "x": -0.68,
+   "y": -0.6,
+   "triggers": [
+    "build_shown",
+    "synergy_found"
+   ],
+   "repellents": [
+    "explanation_absent",
+    "idle"
+   ],
+   "arrival": 0.42,
+   "patience": 0.7,
+   "donate": 0.22,
+   "spawn": 0.85,
+   "volume": 0.6,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~세요",
+     "~주세요"
+    ],
+    "lexicon": [
+     "덱",
+     "시너지"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "덱 좀 한 번만 띄워주세요"
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.23,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-031",
+   "name": "시너지탐지견",
+   "q": "Q2",
+   "x": -0.88,
+   "y": -0.55,
+   "triggers": [
+    "synergy_found",
+    "longplan_paid",
+    "build_shown"
+   ],
+   "repellents": [
+    "rng_jackpot"
+   ],
+   "arrival": 0.48,
+   "patience": 0.8,
+   "donate": 0.2,
+   "spawn": 0.82,
+   "volume": 0.45,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~인데",
+     "~합인데"
+    ],
+    "lexicon": [
+     "시너지",
+     "빌드완성",
+     "덱"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "저 둘 같이 쓰면 미친 조합인데"
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.19,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-032",
+   "name": "최적화강박",
+   "q": "Q2",
+   "x": -0.93,
+   "y": -0.7,
+   "triggers": [
+    "efficient_resource",
+    "optimal_line",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "greed_punished",
+    "misclick"
+   ],
+   "arrival": 0.55,
+   "patience": 0.78,
+   "donate": 0.08,
+   "spawn": 0.72,
+   "volume": 0.5,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~린다",
+     "~슬린다"
+    ],
+    "lexicon": [
+     "효율",
+     "정석",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "골드 3 남긴 게 계속 거슬린다"
+    },
+    "mutation": {
+     "endings": 0.11,
+     "lexicon": 0.21,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-033",
+   "name": "훈수의달인",
+   "q": "Q2",
+   "x": -0.62,
+   "y": -0.35,
+   "triggers": [
+    "meta_choice",
+    "state_flip",
+    "optimal_line"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.35,
+   "patience": 0.65,
+   "donate": 0.25,
+   "spawn": 0.6,
+   "volume": 0.92,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~왼쪽"
+    ],
+    "lexicon": [
+     "분기",
+     "판세",
+     "정석"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "아니 그쪽 말고 왼쪽"
+    },
+    "mutation": {
+     "endings": 0.16,
+     "lexicon": 0.31,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-034",
+   "name": "스프레드시트파",
+   "q": "Q2",
+   "x": -0.85,
+   "y": -0.95,
+   "triggers": [
+    "numbers_revealed",
+    "efficient_resource",
+    "record_pace"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.65,
+   "patience": 0.92,
+   "donate": 0.1,
+   "spawn": 0.68,
+   "volume": 0.25,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~나요",
+     "~되나요"
+    ],
+    "lexicon": [
+     "수치",
+     "효율",
+     "기록"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "표 만들어놨는데 링크 걸어도 되나요"
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.14,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-035",
+   "name": "리플레이분석가",
+   "q": "Q2",
+   "x": -0.75,
+   "y": -0.48,
+   "triggers": [
+    "state_flip",
+    "optimal_line",
+    "skill_comeback"
+   ],
+   "repellents": [
+    "bug_glitch"
+   ],
+   "arrival": 0.52,
+   "patience": 0.88,
+   "donate": 0.14,
+   "spawn": 0.75,
+   "volume": 0.3,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~왔음",
+     "~나왔음"
+    ],
+    "lexicon": [
+     "판세",
+     "정석",
+     "역전"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "패배 원인은 3턴 전에 이미 나왔음"
+    },
+    "mutation": {
+     "endings": 0.14,
+     "lexicon": 0.15,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-036",
+   "name": "메타예언자",
+   "q": "Q2",
+   "x": -0.42,
+   "y": -0.82,
+   "triggers": [
+    "meta_choice",
+    "state_flip",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "repeat_content"
+   ],
+   "arrival": 0.45,
+   "patience": 0.8,
+   "donate": 0.18,
+   "spawn": 0.88,
+   "volume": 0.58,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~니다",
+     "~됩니다"
+    ],
+    "lexicon": [
+     "분기",
+     "판세",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "다음 시즌엔 이 빌드가 1티어 됩니다"
+    },
+    "mutation": {
+     "endings": 0.19,
+     "lexicon": 0.22,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-037",
+   "name": "티어표관리인",
+   "q": "Q2",
+   "x": -0.58,
+   "y": -0.9,
+   "triggers": [
+    "numbers_revealed",
+    "meta_choice"
+   ],
+   "repellents": [
+    "explanation_absent",
+    "no_stakes"
+   ],
+   "arrival": 0.5,
+   "patience": 0.85,
+   "donate": 0.12,
+   "spawn": 0.9,
+   "volume": 0.42,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~인데",
+     "~준인데"
+    ],
+    "lexicon": [
+     "수치",
+     "분기"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "이건 티어표 수정해야 하는 수준인데"
+    },
+    "mutation": {
+     "endings": 0.16,
+     "lexicon": 0.18,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-038",
+   "name": "숫자만봄",
+   "q": "Q2",
+   "x": -0.3,
+   "y": -0.96,
+   "triggers": [
+    "numbers_revealed",
+    "efficient_resource"
+   ],
+   "repellents": [
+    "streamer_story",
+    "streamer_scream"
+   ],
+   "arrival": 0.6,
+   "patience": 0.9,
+   "donate": 0.05,
+   "spawn": 0.55,
+   "volume": 0.12,
+   "speech": {
+    "register": "formal_minimal",
+    "endings": [
+     "~니다",
+     "~됩니다"
+    ],
+    "lexicon": [
+     "수치",
+     "효율"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "한 세션에 두세 번만 말한다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "DPS 로그만 보여주면 됩니다"
+    },
+    "mutation": {
+     "endings": 0.21,
+     "lexicon": 0.11,
+     "quirks": 0.1
+    }
+   }
+  },
+  {
+   "id": "V-039",
+   "name": "자원낭비고발",
+   "q": "Q2",
+   "x": -0.8,
+   "y": -0.28,
+   "triggers": [
+    "efficient_resource",
+    "greed_punished",
+    "optimal_line"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.44,
+   "patience": 0.68,
+   "donate": 0.16,
+   "spawn": 0.62,
+   "volume": 0.85,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~는데",
+     "~었는데"
+    ],
+    "lexicon": [
+     "효율",
+     "욕심",
+     "정석"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "문장을 끝맺지 않고 연달아 친다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "포션 그거 지금 쓸 타이밍 아니었는데"
+    },
+    "mutation": {
+     "endings": 0.13,
+     "lexicon": 0.29,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-040",
+   "name": "루트최적화",
+   "q": "Q2",
+   "x": -0.7,
+   "y": -0.72,
+   "triggers": [
+    "record_pace",
+    "optimal_line",
+    "meta_choice"
+   ],
+   "repellents": [
+    "menu_long",
+    "idle"
+   ],
+   "arrival": 0.55,
+   "patience": 0.82,
+   "donate": 0.14,
+   "spawn": 0.76,
+   "volume": 0.38,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~예요",
+     "~해예요"
+    ],
+    "lexicon": [
+     "기록",
+     "정석",
+     "분기"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "저 경로로 가면 2분 손해예요"
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.17,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-041",
+   "name": "실수기록관",
+   "q": "Q2",
+   "x": -0.5,
+   "y": -0.45,
+   "triggers": [
+    "misclick",
+    "greed_punished",
+    "state_flip"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.4,
+   "patience": 0.86,
+   "donate": 0.1,
+   "spawn": 0.58,
+   "volume": 0.7,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~니다",
+     "~입니다"
+    ],
+    "lexicon": [
+     "미스",
+     "욕심",
+     "판세"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "오늘 같은 실수 세 번째입니다"
+    },
+    "mutation": {
+     "endings": 0.17,
+     "lexicon": 0.26,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-042",
+   "name": "대안제시러",
+   "q": "Q2",
+   "x": -0.65,
+   "y": -0.2,
+   "triggers": [
+    "meta_choice",
+    "state_flip",
+    "synergy_found"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.38,
+   "patience": 0.72,
+   "donate": 0.28,
+   "spawn": 0.66,
+   "volume": 0.88,
+   "speech": {
+    "register": "formal_shout",
+    "endings": [
+     "~니다",
+     "~갑니다"
+    ],
+    "lexicon": [
+     "분기",
+     "판세",
+     "시너지"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "저라면 그냥 버리고 다음 층 갑니다"
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.3,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-043",
+   "name": "세팅질문봇",
+   "q": "Q2",
+   "x": -0.35,
+   "y": -0.62,
+   "triggers": [
+    "build_shown",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.3,
+   "patience": 0.6,
+   "donate": 0.2,
+   "spawn": 0.72,
+   "volume": 0.8,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~가요",
+     "~건가요"
+    ],
+    "lexicon": [
+     "덱",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "그거 옵션 어디서 켜는 건가요"
+    },
+    "mutation": {
+     "endings": 0.2,
+     "lexicon": 0.28,
+     "quirks": 0.1
+    }
+   }
+  },
+  {
+   "id": "V-044",
+   "name": "통계인용러",
+   "q": "Q2",
+   "x": -0.78,
+   "y": -0.88,
+   "triggers": [
+    "numbers_revealed",
+    "record_pace",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "rng_jackpot"
+   ],
+   "arrival": 0.58,
+   "patience": 0.9,
+   "donate": 0.08,
+   "spawn": 0.84,
+   "volume": 0.48,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~예요",
+     "~거예요"
+    ],
+    "lexicon": [
+     "수치",
+     "기록",
+     "빌드완성"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "상위 1% 평균 클리어 타임이 이거예요"
+    },
+    "mutation": {
+     "endings": 0.13,
+     "lexicon": 0.2,
+     "quirks": 0.07
+    }
+   }
+  },
+  {
+   "id": "V-045",
+   "name": "기댓값신봉자",
+   "q": "Q2",
+   "x": -0.6,
+   "y": -0.55,
+   "triggers": [
+    "meta_choice",
+    "numbers_revealed",
+    "greed_punished"
+   ],
+   "repellents": [
+    "rng_jackpot",
+    "improbable_survival"
+   ],
+   "arrival": 0.5,
+   "patience": 0.84,
+   "donate": 0.12,
+   "spawn": 0.7,
+   "volume": 0.55,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~었음",
+     "~이었음"
+    ],
+    "lexicon": [
+     "분기",
+     "수치",
+     "욕심"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "그거 성공했어도 잘못된 선택이었음"
+    },
+    "mutation": {
+     "endings": 0.16,
+     "lexicon": 0.22,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-046",
+   "name": "커브체크",
+   "q": "Q2",
+   "x": -0.86,
+   "y": -0.32,
+   "triggers": [
+    "build_shown",
+    "efficient_resource",
+    "longplan_paid"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.52,
+   "patience": 0.78,
+   "donate": 0.15,
+   "spawn": 0.64,
+   "volume": 0.35,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~나요",
+     "~찮나요"
+    ],
+    "lexicon": [
+     "덱",
+     "효율",
+     "빌드완성"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "3코스트 구간이 비어 있는데 괜찮나요"
+    },
+    "mutation": {
+     "endings": 0.12,
+     "lexicon": 0.17,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-047",
+   "name": "스킬트리검수",
+   "q": "Q2",
+   "x": -0.45,
+   "y": -0.3,
+   "triggers": [
+    "build_shown",
+    "meta_choice",
+    "synergy_found"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.42,
+   "patience": 0.74,
+   "donate": 0.22,
+   "spawn": 0.68,
+   "volume": 0.72,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "덱",
+     "분기",
+     "시너지"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "그 노드 찍을 바에 아래쪽이 낫습니다"
+    },
+    "mutation": {
+     "endings": 0.18,
+     "lexicon": 0.26,
+     "quirks": 0.09
+    }
+   }
+  },
+  {
+   "id": "V-048",
+   "name": "하드모드검증",
+   "q": "Q2",
+   "x": -0.92,
+   "y": -0.62,
+   "triggers": [
+    "no_hit",
+    "clean_execution",
+    "record_pace"
+   ],
+   "repellents": [
+    "no_stakes",
+    "rng_jackpot"
+   ],
+   "arrival": 0.7,
+   "patience": 0.86,
+   "donate": 0.24,
+   "spawn": 0.6,
+   "volume": 0.28,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~하죠",
+     "~요하죠"
+    ],
+    "lexicon": [
+     "무피",
+     "클린",
+     "기록"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "이거 최고 난도에서도 되는지가 중요하죠"
+    },
+    "mutation": {
+     "endings": 0.11,
+     "lexicon": 0.15,
+     "quirks": 0.06
+    }
+   }
+  },
+  {
+   "id": "V-049",
+   "name": "속도주행측정",
+   "q": "Q2",
+   "x": -0.66,
+   "y": -0.42,
+   "triggers": [
+    "record_pace",
+    "optimal_line",
+    "efficient_resource"
+   ],
+   "repellents": [
+    "menu_long",
+    "idle"
+   ],
+   "arrival": 0.6,
+   "patience": 0.66,
+   "donate": 0.18,
+   "spawn": 0.8,
+   "volume": 0.44,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "기록",
+     "정석",
+     "효율"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다",
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "지금 세계기록보다 40초 뒤처져 있습니다"
+    },
+    "mutation": {
+     "endings": 0.15,
+     "lexicon": 0.19,
+     "quirks": 0.08
+    }
+   }
+  },
+  {
+   "id": "V-050",
+   "name": "이론빌드제안",
+   "q": "Q2",
+   "x": -0.2,
+   "y": -0.88,
+   "triggers": [
+    "synergy_found",
+    "longplan_paid",
+    "meta_choice"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.35,
+   "patience": 0.8,
+   "donate": 0.26,
+   "spawn": 0.92,
+   "volume": 0.66,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~까요",
+     "~될까요"
+    ],
+    "lexicon": [
+     "시너지",
+     "빌드완성",
+     "분기"
+    ],
+    "quirks": [
+     "스트리머가 아니라 판을 향해 말한다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "제가 짜본 건데 한 번만 시험해주시면 안 될까요"
+    },
+    "mutation": {
+     "endings": 0.22,
+     "lexicon": 0.24,
+     "quirks": 0.11
+    }
+   }
+  },
+  {
+   "id": "V-051",
+   "name": "절규수집가",
+   "q": "Q3",
+   "x": 0.9,
+   "y": 0.92,
+   "triggers": [
+    "streamer_scream",
+    "catastrophic_fail",
+    "sudden_death"
+   ],
+   "repellents": [
+    "no_stakes",
+    "idle"
+   ],
+   "arrival": 0.2,
+   "patience": 0.25,
+   "donate": 0.75,
+   "spawn": 0.95,
+   "volume": 0.95,
+   "interventionist": true,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~게요",
+     "~쓸게요"
+    ],
+    "lexicon": [
+     "비명",
+     "대참사",
+     "즉사"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다",
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "방금 그 소리 알람으로 쓸게요",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.32,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-052",
+   "name": "멘탈붕괴관측",
+   "q": "Q3",
+   "x": 0.72,
+   "y": 0.85,
+   "triggers": [
+    "streamer_tilt",
+    "rng_disaster",
+    "greed_punished"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.28,
+   "patience": 0.35,
+   "donate": 0.68,
+   "spawn": 0.88,
+   "volume": 0.9,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~시작"
+    ],
+    "lexicon": [
+     "멘탈",
+     "확률",
+     "욕심"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "지금부터 무너지는 거 카운트 시작",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.36,
+     "lexicon": 0.3,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-053",
+   "name": "미션도네러",
+   "q": "Q3",
+   "x": 0.55,
+   "y": 0.7,
+   "triggers": [
+    "streamer_promise",
+    "catastrophic_fail",
+    "streamer_scream"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.3,
+   "patience": 0.4,
+   "donate": 0.96,
+   "spawn": 0.7,
+   "volume": 0.78,
+   "interventionist": true,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~쏩니다"
+    ],
+    "lexicon": [
+     "공약",
+     "대참사",
+     "비명"
+    ],
+    "quirks": [
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "이번 판 눈 감고 하면 두 배로 쏩니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.33,
+     "lexicon": 0.28,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-054",
+   "name": "룰렛돌리기",
+   "q": "Q3",
+   "x": 0.82,
+   "y": 0.55,
+   "triggers": [
+    "rng_disaster",
+    "rng_jackpot",
+    "streamer_scream"
+   ],
+   "repellents": [
+    "no_stakes",
+    "idle"
+   ],
+   "arrival": 0.32,
+   "patience": 0.3,
+   "donate": 0.92,
+   "spawn": 0.75,
+   "volume": 0.82,
+   "interventionist": true,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~집니다"
+    ],
+    "lexicon": [
+     "확률",
+     "대박",
+     "비명"
+    ],
+    "quirks": [
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "돌립니다 결과는 책임 안 집니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.37,
+     "lexicon": 0.28,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-055",
+   "name": "웃음참기실패",
+   "q": "Q3",
+   "x": 0.68,
+   "y": 0.48,
+   "triggers": [
+    "misclick",
+    "absurd_outcome",
+    "streamer_selfmock"
+   ],
+   "repellents": [
+    "menu_long"
+   ],
+   "arrival": 0.22,
+   "patience": 0.32,
+   "donate": 0.55,
+   "spawn": 0.9,
+   "volume": 0.88,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~는데",
+     "~겠는데"
+    ],
+    "lexicon": [
+     "미스",
+     "어이",
+     "자폭"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "아 이거 진짜 못 참겠는데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.35,
+     "lexicon": 0.3,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-056",
+   "name": "비명알람설정",
+   "q": "Q3",
+   "x": 0.95,
+   "y": 0.62,
+   "triggers": [
+    "streamer_scream",
+    "sudden_death",
+    "total_wipe"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.35,
+   "patience": 0.22,
+   "donate": 0.62,
+   "spawn": 0.85,
+   "volume": 0.75,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~했다",
+     "~신했다"
+    ],
+    "lexicon": [
+     "비명",
+     "즉사",
+     "전멸"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "데시벨 갱신했다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.27,
+     "quirks": 0.2
+    }
+   }
+  },
+  {
+   "id": "V-057",
+   "name": "침묵감지기",
+   "q": "Q3",
+   "x": 0.45,
+   "y": 0.9,
+   "triggers": [
+    "streamer_silence",
+    "catastrophic_fail",
+    "streamer_tilt"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.3,
+   "patience": 0.45,
+   "donate": 0.7,
+   "spawn": 0.65,
+   "volume": 0.85,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~없다"
+    ],
+    "lexicon": [
+     "정적",
+     "대참사",
+     "멘탈"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "5초째 아무 말이 없다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.32,
+     "lexicon": 0.29,
+     "quirks": 0.16
+    }
+   }
+  },
+  {
+   "id": "V-058",
+   "name": "화내는거보고싶다",
+   "q": "Q3",
+   "x": 0.88,
+   "y": 0.78,
+   "triggers": [
+    "streamer_tilt",
+    "rng_disaster",
+    "misclick"
+   ],
+   "repellents": [
+    "streamer_joy"
+   ],
+   "arrival": 0.25,
+   "patience": 0.28,
+   "donate": 0.8,
+   "spawn": 0.82,
+   "volume": 0.92,
+   "interventionist": true,
+   "speech": {
+    "register": "shout",
+    "endings": [],
+    "lexicon": [
+     "멘탈",
+     "확률",
+     "미스"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다",
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "아직 참고 있네 조금만 더",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.38,
+     "lexicon": 0.31,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-059",
+   "name": "사고유발자",
+   "q": "Q3",
+   "x": 0.78,
+   "y": 0.35,
+   "triggers": [
+    "greed_punished",
+    "catastrophic_fail",
+    "misclick"
+   ],
+   "repellents": [
+    "no_stakes",
+    "efficient_resource"
+   ],
+   "arrival": 0.28,
+   "patience": 0.26,
+   "donate": 0.88,
+   "spawn": 0.78,
+   "volume": 0.8,
+   "interventionist": true,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~은데",
+     "~같은데"
+    ],
+    "lexicon": [
+     "욕심",
+     "대참사",
+     "미스"
+    ],
+    "quirks": [
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "저기 들어가면 재밌어질 것 같은데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.37,
+     "lexicon": 0.28,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-060",
+   "name": "표정캡처",
+   "q": "Q3",
+   "x": 0.6,
+   "y": 0.95,
+   "triggers": [
+    "streamer_scream",
+    "streamer_joy",
+    "streamer_tilt"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.24,
+   "patience": 0.38,
+   "donate": 0.58,
+   "spawn": 0.94,
+   "volume": 0.7,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "비명",
+     "환희",
+     "멘탈"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "0.5초 전 프레임 박제했습니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.34,
+     "lexicon": 0.26,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-061",
+   "name": "굴욕각인",
+   "q": "Q3",
+   "x": 0.85,
+   "y": 0.42,
+   "triggers": [
+    "sudden_death",
+    "absurd_outcome",
+    "streamer_selfmock"
+   ],
+   "repellents": [
+    "clean_execution"
+   ],
+   "arrival": 0.3,
+   "patience": 0.3,
+   "donate": 0.65,
+   "spawn": 0.86,
+   "volume": 0.84,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~이다",
+     "~감이다"
+    ],
+    "lexicon": [
+     "즉사",
+     "어이",
+     "자폭"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "이건 평생 놀림감이다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.38,
+     "lexicon": 0.29,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-062",
+   "name": "자막장인",
+   "q": "Q3",
+   "x": 0.5,
+   "y": 0.6,
+   "triggers": [
+    "streamer_selfmock",
+    "absurd_outcome",
+    "streamer_scream"
+   ],
+   "repellents": [
+    "menu_long"
+   ],
+   "arrival": 0.26,
+   "patience": 0.42,
+   "donate": 0.5,
+   "spawn": 0.96,
+   "volume": 0.76,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~인데",
+     "~성인데"
+    ],
+    "lexicon": [
+     "자폭",
+     "어이",
+     "비명"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "지금 대사에 자막 달면 완성인데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.32,
+     "lexicon": 0.27,
+     "quirks": 0.16
+    }
+   }
+  },
+  {
+   "id": "V-063",
+   "name": "놀리기전문",
+   "q": "Q3",
+   "x": 0.92,
+   "y": 0.2,
+   "triggers": [
+    "misclick",
+    "greed_punished",
+    "streamer_selfmock"
+   ],
+   "repellents": [
+    "clean_execution",
+    "no_hit"
+   ],
+   "arrival": 0.22,
+   "patience": 0.24,
+   "donate": 0.72,
+   "spawn": 0.8,
+   "volume": 0.98,
+   "interventionist": true,
+   "speech": {
+    "register": "formal_shout",
+    "endings": [
+     "~나요",
+     "~셨나요"
+    ],
+    "lexicon": [
+     "미스",
+     "욕심",
+     "자폭"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다",
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "실력은 어디 두고 오셨나요",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.33,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-064",
+   "name": "반응속도측정",
+   "q": "Q3",
+   "x": 0.4,
+   "y": 0.52,
+   "triggers": [
+    "sudden_death",
+    "streamer_scream",
+    "improbable_survival"
+   ],
+   "repellents": [
+    "idle"
+   ],
+   "arrival": 0.34,
+   "patience": 0.4,
+   "donate": 0.45,
+   "spawn": 0.72,
+   "volume": 0.68,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~8초",
+     "~.8초"
+    ],
+    "lexicon": [
+     "즉사",
+     "비명",
+     "기적"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "죽고 나서 비명까지 0.8초",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.31,
+     "lexicon": 0.25,
+     "quirks": 0.15
+    }
+   }
+  },
+  {
+   "id": "V-065",
+   "name": "억지미션",
+   "q": "Q3",
+   "x": 0.75,
+   "y": 0.68,
+   "triggers": [
+    "streamer_promise",
+    "catastrophic_fail",
+    "streamer_tilt"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.32,
+   "patience": 0.3,
+   "donate": 0.94,
+   "spawn": 0.68,
+   "volume": 0.86,
+   "interventionist": true,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~신지",
+     "~떠신지"
+    ],
+    "lexicon": [
+     "공약",
+     "대참사",
+     "멘탈"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다",
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "손 하나로 클리어 도전 어떠신지",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.36,
+     "lexicon": 0.29,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-066",
+   "name": "헛웃음유발",
+   "q": "Q3",
+   "x": 0.65,
+   "y": 0.28,
+   "triggers": [
+    "absurd_outcome",
+    "bug_glitch",
+    "streamer_selfmock"
+   ],
+   "repellents": [
+    "optimal_line"
+   ],
+   "arrival": 0.26,
+   "patience": 0.34,
+   "donate": 0.48,
+   "spawn": 0.88,
+   "volume": 0.82,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~싶다"
+    ],
+    "lexicon": [
+     "어이",
+     "버그",
+     "자폭"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "이게 게임이 맞나 싶다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.35,
+     "lexicon": 0.28,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-067",
+   "name": "하이라이트제조",
+   "q": "Q3",
+   "x": 0.58,
+   "y": 0.8,
+   "triggers": [
+    "streamer_scream",
+    "improbable_survival",
+    "state_flip"
+   ],
+   "repellents": [
+    "idle",
+    "menu_long"
+   ],
+   "arrival": 0.28,
+   "patience": 0.36,
+   "donate": 0.6,
+   "spawn": 0.98,
+   "volume": 0.74,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~왔다",
+     "~나왔다"
+    ],
+    "lexicon": [
+     "비명",
+     "기적",
+     "판세"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "이번 편 썸네일 나왔다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.34,
+     "lexicon": 0.27,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-068",
+   "name": "감정롤러코스터",
+   "q": "Q3",
+   "x": 0.35,
+   "y": 0.88,
+   "triggers": [
+    "state_flip",
+    "streamer_joy",
+    "streamer_tilt"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.3,
+   "patience": 0.44,
+   "donate": 0.78,
+   "spawn": 0.7,
+   "volume": 0.9,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~진짜"
+    ],
+    "lexicon": [
+     "판세",
+     "환희",
+     "멘탈"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "심장에 안 좋다 진짜",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.3,
+     "lexicon": 0.3,
+     "quirks": 0.15
+    }
+   }
+  },
+  {
+   "id": "V-069",
+   "name": "탈주각감지",
+   "q": "Q3",
+   "x": 0.7,
+   "y": 0.75,
+   "triggers": [
+    "streamer_selfmock",
+    "streamer_tilt",
+    "streamer_silence"
+   ],
+   "repellents": [
+    "streamer_joy"
+   ],
+   "arrival": 0.34,
+   "patience": 0.38,
+   "donate": 0.66,
+   "spawn": 0.62,
+   "volume": 0.88,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~인데",
+     "~정인데"
+    ],
+    "lexicon": [
+     "자폭",
+     "멘탈",
+     "정적"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "지금 끄고 싶은 표정인데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.35,
+     "lexicon": 0.3,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-070",
+   "name": "위로도네",
+   "q": "Q3",
+   "x": 0.42,
+   "y": 0.72,
+   "triggers": [
+    "catastrophic_fail",
+    "rng_disaster",
+    "streamer_tilt"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.28,
+   "patience": 0.5,
+   "donate": 0.9,
+   "spawn": 0.55,
+   "volume": 0.65,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~했다",
+     "~못했다"
+    ],
+    "lexicon": [
+     "대참사",
+     "확률",
+     "멘탈"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "이건 진짜 게임이 잘못했다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.31,
+     "lexicon": 0.24,
+     "quirks": 0.16
+    }
+   }
+  },
+  {
+   "id": "V-071",
+   "name": "눈물빼기",
+   "q": "Q3",
+   "x": 0.8,
+   "y": 0.9,
+   "triggers": [
+    "total_wipe",
+    "streamer_silence",
+    "greed_punished"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.36,
+   "patience": 0.28,
+   "donate": 0.82,
+   "spawn": 0.74,
+   "volume": 0.8,
+   "interventionist": true,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~됩니다"
+    ],
+    "lexicon": [
+     "전멸",
+     "정적",
+     "욕심"
+    ],
+    "quirks": [
+     "요구를 조건문으로 던진다"
+    ],
+    "exemplars": {
+     "spike": "이쯤 되면 울어도 됩니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.37,
+     "lexicon": 0.28,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-072",
+   "name": "소리질러",
+   "q": "Q3",
+   "x": 0.96,
+   "y": 0.45,
+   "triggers": [
+    "streamer_scream",
+    "sudden_death",
+    "rng_disaster"
+   ],
+   "repellents": [
+    "idle",
+    "menu_long"
+   ],
+   "arrival": 0.2,
+   "patience": 0.2,
+   "donate": 0.56,
+   "spawn": 0.84,
+   "volume": 0.99,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~ㅋㅋ",
+     "~ㅋㅋㅋ"
+    ],
+    "lexicon": [
+     "비명",
+     "즉사",
+     "확률"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.33,
+     "quirks": 0.2
+    }
+   }
+  },
+  {
+   "id": "V-073",
+   "name": "방송사고애호",
+   "q": "Q3",
+   "x": 0.62,
+   "y": 0.38,
+   "triggers": [
+    "bug_glitch",
+    "absurd_outcome",
+    "streamer_scream"
+   ],
+   "repellents": [
+    "clean_execution"
+   ],
+   "arrival": 0.3,
+   "patience": 0.32,
+   "donate": 0.52,
+   "spawn": 0.92,
+   "volume": 0.78,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~는데",
+     "~겠는데"
+    ],
+    "lexicon": [
+     "버그",
+     "어이",
+     "비명"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": "이건 짤로 박제되겠는데",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.34,
+     "lexicon": 0.28,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-074",
+   "name": "급발진관찰",
+   "q": "Q3",
+   "x": 0.88,
+   "y": 0.58,
+   "triggers": [
+    "streamer_tilt",
+    "misclick",
+    "greed_punished"
+   ],
+   "repellents": [
+    "streamer_silence"
+   ],
+   "arrival": 0.26,
+   "patience": 0.26,
+   "donate": 0.7,
+   "spawn": 0.8,
+   "volume": 0.94,
+   "speech": {
+    "register": "shout",
+    "endings": [
+     "~온다"
+    ],
+    "lexicon": [
+     "멘탈",
+     "미스",
+     "욕심"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "왔다 지금 온다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.38,
+     "lexicon": 0.32,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-075",
+   "name": "리액션평론가",
+   "q": "Q3",
+   "x": 0.18,
+   "y": 0.94,
+   "triggers": [
+    "streamer_scream",
+    "streamer_joy",
+    "streamer_selfmock"
+   ],
+   "repellents": [
+    "numbers_revealed"
+   ],
+   "arrival": 0.32,
+   "patience": 0.48,
+   "donate": 0.64,
+   "spawn": 0.76,
+   "volume": 0.86,
+   "speech": {
+    "register": "formal_shout",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "비명",
+     "환희",
+     "자폭"
+    ],
+    "quirks": [
+     "문장을 끝맺지 않고 연달아 친다"
+    ],
+    "exemplars": {
+     "spike": "오늘 리액션은 저번보다 한 수 위였습니다",
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": null
+    },
+    "mutation": {
+     "endings": 0.28,
+     "lexicon": 0.29,
+     "quirks": 0.14
+    }
+   }
+  },
+  {
+   "id": "V-076",
+   "name": "파괴중독",
+   "q": "Q4",
+   "x": 0.94,
+   "y": -0.9,
+   "triggers": [
+    "total_wipe",
+    "catastrophic_fail",
+    "rng_disaster"
+   ],
+   "repellents": [
+    "no_stakes",
+    "clean_execution"
+   ],
+   "arrival": 0.3,
+   "patience": 0.55,
+   "donate": 0.2,
+   "spawn": 0.82,
+   "volume": 0.45,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~하다",
+     "~만하다"
+    ],
+    "lexicon": [
+     "전멸",
+     "대참사",
+     "확률"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "무너질 때가 제일 볼만하다"
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.19,
+     "quirks": 0.2
+    }
+   }
+  },
+  {
+   "id": "V-077",
+   "name": "강화실패관람",
+   "q": "Q4",
+   "x": 0.86,
+   "y": -0.72,
+   "triggers": [
+    "rng_disaster",
+    "greed_punished",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "efficient_resource"
+   ],
+   "arrival": 0.28,
+   "patience": 0.62,
+   "donate": 0.32,
+   "spawn": 0.86,
+   "volume": 0.6,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~겁니다"
+    ],
+    "lexicon": [
+     "확률",
+     "욕심",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "한 번 더 가면 터진다에 겁니다"
+    },
+    "mutation": {
+     "endings": 0.38,
+     "lexicon": 0.23,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-078",
+   "name": "확률의배신",
+   "q": "Q4",
+   "x": 0.75,
+   "y": -0.88,
+   "triggers": [
+    "rng_disaster",
+    "rng_jackpot",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "optimal_line"
+   ],
+   "arrival": 0.35,
+   "patience": 0.68,
+   "donate": 0.25,
+   "spawn": 0.8,
+   "volume": 0.52,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "확률",
+     "대박",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "92%가 이렇게 무섭습니다"
+    },
+    "mutation": {
+     "endings": 0.36,
+     "lexicon": 0.21,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-079",
+   "name": "즉사장면수집",
+   "q": "Q4",
+   "x": 0.9,
+   "y": -0.45,
+   "triggers": [
+    "sudden_death",
+    "total_wipe",
+    "misclick"
+   ],
+   "repellents": [
+    "no_hit"
+   ],
+   "arrival": 0.32,
+   "patience": 0.5,
+   "donate": 0.18,
+   "spawn": 0.9,
+   "volume": 0.4,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~났다",
+     "~끝났다"
+    ],
+    "lexicon": [
+     "즉사",
+     "전멸",
+     "미스"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "0.3초 만에 끝났다"
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.18,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-080",
+   "name": "최악의수감상",
+   "q": "Q4",
+   "x": 0.62,
+   "y": -0.65,
+   "triggers": [
+    "greed_punished",
+    "misclick",
+    "absurd_outcome"
+   ],
+   "repellents": [
+    "optimal_line"
+   ],
+   "arrival": 0.38,
+   "patience": 0.72,
+   "donate": 0.22,
+   "spawn": 0.74,
+   "volume": 0.66,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~은데",
+     "~싶은데"
+    ],
+    "lexicon": [
+     "욕심",
+     "미스",
+     "어이"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "저것보다 나쁜 선택이 있나 싶은데"
+    },
+    "mutation": {
+     "endings": 0.34,
+     "lexicon": 0.24,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-081",
+   "name": "도박판구경",
+   "q": "Q4",
+   "x": 0.8,
+   "y": -0.35,
+   "triggers": [
+    "rng_disaster",
+    "rng_jackpot",
+    "meta_choice"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.26,
+   "patience": 0.58,
+   "donate": 0.4,
+   "spawn": 0.78,
+   "volume": 0.7,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~힌다",
+     "~집힌다"
+    ],
+    "lexicon": [
+     "확률",
+     "대박",
+     "분기"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "여기서 지르면 판이 뒤집힌다"
+    },
+    "mutation": {
+     "endings": 0.37,
+     "lexicon": 0.26,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-082",
+   "name": "전멸예언자",
+   "q": "Q4",
+   "x": 0.55,
+   "y": -0.8,
+   "triggers": [
+    "total_wipe",
+    "state_flip",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "improbable_survival"
+   ],
+   "arrival": 0.4,
+   "patience": 0.75,
+   "donate": 0.15,
+   "spawn": 0.72,
+   "volume": 0.74,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~납니다"
+    ],
+    "lexicon": [
+     "전멸",
+     "판세",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "이 구성으로는 3층에서 끝납니다"
+    },
+    "mutation": {
+     "endings": 0.33,
+     "lexicon": 0.27,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-083",
+   "name": "버그헌터",
+   "q": "Q4",
+   "x": 0.92,
+   "y": -0.62,
+   "triggers": [
+    "bug_glitch",
+    "absurd_outcome"
+   ],
+   "repellents": [
+    "clean_execution",
+    "no_stakes"
+   ],
+   "arrival": 0.48,
+   "patience": 0.8,
+   "donate": 0.12,
+   "spawn": 0.94,
+   "volume": 0.55,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~뭐지"
+    ],
+    "lexicon": [
+     "버그",
+     "어이"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "방금 그거 재현 조건이 뭐지"
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.22,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-084",
+   "name": "물리엔진애호",
+   "q": "Q4",
+   "x": 0.7,
+   "y": -0.95,
+   "triggers": [
+    "bug_glitch",
+    "absurd_outcome",
+    "improbable_survival"
+   ],
+   "repellents": [
+    "menu_long"
+   ],
+   "arrival": 0.42,
+   "patience": 0.66,
+   "donate": 0.14,
+   "spawn": 0.88,
+   "volume": 0.48,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~거임"
+    ],
+    "lexicon": [
+     "버그",
+     "어이",
+     "기적"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "저 시체 지금 어디로 날아간 거임"
+    },
+    "mutation": {
+     "endings": 0.35,
+     "lexicon": 0.2,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-085",
+   "name": "어이없음추구",
+   "q": "Q4",
+   "x": 0.84,
+   "y": -0.22,
+   "triggers": [
+    "absurd_outcome",
+    "rng_disaster",
+    "bug_glitch"
+   ],
+   "repellents": [
+    "optimal_line",
+    "efficient_resource"
+   ],
+   "arrival": 0.3,
+   "patience": 0.52,
+   "donate": 0.24,
+   "spawn": 0.84,
+   "volume": 0.62,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~밌다",
+     "~재밌다"
+    ],
+    "lexicon": [
+     "어이",
+     "확률",
+     "버그"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "설명이 안 되는 게 제일 재밌다"
+    },
+    "mutation": {
+     "endings": 0.38,
+     "lexicon": 0.23,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-086",
+   "name": "역전당함전문",
+   "q": "Q4",
+   "x": 0.58,
+   "y": -0.5,
+   "triggers": [
+    "state_flip",
+    "greed_punished",
+    "sudden_death"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.34,
+   "patience": 0.7,
+   "donate": 0.26,
+   "spawn": 0.76,
+   "volume": 0.58,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~치지",
+     "~놓치지"
+    ],
+    "lexicon": [
+     "판세",
+     "욕심",
+     "즉사"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "다 이긴 판을 어떻게 저렇게 놓치지"
+    },
+    "mutation": {
+     "endings": 0.34,
+     "lexicon": 0.22,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-087",
+   "name": "자원증발목격",
+   "q": "Q4",
+   "x": 0.66,
+   "y": -0.78,
+   "triggers": [
+    "greed_punished",
+    "rng_disaster",
+    "total_wipe"
+   ],
+   "repellents": [
+    "efficient_resource"
+   ],
+   "arrival": 0.4,
+   "patience": 0.74,
+   "donate": 0.18,
+   "spawn": 0.7,
+   "volume": 0.5,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~졌다",
+     "~라졌다"
+    ],
+    "lexicon": [
+     "욕심",
+     "확률",
+     "전멸"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "40분 모은 게 3초 만에 사라졌다"
+    },
+    "mutation": {
+     "endings": 0.35,
+     "lexicon": 0.21,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-088",
+   "name": "실수도미노",
+   "q": "Q4",
+   "x": 0.24,
+   "y": -0.92,
+   "triggers": [
+    "misclick",
+    "state_flip",
+    "catastrophic_fail"
+   ],
+   "repellents": [
+    "clean_execution"
+   ],
+   "arrival": 0.44,
+   "patience": 0.82,
+   "donate": 0.1,
+   "spawn": 0.66,
+   "volume": 0.68,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~네요",
+     "~졌네요"
+    ],
+    "lexicon": [
+     "미스",
+     "판세",
+     "대참사"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "첫 실수가 여기까지 번졌네요"
+    },
+    "mutation": {
+     "endings": 0.29,
+     "lexicon": 0.25,
+     "quirks": 0.14
+    }
+   }
+  },
+  {
+   "id": "V-089",
+   "name": "극한생존감상",
+   "q": "Q4",
+   "x": 0.48,
+   "y": -0.38,
+   "triggers": [
+    "improbable_survival",
+    "state_flip",
+    "no_hit"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.46,
+   "patience": 0.64,
+   "donate": 0.3,
+   "spawn": 0.8,
+   "volume": 0.56,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~화냐",
+     "~실화냐"
+    ],
+    "lexicon": [
+     "기적",
+     "판세",
+     "무피"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "체력 1로 버티는 거 이거 실화냐"
+    },
+    "mutation": {
+     "endings": 0.32,
+     "lexicon": 0.22,
+     "quirks": 0.16
+    }
+   }
+  },
+  {
+   "id": "V-090",
+   "name": "1퍼센트기적",
+   "q": "Q4",
+   "x": 0.88,
+   "y": -0.85,
+   "triggers": [
+    "rng_jackpot",
+    "improbable_survival",
+    "numbers_revealed"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.5,
+   "patience": 0.78,
+   "donate": 0.38,
+   "spawn": 0.92,
+   "volume": 0.62,
+   "speech": {
+    "register": "casual",
+    "endings": [],
+    "lexicon": [
+     "대박",
+     "기적",
+     "수치"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "확률 뚫었다 이거 기록해야 함"
+    },
+    "mutation": {
+     "endings": 0.38,
+     "lexicon": 0.23,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-091",
+   "name": "연속실패기록",
+   "q": "Q4",
+   "x": 0.72,
+   "y": -0.58,
+   "triggers": [
+    "rng_disaster",
+    "catastrophic_fail",
+    "sudden_death"
+   ],
+   "repellents": [
+    "retry_success"
+   ],
+   "arrival": 0.42,
+   "patience": 0.86,
+   "donate": 0.16,
+   "spawn": 0.68,
+   "volume": 0.72,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~해요",
+     "~상해요"
+    ],
+    "lexicon": [
+     "확률",
+     "대참사",
+     "즉사"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "9연속입니다 이제 통계적으로 이상해요"
+    },
+    "mutation": {
+     "endings": 0.36,
+     "lexicon": 0.26,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-092",
+   "name": "무리수응원",
+   "q": "Q4",
+   "x": 0.94,
+   "y": -0.3,
+   "triggers": [
+    "greed_punished",
+    "meta_choice",
+    "rng_jackpot"
+   ],
+   "repellents": [
+    "efficient_resource",
+    "no_stakes"
+   ],
+   "arrival": 0.28,
+   "patience": 0.48,
+   "donate": 0.44,
+   "spawn": 0.74,
+   "volume": 0.78,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~아요",
+     "~잖아요"
+    ],
+    "lexicon": [
+     "욕심",
+     "분기",
+     "대박"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "안전한 길로 가면 볼 게 없잖아요"
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.28,
+     "quirks": 0.2
+    }
+   }
+  },
+  {
+   "id": "V-093",
+   "name": "판갈이요구",
+   "q": "Q4",
+   "x": 0.36,
+   "y": -0.55,
+   "triggers": [
+    "repeat_content",
+    "state_flip",
+    "total_wipe"
+   ],
+   "repellents": [
+    "idle",
+    "menu_long"
+   ],
+   "arrival": 0.32,
+   "patience": 0.4,
+   "donate": 0.2,
+   "spawn": 0.62,
+   "volume": 0.8,
+   "speech": {
+    "register": "casual",
+    "endings": [],
+    "lexicon": [
+     "반복",
+     "판세",
+     "전멸"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "이 판 버리고 새로 파는 게 빠를 듯"
+    },
+    "mutation": {
+     "endings": 0.3,
+     "lexicon": 0.28,
+     "quirks": 0.15
+    }
+   }
+  },
+  {
+   "id": "V-094",
+   "name": "시드운감별",
+   "q": "Q4",
+   "x": 0.6,
+   "y": -0.92,
+   "triggers": [
+    "numbers_revealed",
+    "rng_disaster",
+    "meta_choice"
+   ],
+   "repellents": [
+    "explanation_absent"
+   ],
+   "arrival": 0.52,
+   "patience": 0.84,
+   "donate": 0.12,
+   "spawn": 0.76,
+   "volume": 0.44,
+   "speech": {
+    "register": "formal_measured",
+    "endings": [
+     "~니다",
+     "~겁니다"
+    ],
+    "lexicon": [
+     "수치",
+     "확률",
+     "분기"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "이건 시드가 처음부터 망한 겁니다"
+    },
+    "mutation": {
+     "endings": 0.34,
+     "lexicon": 0.19,
+     "quirks": 0.17
+    }
+   }
+  },
+  {
+   "id": "V-095",
+   "name": "폭사감상문",
+   "q": "Q4",
+   "x": 0.82,
+   "y": -0.52,
+   "triggers": [
+    "sudden_death",
+    "catastrophic_fail",
+    "absurd_outcome"
+   ],
+   "repellents": [
+    "no_hit"
+   ],
+   "arrival": 0.34,
+   "patience": 0.56,
+   "donate": 0.22,
+   "spawn": 0.86,
+   "volume": 0.64,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~가능"
+    ],
+    "lexicon": [
+     "즉사",
+     "대참사",
+     "어이"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "장렬했다 세 줄 요약 가능"
+    },
+    "mutation": {
+     "endings": 0.37,
+     "lexicon": 0.24,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-096",
+   "name": "뒤집힘중독",
+   "q": "Q4",
+   "x": 0.5,
+   "y": -0.25,
+   "triggers": [
+    "state_flip",
+    "improbable_survival",
+    "rng_jackpot"
+   ],
+   "repellents": [
+    "no_stakes",
+    "idle"
+   ],
+   "arrival": 0.3,
+   "patience": 0.6,
+   "donate": 0.34,
+   "spawn": 0.82,
+   "volume": 0.7,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~옵니다"
+    ],
+    "lexicon": [
+     "판세",
+     "기적",
+     "대박"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "판세 뒤집히는 그 순간만 보러 옵니다"
+    },
+    "mutation": {
+     "endings": 0.32,
+     "lexicon": 0.26,
+     "quirks": 0.16
+    }
+   }
+  },
+  {
+   "id": "V-097",
+   "name": "최저기록수집",
+   "q": "Q4",
+   "x": 0.78,
+   "y": -0.68,
+   "triggers": [
+    "catastrophic_fail",
+    "sudden_death",
+    "record_pace"
+   ],
+   "repellents": [
+    "clean_execution"
+   ],
+   "arrival": 0.46,
+   "patience": 0.76,
+   "donate": 0.14,
+   "spawn": 0.78,
+   "volume": 0.46,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~입니다"
+    ],
+    "lexicon": [
+     "대참사",
+     "즉사",
+     "기록"
+    ],
+    "quirks": [
+     "반드시 구체적인 숫자를 붙인다"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "최단 시간 사망 기록 경신입니다"
+    },
+    "mutation": {
+     "endings": 0.37,
+     "lexicon": 0.2,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-098",
+   "name": "망한판애호",
+   "q": "Q4",
+   "x": 0.68,
+   "y": -0.42,
+   "triggers": [
+    "total_wipe",
+    "greed_punished",
+    "misclick"
+   ],
+   "repellents": [
+    "optimal_line",
+    "no_stakes"
+   ],
+   "arrival": 0.36,
+   "patience": 0.68,
+   "donate": 0.24,
+   "spawn": 0.72,
+   "volume": 0.58,
+   "speech": {
+    "register": "casual",
+    "endings": [
+     "~관건"
+    ],
+    "lexicon": [
+     "전멸",
+     "욕심",
+     "미스"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "이미 망한 판을 어떻게 끌고 가는지가 관건"
+    },
+    "mutation": {
+     "endings": 0.35,
+     "lexicon": 0.22,
+     "quirks": 0.18
+    }
+   }
+  },
+  {
+   "id": "V-099",
+   "name": "개연성없음환영",
+   "q": "Q4",
+   "x": 0.9,
+   "y": -0.15,
+   "triggers": [
+    "absurd_outcome",
+    "bug_glitch",
+    "rng_jackpot"
+   ],
+   "repellents": [
+    "optimal_line",
+    "numbers_revealed"
+   ],
+   "arrival": 0.26,
+   "patience": 0.5,
+   "donate": 0.28,
+   "spawn": 0.88,
+   "volume": 0.74,
+   "speech": {
+    "register": "formal_casual",
+    "endings": [
+     "~니다",
+     "~습니다"
+    ],
+    "lexicon": [
+     "어이",
+     "버그",
+     "대박"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "말이 안 될수록 좋습니다"
+    },
+    "mutation": {
+     "endings": 0.39,
+     "lexicon": 0.27,
+     "quirks": 0.19
+    }
+   }
+  },
+  {
+   "id": "V-100",
+   "name": "과정파괴관측",
+   "q": "Q4",
+   "x": 0.16,
+   "y": -0.86,
+   "triggers": [
+    "state_flip",
+    "catastrophic_fail",
+    "meta_choice"
+   ],
+   "repellents": [
+    "no_stakes"
+   ],
+   "arrival": 0.48,
+   "patience": 0.88,
+   "donate": 0.16,
+   "spawn": 0.64,
+   "volume": 0.52,
+   "speech": {
+    "register": "measured",
+    "endings": [
+     "~하다",
+     "~금하다"
+    ],
+    "lexicon": [
+     "판세",
+     "대참사",
+     "분기"
+    ],
+    "quirks": [
+     "특별한 습관 없음"
+    ],
+    "exemplars": {
+     "spike": null,
+     "valley": null,
+     "donate": null,
+     "exit": null,
+     "observe": "결과보다 어디서부터 어긋났는지가 궁금하다"
+    },
+    "mutation": {
+     "endings": 0.27,
+     "lexicon": 0.21,
+     "quirks": 0.14
+    }
+   }
+  }
+ ],
+ "changelog": [
+  "v0.2: line(고정 문자열) → speech(변형 가능 구조)로 전환",
+  "v0.2: 빈 line 2건, 빈 repellents 2건 보충",
+  "v0.2: 완전 동일 트리거 집합 10쌍 해소",
+  "v0.2: immortal_observers를 각 사분면 실제 최외곽 3종으로 재지정"
+ ],
+ "density_note": "N=100을 2x2 좌표 공간에 배치할 때 이론적 평균 최근접거리는 약 0.5/sqrt(N)=0.05다. 설계문서 v0.1의 직교성 기준 0.35는 N=8 기준이며 N=100에는 적용 불가. N에 따라 d_min = 0.5/sqrt(N)로 스케일할 것."
+};
