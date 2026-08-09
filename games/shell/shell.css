@@ -27,12 +27,12 @@ body {
   font-family: Georgia, serif; font-weight: bold; font-size: 24px; letter-spacing: 1px;
   color: var(--plat); text-shadow: 0 0 18px rgba(0,255,163,.5);
 }
-.tbLogo span { color: var(--plat2); font-size: 15px; }
-.tbStudio { color: var(--dim); font-size: 12px; letter-spacing: 3px; }
-.tbR { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--dim); }
+.tbLogo span { color: var(--plat2); font-size: 20px; }
+.tbStudio { color: var(--dim); font-size: 20px; letter-spacing: 3px; }
+.tbR { display: flex; align-items: center; gap: 14px; font-size: 20px; color: var(--dim); }
 .tbStat b { color: var(--plat2); font-variant-numeric: tabular-nums; }
 #tbLive {
-  font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 3px 10px; border-radius: 11px;
+  font-size: 20px; font-weight: 700; letter-spacing: 2px; padding: 3px 10px; border-radius: 11px;
   border: 1px solid #2e3138; color: #84868c;
 }
 #tbLive.on { border-color: var(--tally); color: #fff; background: var(--tally); animation: tpulse 2.4s infinite; }
@@ -78,7 +78,7 @@ body {
 #tally {
   position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 2;
   background: var(--tally); color: #fff; display: flex; align-items: center;
-  justify-content: space-between; padding: 0 12px; font-size: 11px; font-weight: 700;
+  justify-content: space-between; padding: 0 12px; font-size: 20px; font-weight: 700;
   letter-spacing: .22em; animation: tpulse 2.4s infinite;
 }
 #tally.off { background: #3a332a; color: #9a9184; animation: none; }
@@ -89,7 +89,7 @@ body {
   position: absolute; top: 32px; left: 50%; transform: translateX(-50%); z-index: 2;
   display: flex; align-items: center; gap: 9px;
   background: rgba(18,14,9,.88); border: 1px solid #4a4232; border-radius: 24px;
-  padding: 6px 20px; font-size: 15px; letter-spacing: 1px;
+  padding: 6px 20px; font-size: 20px; letter-spacing: 1px;
   transition: border-color .6s, filter .6s;
 }
 #liveBar b { color: var(--amber2); font-size: 24px; font-variant-numeric: tabular-nums; transition: color .6s; }
@@ -104,7 +104,7 @@ body {
 #paceChip {
   position: absolute; top: 78px; left: 50%; transform: translateX(-50%); z-index: 2;
   background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 12px;
-  padding: 3px 12px; font-size: 11.5px; letter-spacing: .5px; color: var(--amber2);
+  padding: 3px 12px; font-size: 20px; letter-spacing: .5px; color: var(--amber2);
 }
 #paceChip.hidden { display: none; }
 #paceChip.hot { border-color: var(--amber); color: #ffdf9e; box-shadow: 0 0 14px rgba(255,180,71,.5); animation: tpulse 1.6s infinite; }
@@ -118,9 +118,12 @@ body {
 }
 /* flex로 두면 "님이"·금액·"후원!"이 각각 flex 아이템이라 글자 중간에서 줄이 끊긴다.
    글자가 커진 뒤로는 일반 텍스트 흐름이어야 어절 단위로 줄바꿈된다 */
-#donBanner .dhead { font-weight: 700; line-height: 1.25; }
-#donBanner .uiIco { width: 72px; height: 72px; vertical-align: -18px; margin-right: 14px; }
-#donBanner .amt { color: #ffdf9e; font-size: 68px; }
+/* 후원 머리줄은 한 줄로 — 이름·금액이 줄바꿈으로 끊기면 읽히지 않는다 (사용자 요청).
+   긴 닉네임으로 폭을 넘길 때만 drainDon이 글자 크기를 줄여 한 줄에 맞춘다 */
+#donBanner .dhead { font-weight: 700; line-height: 1.25; white-space: nowrap; }
+#donBanner .uiIco { width: 1.3em; height: 1.3em; vertical-align: -.28em; margin-right: .22em; }
+/* 머리줄 안에 있으니 em — px로 두면 줄여도 금액만 그대로 커서 한 줄에 들어오지 않는다 */
+#donBanner .amt { color: #ffdf9e; font-size: 1.22em; }
 #donBanner .dmsg { color: #e6dcc6; font-size: 48px; margin-top: 12px; }
 #donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; pointer-events: auto; cursor: pointer; }
 /* 도네 읽어주기 — 배너가 떠 있는 동안 클릭 가능. 읽으면 민트 확인 (응답 루프, 연출 전용) */
@@ -154,7 +157,7 @@ body {
 }
 #camBox.hidden { display: none; }
 #camBox img { display: block; width: 264px; height: 264px; border-radius: 8px; }
-#camBox span { font-size: 13px; letter-spacing: 2px; color: var(--plat2); }
+#camBox span { font-size: 20px; letter-spacing: 2px; color: var(--plat2); }
 .vpopup {
   position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 2;
   font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: var(--amber2);
@@ -169,7 +172,7 @@ body {
 #plaque {
   position: absolute; top: 34px; left: 10px; z-index: 2;
   background: rgba(18,14,9,.85); border: 1px solid #4a4232; border-radius: 6px;
-  padding: 6px 12px; font-size: 12px; line-height: 1.7; color: #c9cdd2;
+  padding: 6px 12px; font-size: 20px; line-height: 1.7; color: #c9cdd2;
 }
 #plaque:empty { display: none; }
 #plaque b { color: var(--amber2); font-variant-numeric: tabular-nums; }
@@ -179,16 +182,16 @@ body {
   padding: 6px 16px; transition: box-shadow .3s, border-color .3s;
 }
 #chainMeter.hidden { display: none; }
-#chainMeter .lab { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+#chainMeter .lab { font-size: 20px; color: var(--dim); letter-spacing: 2px; }
 #chainMeter .val { font-size: 22px; font-weight: 700; color: var(--amber2); font-variant-numeric: tabular-nums; }
 #chainMeter.hot { border-color: var(--amber); box-shadow: 0 0 18px rgba(255,180,71,.45); }
 #chainMeter.hot .val { color: #ffdf9e; text-shadow: 0 0 12px rgba(255,180,71,.8); }
 #ticker {
   position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2;   /* 전폭 그래프 위 */
-  font-size: 14px; text-shadow: 0 2px 5px #000; opacity: 0; pointer-events: none; white-space: nowrap;
+  font-size: 20px; text-shadow: 0 2px 5px #000; opacity: 0; pointer-events: none; white-space: nowrap;
 }
 #ticker.show { animation: tick 2.2s forwards; }
-#ticker.muted { color: #9a9184; font-size: 12.5px; }
+#ticker.muted { color: #9a9184; font-size: 20px; }
 /* 손실 고지는 팝 없이 정적 표시 후 소멸 — 슬라이드·페이드인 없음 (규약 2, critic M5) */
 #ticker.muted.show { animation: mutedtick 2.2s forwards; }
 @keyframes mutedtick { 0%, 78% { opacity: .85; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 0); } }
@@ -227,17 +230,17 @@ body {
   margin: auto;
 }
 .panel h2 { margin: 0 0 10px; font-family: Georgia, 'Nanum Myeongjo', serif; color: var(--amber); letter-spacing: 3px; }
-.panel p, .panel li { font-size: 13.5px; line-height: 1.65; color: #d5cdbd; }
+.panel p, .panel li { font-size: 20px; line-height: 1.65; color: #d5cdbd; }
 .panel ul { padding-left: 18px; margin: 8px 0; }
-.panel .fine { font-size: 12px; color: var(--dim); }
+.panel .fine { font-size: 20px; color: var(--dim); }
 .panel .rec { color: var(--ok); font-weight: bold; }
 .btnrow { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
-.statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin: 10px 0; font-size: 14px; }
+.statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin: 10px 0; font-size: 20px; }
 .statgrid b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 .slab {
   background: linear-gradient(#4a3f28, #2c2414); color: var(--ink);
   border: 1px solid #1a150e; border-top-color: #6b5d3b; border-radius: 6px;
-  padding: 10px 18px; font-size: 15px; cursor: pointer;
+  padding: 10px 18px; font-size: 20px; cursor: pointer;
   box-shadow: 0 3px 0 #120e08, inset 0 1px 0 #ffffff14; transition: transform .06s;
 }
 .slab:hover:not(:disabled) { border-color: var(--amber); color: var(--amber2); }
@@ -268,46 +271,46 @@ body {
 .gthumb { display: block; width: 100%; height: auto; border-bottom: 1px solid #26292e; }
 .golive {
   position: absolute; right: 8px; top: 8px; opacity: 0; transition: opacity .15s;
-  background: var(--tally); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  background: var(--tally); color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 1px;
   padding: 3px 9px; border-radius: 10px;
 }
-.gcard .gt { font-size: 16px; font-weight: 700; color: var(--ink); margin: 10px 14px 0; }
-.gcard .gd { font-size: 11.5px; color: var(--dim); margin: 5px 14px 0; line-height: 1.55; min-height: 3.1em; }
+.gcard .gt { font-size: 20px; font-weight: 700; color: var(--ink); margin: 10px 14px 0; }
+.gcard .gd { font-size: 20px; color: var(--dim); margin: 5px 14px 0; line-height: 1.55; min-height: 3.1em; }
 /* 관객 프로필 — 이 게임이 특히 불러 모으는 원형. 라벨 하나로 단정하지 않고 막대를 함께
    두는 이유는 게임 간 프로필이 실제로 비슷할 수 있기 때문이다 (그때는 비슷하게 보여야 한다).
    .gcard 접두사를 떼서 데스크탑 툴팁(#dTip)의 프로필 행에도 같은 규칙이 적용되게 한다 */
-.gaud { font-size: 11px; color: var(--dim); margin: 7px 0 0; display: flex; align-items: center; gap: 7px; }
+.gaud { font-size: 20px; color: var(--dim); margin: 7px 0 0; display: flex; align-items: center; gap: 7px; }
 .gaud b { font-weight: 700; white-space: nowrap; }
 .gaudbar { flex: 1; display: flex; height: 7px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
 .gaudbar i { display: block; min-width: 0; }
-.gcard .gf { font-size: 11px; margin: 8px 14px 0; color: #c9cdd2; display: flex; justify-content: space-between; }
+.gcard .gf { font-size: 20px; margin: 8px 14px 0; color: #c9cdd2; display: flex; justify-content: space-between; }
 .gcard .gf b { font-variant-numeric: tabular-nums; }
 .gcard .gf.warn b { color: #ff8d7a; }
 .freshbar { height: 4px; background: #000; border-radius: 3px; margin: 5px 14px 0; overflow: hidden; }
 .freshbar i { display: block; height: 100%; background: var(--ok); border-radius: 3px; }
 .freshbar i.warn { background: #ff8d7a; }
-.chanline { font-size: 12.5px; color: var(--dim); margin-top: 10px; }
+.chanline { font-size: 20px; color: var(--dim); margin-top: 10px; }
 .chanline b { color: var(--plat2); font-variant-numeric: tabular-nums; }
 /* 채널 색깔 — 관객 구성 이월의 얼굴. 라이브 게이지(#compBar)와 같은 시각 언어를 쓴다 */
-.chanmix { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 11.5px; color: var(--dim); }
+.chanmix { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 20px; color: var(--dim); }
 .chanmix b { white-space: nowrap; font-weight: 700; }
 .mixbar { flex: 1; max-width: 200px; display: flex; height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
 .mixbar i { display: block; min-width: 0; transition: flex-grow .45s ease-out; }
 .recent { margin-top: 14px; border-top: 1px solid #26292e; padding-top: 10px; }
-.recent .rlab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin-bottom: 6px; }
-.recent .rrow { display: flex; justify-content: space-between; font-size: 12px; color: #c9cdd2; padding: 2px 0; }
+.recent .rlab { font-size: 20px; letter-spacing: 2px; color: var(--dim); margin-bottom: 6px; }
+.recent .rrow { display: flex; justify-content: space-between; font-size: 20px; color: #c9cdd2; padding: 2px 0; }
 .recent .rrow b { color: var(--amber2); font-variant-numeric: tabular-nums; }
-.recent .rrow .rec { color: var(--ok); font-size: 10.5px; margin-left: 6px; }
+.recent .rrow .rec { color: var(--ok); font-size: 20px; margin-left: 6px; }
 
 /* ---------- 방송 리포트 그래프 ---------- */
 #repGraph { display: block; width: 100%; height: auto; background: #101214; border: 1px solid #26292e; border-radius: 6px; margin: 8px 0 4px; }
 
 /* 클립 — 흥미도 기반 자동 캡처 (방송 리포트 스트립 + 허브 최근 방송 썸네일) */
-.clipLab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin: 10px 0 5px; }
+.clipLab { font-size: 20px; letter-spacing: 2px; color: var(--dim); margin: 10px 0 5px; }
 .clipRow { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
 .clipCard { margin: 0; flex: 0 0 148px; }
 .clipCard img, .clipCard video { width: 148px; height: 66px; object-fit: cover; border-radius: 5px; border: 1px solid #2c3036; display: block; background: #000; }
-.clipCard figcaption { font-size: 10px; color: #b8bdc4; margin-top: 3px; line-height: 1.35; }
+.clipCard figcaption { font-size: 20px; color: #b8bdc4; margin-top: 3px; line-height: 1.35; }
 .clipCard figcaption b { color: var(--plat); }
 .clipCard .cwhy { display: block; color: var(--dim); }
 .recent .rrow { align-items: center; }
@@ -315,31 +318,31 @@ body {
 /* ---------- 상점 (방송용품) ---------- */
 .shopWin h2 { display: flex; align-items: center; gap: 9px; }
 .shopWin .shopH { width: 30px; height: 30px; border-radius: 6px; }
-.shopBal b { color: #ffd24a; font-size: 16px; font-variant-numeric: tabular-nums; }
+.shopBal b { color: #ffd24a; font-size: 20px; font-variant-numeric: tabular-nums; }
 
 /* ---------- 캐스트 영입 · 반응 도감 (ADR-006) ---------- */
 .dexList { margin-top: 8px; }
-.dexRow { display: flex; align-items: center; gap: 9px; font-size: 12px; padding: 3px 0; }
+.dexRow { display: flex; align-items: center; gap: 9px; font-size: 20px; padding: 3px 0; }
 .dexRow b { flex: 0 0 96px; white-space: nowrap; }
 .dexBar { flex: 1; max-width: 220px; height: 6px; background: rgba(0,0,0,.4); border: 1px solid #2a2437; border-radius: 3px; overflow: hidden; }
 .dexBar i { display: block; height: 100%; background: var(--amber); border-radius: 3px; }
-.dexN { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
-.dexObs { flex: 0 0 auto; font-size: 9px; font-style: normal; letter-spacing: 1px; color: var(--dim); border: 1px solid #2a2437; border-radius: 3px; padding: 0 4px; }
+.dexN { color: var(--dim); font-size: 20px; font-variant-numeric: tabular-nums; }
+.dexObs { flex: 0 0 auto; font-size: 20px; font-style: normal; letter-spacing: 1px; color: var(--dim); border: 1px solid #2a2437; border-radius: 3px; padding: 0 4px; }
 /* 텐션 (§7) — 허브 표시. 손실은 숫자만 조용히 (규약 2) — 저텐션도 색만 바뀐다 */
 .deskStat.simTension { display: flex; align-items: center; gap: 8px; }
 .deskStat.simTension.low b { color: #ff6b5a; }
-.tenNote { color: var(--dim); font-size: 11px; }
+.tenNote { color: var(--dim); font-size: 20px; }
 #restBtn {
-  font: inherit; font-size: 11px; cursor: pointer; color: var(--plat2);
+  font: inherit; font-size: 20px; cursor: pointer; color: var(--plat2);
   background: rgba(12,10,16,.6); border: 1px solid var(--plat); border-radius: 5px; padding: 2px 8px;
 }
 #restBtn:hover { color: #ece7dd; border-color: var(--amber); }
 .dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 13px; margin-top: 10px; }
 .dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
-.dexCard b { font-size: 18px; }
-.dexCard .dexDesc { font-size: 15px; color: #c9cdd2; line-height: 1.45; }
-.dexCard .dexTr { font-size: 13px; color: var(--dim); }
-.dexCard .siBuy { margin-top: 3px; background: #241e14; border: 1px solid #4a4232; color: var(--amber2); border-radius: 6px; padding: 9px 10px; cursor: pointer; font-size: 16px; }
+.dexCard b { font-size: 20px; }
+.dexCard .dexDesc { font-size: 20px; color: #c9cdd2; line-height: 1.45; }
+.dexCard .dexTr { font-size: 20px; color: var(--dim); }
+.dexCard .siBuy { margin-top: 3px; background: #241e14; border: 1px solid #4a4232; color: var(--amber2); border-radius: 6px; padding: 9px 10px; cursor: pointer; font-size: 20px; }
 .dexCard .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 16px 0 6px; }
 .shopItem {
@@ -348,15 +351,15 @@ body {
 }
 .shopItem.owned { border-color: rgba(0,255,163,.45); }
 .shopItem img { width: 92px; height: 92px; border-radius: 10px; margin-bottom: 10px; }
-.shopItem .siName { font-size: 18px; color: #ece7dd; font-weight: 700; }
-.shopItem .siDesc { font-size: 14px; color: var(--dim); margin: 5px 0 11px; line-height: 1.4; min-height: 40px; }
+.shopItem .siName { font-size: 20px; color: #ece7dd; font-weight: 700; }
+.shopItem .siDesc { font-size: 20px; color: var(--dim); margin: 5px 0 11px; line-height: 1.4; min-height: 40px; }
 .shopItem .siBuy {
   width: 100%; padding: 9px 0; border-radius: 8px; border: 1px solid #4a4232;
-  background: linear-gradient(#2a2416, #1c1810); color: #ffd24a; font-size: 16px;
+  background: linear-gradient(#2a2416, #1c1810); color: #ffd24a; font-size: 20px;
   font-weight: 700; cursor: pointer;
 }
 .shopItem .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
-.shopItem .siOwned { font-size: 15px; color: var(--plat2); padding: 9px 0; }
+.shopItem .siOwned { font-size: 20px; color: var(--plat2); padding: 9px 0; }
 
 /* ---------- 방송용품 효과 — 전부 순수 장식 (body.g-<id>) ---------- */
 body.g-camgold #camBox { border-color: #ffd24a; box-shadow: 0 0 16px rgba(255,210,74,.45), 0 4px 18px rgba(0,0,0,.6); }
@@ -385,16 +388,16 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 }
 .rwHead {
   display: flex; align-items: center; gap: 6px; padding: 5px 9px;
-  font-size: 10px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
+  font-size: 20px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
 }
 .rwHead .rwSave { margin-left: auto; color: #c8ffe8; font-weight: 400; letter-spacing: 0; }
 /* 합성 클립은 1260×660 (게임+HUD+채팅) — cover로 자르면 하단 조작부가 잘려나간다 */
 #replayWin video, #replayWin img { display: block; width: 100%; height: 356px; object-fit: contain; background: #000; }
-.rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
+.rwCap { padding: 5px 9px 6px; font-size: 20px; color: #c8ffe8; }
 .rwCap b { color: #7dffd0; }
 /* 클립 하단 후원 줄 (치지직 문법) — 연출 전용, 코인 무관 */
 /* 클립 하단 후원 줄 — 아이콘 없이 한 줄. 클립 창의 주인공은 영상이다 (사용자 피드백) */
-.rwDon { display: flex; align-items: center; gap: 4px; padding: 0 9px 6px; font-size: 11px; color: #ffedc4; }
+.rwDon { display: flex; align-items: center; gap: 4px; padding: 0 9px 6px; font-size: 20px; color: #ffedc4; }
 .rwDon .amt { color: #ffdf9e; }
 #replayWin .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
 /* 리플레이가 실제로 재생될 시간을 준다 — 6.6초 (진입 + 재생 ~5.6 + 퇴장) */
@@ -407,7 +410,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 }
 @keyframes clipRec { to { opacity: .25; } }
 /* 원형별 순증감 — 오늘 방송이 어떤 사람들을 데려왔나 (공명 판정층 리포트 줄) */
-.archline { font-size: 12.5px; color: #cfc7b8; margin: 4px 0 2px; line-height: 1.7; }
+.archline { font-size: 20px; color: #cfc7b8; margin: 4px 0 2px; line-height: 1.7; }
 .archline b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
@@ -420,11 +423,11 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 }
 .pkmove:hover:not(:disabled) { border-color: var(--amber); }
 .pkmove:disabled { opacity: .45; cursor: default; }
-.pkmove b { font-size: 12.5px; color: var(--amber2); }
-.pkmove span { font-size: 10px; color: var(--dim); }
+.pkmove b { font-size: 20px; color: var(--amber2); }
+.pkmove span { font-size: 20px; color: var(--dim); }
 .pkmove span.warn { color: #ff8d7a; }
 .pkside { flex: 1 1 260px; display: flex; flex-direction: column; gap: 7px; }
-.pkfoe { font-size: 11.5px; color: var(--dim); background: #191b1f; border: 1px solid #2e3138; border-radius: 8px; padding: 7px 10px; }
+.pkfoe { font-size: 20px; color: var(--dim); background: #191b1f; border: 1px solid #2e3138; border-radius: 8px; padding: 7px 10px; }
 .pkbench { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .pkmon {
   background: #191b1f; border: 1px solid #2e3138; border-radius: 8px; color: var(--ink);
@@ -434,20 +437,20 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 .pkmon:disabled { cursor: default; }
 .pkmon.on { border-color: var(--amber); }
 .pkmon.dead { opacity: .4; }
-.pkmon b { font-size: 12px; display: block; }
-.pkmon span { font-size: 9.5px; color: var(--dim); }
+.pkmon b { font-size: 20px; display: block; }
+.pkmon span { font-size: 20px; color: var(--dim); }
 .pkhp { height: 4px; background: #000; border-radius: 3px; margin-top: 5px; overflow: hidden; }
 .pkhp i { display: block; height: 100%; border-radius: 3px; }
-.pkheal { width: 100%; text-align: center; padding: 18px; font-size: 15px; color: var(--ink);
+.pkheal { width: 100%; text-align: center; padding: 18px; font-size: 20px; color: var(--ink);
   background: linear-gradient(#1d1810, #130e08); border: 1px solid #3a332a; border-radius: 8px; }
 .pkheal b { color: var(--amber2); }
-.pkheal span { font-size: 11.5px; color: var(--dim); }
+.pkheal span { font-size: 20px; color: var(--dim); }
 @media (max-width: 760px) { .pkmoves { grid-template-columns: repeat(2, 1fr); } }
 
 /* ---------- 게임 조작 패널 (게임이 내용을 채운다) ---------- */
 #panel { margin-top: 10px; }
 #panel:empty { display: none; }
-#foot { text-align: center; color: #6b6455; font-size: 11.5px; margin-top: 12px; line-height: 1.7; }
+#foot { text-align: center; color: #6b6455; font-size: 20px; margin-top: 12px; line-height: 1.7; }
 #foot kbd { border: 1px solid #4a4232; border-radius: 3px; padding: 0 4px; color: #c9cdd2; }
 
 /* 화력쇼 — 화구 조작 스트립 */
@@ -460,17 +463,17 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 }
 .bcol.hot { border-color: var(--tally); background: linear-gradient(#2a1512, #170d0a); }
 .bcol.locked { opacity: .55; }
-.bnum { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
-.bdish { font-size: 14px; font-weight: 700; margin-top: 5px; }
-.bmode { font-size: 11px; color: var(--amber); margin-top: 1px; }
+.bnum { font-size: 20px; color: var(--dim); letter-spacing: 2px; }
+.bdish { font-size: 20px; font-weight: 700; margin-top: 5px; }
+.bmode { font-size: 20px; color: var(--amber); margin-top: 1px; }
 .prog { height: 5px; background: #000; border-radius: 3px; margin-top: 8px; overflow: hidden; }
 .prog i { display: block; height: 100%; background: #4dd8e6; border-radius: 3px; }
 .win { height: 7px; background: #3a1418; border-radius: 3px; margin-top: 7px; overflow: hidden; }
 .win i { display: block; height: 100%; background: var(--tally); border-radius: 3px; }
-.accname { font-size: 12.5px; color: #ff8d7a; font-weight: 700; margin-top: 8px; }
-.accfresh { color: var(--dim); font-weight: 400; font-size: 10.5px; }
+.accname { font-size: 20px; color: #ff8d7a; font-weight: 700; margin-top: 8px; }
+.accfresh { color: var(--dim); font-weight: 400; font-size: 20px; }
 .fixbtn {
-  width: 100%; margin-top: 6px; padding: 8px; font-size: 14px; font-weight: 700;
+  width: 100%; margin-top: 6px; padding: 8px; font-size: 20px; font-weight: 700;
   background: linear-gradient(#8a2c2c, #571a1a); color: #ffe1d8;
   border: 1px solid #1a0e0e; border-top-color: #c95555; border-radius: 6px; cursor: pointer;
   box-shadow: 0 3px 0 #120808;
@@ -479,24 +482,24 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 .modes { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
 .modes button {
   flex: 1 1 auto; background: #241e14; border: 1px solid #3a332a; color: var(--ink);
-  font-size: 11px; padding: 6px 4px; border-radius: 5px; cursor: pointer;
+  font-size: 20px; padding: 6px 4px; border-radius: 5px; cursor: pointer;
 }
 .modes button:hover:not(:disabled) { border-color: var(--amber); color: var(--amber2); }
 .modes button:disabled { opacity: .4; cursor: default; }
-.bhint { font-size: 10px; color: var(--dim); margin-top: 6px; line-height: 1.5; }
+.bhint { font-size: 20px; color: var(--dim); margin-top: 6px; line-height: 1.5; }
 .bhint b { color: #c9cdd2; }
 
 /* Giving Up On It — 등반 계기판 */
 .climbbar {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   background: linear-gradient(#1d1810, #130e08); border: 1px solid #3a332a;
-  border-radius: 8px; padding: 12px 16px; font-size: 13px;
+  border-radius: 8px; padding: 12px 16px; font-size: 20px;
 }
 .climbbar .cell { min-width: 110px; }
-.climbbar .lab { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
-.climbbar .val { font-size: 19px; font-weight: 700; color: var(--amber2); font-variant-numeric: tabular-nums; }
+.climbbar .lab { font-size: 20px; color: var(--dim); letter-spacing: 2px; }
+.climbbar .val { font-size: 20px; font-weight: 700; color: var(--amber2); font-variant-numeric: tabular-nums; }
 .climbbar .val.warn { color: #ff8d7a; }
-.climbbar .hint { flex: 1 1 220px; font-size: 11px; color: var(--dim); line-height: 1.6; text-align: right; }
+.climbbar .hint { flex: 1 1 220px; font-size: 20px; color: var(--dim); line-height: 1.6; text-align: right; }
 
 /* ---------- 데스크탑 허브 (스트리머의 PC) ----------
    카드 그리드를 모니터 안의 바탕화면으로 바꿨다. "종합게임 스트리머"의 방송 전 상태는
@@ -542,8 +545,8 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   border: 1px solid rgba(255,180,71,.35);
 }
 .dIcon.noimg .dIconArt img { display: none; }
-.dIconName { display: block; font-size: 17px; line-height: 1.35; text-shadow: 0 1px 3px #000; }
-.dIconFresh { display: block; font-size: 13px; color: var(--ok); margin-top: 4px; }
+.dIconName { display: block; font-size: 20px; line-height: 1.35; text-shadow: 0 1px 3px #000; }
+.dIconFresh { display: block; font-size: 20px; color: var(--ok); margin-top: 4px; }
 .dIconFresh.warn { color: var(--amber); }
 
 /* 게임 설명 툴팁 — 창이 아니라 아이콘 옆 팝업 (호버로 열리고 벗어나면 닫힌다).
@@ -558,14 +561,14 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 /* 대표컷 이미지 — 로드 전에도 툴팁 높이가 흔들리지 않게 고정 (위치 계산이 offsetHeight를 읽는다) */
 #dTip img.gthumb { height: 126px; object-fit: cover; }
 .dwInfo { padding: 10px 12px 4px; }
-.dwInfo .tipTitle { display: block; font-size: 14px; color: var(--plat2); margin-bottom: 5px; }
-.dwInfo .gd { font-size: 11.5px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }
-.dwInfo .gf { font-size: 11px; margin-top: 6px; color: #c9cdd2; display: flex; justify-content: space-between; }
+.dwInfo .tipTitle { display: block; font-size: 20px; color: var(--plat2); margin-bottom: 5px; }
+.dwInfo .gd { font-size: 20px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }
+.dwInfo .gf { font-size: 20px; margin-top: 6px; color: #c9cdd2; display: flex; justify-content: space-between; }
 /* 방송 시작 버튼 대신 — 진입은 실제 데스크탑처럼 더블클릭이다 */
 .dwHint {
   display: block; margin: 10px 12px 12px; padding: 8px; text-align: center;
   border: 1px dashed rgba(0,255,163,.45); border-radius: 7px;
-  color: var(--plat2); font-size: 12px; letter-spacing: .5px;
+  color: var(--plat2); font-size: 20px; letter-spacing: .5px;
 }
 .dwHint b { color: #fff; }
 
@@ -573,7 +576,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 .deskBar {
   position: absolute; left: 0; right: 0; bottom: 0; height: 38px;
   display: flex; align-items: center; gap: 12px; padding: 0 12px;
-  background: rgba(14,16,18,.88); border-top: 1px solid #26292e; font-size: 11.5px;
+  background: rgba(14,16,18,.88); border-top: 1px solid #26292e; font-size: 20px;
 }
 .dStart { display: flex; align-items: center; gap: 7px; font-weight: 700; color: var(--plat2); }
 .dStart img { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--plat); }
@@ -634,12 +637,12 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   padding: 9px 14px; border-radius: 9px; cursor: pointer;
   background: rgba(8,10,12,.9); border: 1px solid var(--plat);
   box-shadow: 0 8px 26px rgba(0,0,0,.55);
-  font-size: 12.5px; line-height: 1.6; color: var(--ink);
+  font-size: 20px; line-height: 1.6; color: var(--ink);
   opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
 }
 #tutTip.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 #tutTip i {
-  flex: 0 0 auto; font-style: normal; font-size: 10px; letter-spacing: 2px; font-weight: 700;
+  flex: 0 0 auto; font-style: normal; font-size: 20px; letter-spacing: 2px; font-weight: 700;
   color: #06301e; background: var(--plat); border-radius: 5px; padding: 3px 7px;
 }
 
@@ -657,18 +660,18 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   margin: 8px 0 2px; padding: 10px 14px;
   background: linear-gradient(#191b1f, #110d1a); border: 1px solid #26292e; border-radius: 8px;
 }
-#infoDot { font-size: 10px; }
+#infoDot { font-size: 20px; }
 #infoDot.on { color: var(--tally); animation: tpulse 2.4s infinite; }
 #infoDot.off { color: #4a4456; }
 .infoMain { flex: 1; min-width: 0; }
-#infoTitle { display: block; font-size: 14.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.infoSub { display: flex; align-items: center; gap: 10px; margin-top: 3px; font-size: 11px; color: var(--dim); }
+#infoTitle { display: block; font-size: 20px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.infoSub { display: flex; align-items: center; gap: 10px; margin-top: 3px; font-size: 20px; color: var(--dim); }
 .cat {
   display: inline-block; padding: 1px 8px; border-radius: 9px;
-  border: 1px solid var(--plat); color: var(--plat2); font-size: 10.5px;
+  border: 1px solid var(--plat); color: var(--plat2); font-size: 20px;
 }
 .infoR { display: flex; align-items: center; gap: 12px; }
-.infoViewers { font-size: 12.5px; color: #c9cdd2; font-variant-numeric: tabular-nums; }
+.infoViewers { font-size: 20px; color: #c9cdd2; font-variant-numeric: tabular-nums; }
 #followBtn {
   padding: 6px 14px; border: 0; border-radius: 7px; cursor: pointer;
   background: var(--plat); color: #fff; font: 700 12px inherit;
@@ -676,9 +679,9 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 #followBtn:hover { filter: brightness(1.15); }
 
 /* ---------- 작업표시줄 트레이 (시계·아이콘) ---------- */
-.dTray { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 11px; color: #c9cdd2; }
+.dTray { display: flex; align-items: center; gap: 10px; margin-left: auto; font-size: 20px; color: #c9cdd2; }
 .dTray i { font-style: normal; opacity: .85; }
-#dRec { color: var(--tally); font-size: 10px; letter-spacing: 1px; animation: tpulse 2.4s infinite; }
+#dRec { color: var(--tally); font-size: 20px; letter-spacing: 1px; animation: tpulse 2.4s infinite; }
 #dClock { font-variant-numeric: tabular-nums; color: var(--ink); }
 /* 트레이가 들어오면 힌트는 자리를 양보한다 */
 .dBarHint { margin-left: 12px; }
@@ -713,7 +716,7 @@ body {
   display: flex; flex-direction: column; gap: 14px; align-items: flex-start;
   width: min(1500px, 82%);   /* 글자를 키운 만큼 한 줄이 접히지 않게 */
 }
-.deskStat { font-size: 11.5px; color: #c9cdd2; text-shadow: 0 1px 4px #000; letter-spacing: .3px; }
+.deskStat { font-size: 20px; color: #c9cdd2; text-shadow: 0 1px 4px #000; letter-spacing: .3px; }
 
 /* 바탕화면 상태 줄만 2.5배 — .chanmix·.tenNote·#restBtn은 정산 리포트도 쓰므로
    전역으로 키우면 리포트가 깨진다. 여기서만 덮어쓴다 */
@@ -733,7 +736,7 @@ body {
 }
 #desktop .dIcon.locked:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
 .dIconNeed {
-  display: block; margin-top: 4px; font-size: 12.5px; line-height: 1.3;
+  display: block; margin-top: 4px; font-size: 20px; line-height: 1.3;
   color: var(--plat2); letter-spacing: .2px; text-shadow: 0 1px 4px #000;
 }
 .dwHint.locked { color: var(--plat2); }
@@ -752,16 +755,16 @@ body {
   font: bold 22px Georgia, serif; color: var(--plat2);
   background: rgba(10,12,14,.6); border: 1px dashed rgba(0,255,163,.45);
 }
-.labLead { font-size: 13px; line-height: 1.75; color: #c9cdd2; margin: 8px 0 14px; }
+.labLead { font-size: 20px; line-height: 1.75; color: #c9cdd2; margin: 8px 0 14px; }
 .labLead b { color: var(--plat2); }
 .labSeed { border: 1px solid #2c3036; border-radius: 9px; padding: 12px 14px; background: rgba(10,12,14,.45); }
-.labRow { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; padding: 4px 0; color: var(--dim); }
+.labRow { display: flex; justify-content: space-between; gap: 12px; font-size: 20px; padding: 4px 0; color: var(--dim); }
 .labRow b { color: var(--ink); }
-.labSoon { margin: 13px 0 0; font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+.labSoon { margin: 13px 0 0; font-size: 20px; color: var(--dim); letter-spacing: 1px; }
 
 /* 방송 장비 (ADR-008) — 장식(방송용품)과 한 창에 있지만 구역을 갈라 둔다.
    둘의 차이(성능+유지비 vs 순수 장식)가 이 게임의 규약이라 제목이 그걸 설명한다 */
-.shopSec { margin: 16px 0 8px; font-size: 13.5px; color: var(--amber2); letter-spacing: 1px; }
+.shopSec { margin: 16px 0 8px; font-size: 20px; color: var(--amber2); letter-spacing: 1px; }
 .shopSec .fine { color: var(--dim); letter-spacing: 0; }
 .rigGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 9px; }
 .rigItem {
@@ -770,9 +773,9 @@ body {
 }
 .rigItem.max { border-color: rgba(0,255,163,.4); }
 .riTop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.riTop b { font-size: 13px; }
-.riLv { font-size: 11px; color: var(--plat2); }
-.riDesc { font-size: 11px; color: #c9cdd2; line-height: 1.5; }
+.riTop b { font-size: 20px; }
+.riLv { font-size: 20px; color: var(--plat2); }
+.riDesc { font-size: 20px; color: #c9cdd2; line-height: 1.5; }
 .riDesc b { color: var(--ink); }
 /* 2배로 키우면서 왼쪽 아래 deskStat(텐션·휴방 버튼)을 덮어버려 오른쪽으로 옮겼다 */
 #desktop .recent {   /* 오른쪽 아래 — 왼쪽 아래는 .deskBL(상태 줄) 자리다 */
@@ -797,14 +800,14 @@ body {
 #winbar {
   display: flex; align-items: center; gap: 9px; padding: 8px 12px;
   background: linear-gradient(#202327, #17191c); border-bottom: 1px solid #2e3138;
-  font-size: 12px; color: #c9cdd2; user-select: none;
+  font-size: 20px; color: #c9cdd2; user-select: none;
 }
-.winIco { font-size: 13px; }
+.winIco { font-size: 20px; }
 .winTitle { flex: 1; letter-spacing: .5px; }
 .winBtns { display: flex; gap: 6px; }
 .winBtns i {
   width: 26px; height: 20px; display: grid; place-items: center;
-  font-style: normal; font-size: 11px; border-radius: 4px; color: #9d9ea3;
+  font-style: normal; font-size: 20px; border-radius: 4px; color: #9d9ea3;
 }
 .winBtns i:hover { background: rgba(255,255,255,.08); }
 .winBtns i.x:hover { background: #c0392b; color: #fff; }
@@ -841,13 +844,13 @@ body {
 #tbApps { display: flex; gap: 6px; }
 .tbApp {
   display: flex; align-items: center; gap: 6px; padding: 6px 12px;
-  border-radius: 6px; font-size: 11.5px; color: #c9cdd2;
+  border-radius: 6px; font-size: 20px; color: #c9cdd2;
   border: 1px solid transparent; border-bottom: 2px solid #4a4456;
 }
 .tbApp i { font-style: normal; }
 .tbApp.on { background: rgba(0,255,163,.16); border-bottom-color: var(--plat); color: var(--ink); }
 .tbApp.dim { opacity: .65; }
-.tbApp em { font-style: normal; font-size: 8px; color: #4a4456; margin-left: 2px; }
+.tbApp em { font-style: normal; font-size: 20px; color: #4a4456; margin-left: 2px; }
 .tbApp em.live { color: var(--tally); animation: tpulse 2.4s infinite; }
 #taskbar .dTray { margin-left: auto; }
 
@@ -904,16 +907,22 @@ body {
   pointer-events: none; padding: 20px 24px; border-radius: 14px;
   background: linear-gradient(rgba(23,25,28,.85), rgba(23,25,28,.85)),
     url('img/ui-panelbg.jpg') center/cover, #17191c;
-  border: 1px solid #2e3138; font-size: 18px; color: #c9cdd2;
+  border: 1px solid #2e3138; font-size: 20px; color: #c9cdd2;
 }
 /* 방송 중에는 바탕화면이 통째로 가려진다 — 위젯도 함께 물러난다 */
 body.fullshow #dayChip { display: none; }
+/* 인트로 4컷이 떠 있는 동안도 마찬가지. z-index로 눌러도(만화 47 > 위젯 45) 스플래시 배경이
+   88% 반투명이라 지면 밖으로 삐져나온 위젯이 비쳐 보인다 — 아예 내린다 */
+body:has(#introSplash:not(.hidden)) #dayChip { display: none; }
+/* 팝업(브리핑·상점·도감·클립 보관함·방송 리포트)도 같다. 이쪽은 z-index로는 못 이긴다 —
+   #overlay는 #jgsWin(z-index 4) 안이라 자기 값이 얼마든 창의 문맥에 갇힌다. 위젯을 내린다 */
+body:has(#overlay:not(.hidden)) #dayChip { display: none; }
 #dayChip .dcTop { display: flex; align-items: baseline; gap: 14px; }
 #dayChip .dcDday {
   font-family: Georgia, serif; font-size: 44px; line-height: 1; color: var(--ink);
   letter-spacing: 1px;
 }
-#dayChip .dcOf { font-size: 18px; color: var(--dim); }
+#dayChip .dcOf { font-size: 20px; color: var(--dim); }
 #dayChip .dcGoal { display: block; margin-top: 10px; font-size: 20px; }
 #dayChip .dcGoal b { color: var(--plat2); }
 #dayChip .dcBar {
@@ -931,13 +940,15 @@ body.fullshow #dayChip { display: none; }
   background: rgba(8,9,10,.9); backdrop-filter: blur(4px);
 }
 #seasonEnd.hidden { display: none; }
-#seasonEnd .isPanel.win { box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,255,163,.45); }
+#seasonEnd .isPanel.isWin { box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,255,163,.45); }
 #seasonEnd .isPanel h1 { color: #ff8d7a; }
-#seasonEnd .isPanel.win h1 { color: var(--plat2); }
+#seasonEnd .isPanel.isWin h1 { color: var(--plat2); }
 
 /* ---------- 온보딩 — 첫 방문 스플래시 + 코치마크 ---------- */
+/* z-index 47 = 화면 최상단. 인트로는 "아직 아무것도 시작 안 했다"를 말하는 화면이라
+   D-Day 위젯(#dayChip 45)·시즌 종료(#seasonEnd 46) 어느 것도 위로 올라오면 안 된다 */
 #introSplash {
-  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 47; display: flex; align-items: center; justify-content: center;
   background: rgba(8,9,10,.88); backdrop-filter: blur(4px);
 }
 #introSplash.hidden { display: none; }
@@ -947,12 +958,12 @@ body.fullshow #dayChip { display: none; }
   box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,255,163,.12);
 }
 .isLogo { font-family: Georgia, serif; font-size: 30px; color: var(--plat); text-shadow: 0 0 20px rgba(0,255,163,.5); }
-.isLogo span { color: var(--plat2); font-size: 18px; }
+.isLogo span { color: var(--plat2); font-size: 20px; }
 .isPanel h1 { margin: 14px 0 12px; font-size: 24px; color: var(--ink); letter-spacing: 1px; }
-.isPanel p { font-size: 14px; line-height: 1.8; color: #c9cdd2; margin: 0 0 10px; }
+.isPanel p { font-size: 20px; line-height: 1.8; color: #c9cdd2; margin: 0 0 10px; }
 .isPanel p b { color: var(--plat2); }
-.isPanel .isSub { font-size: 12px; color: var(--dim); }
-.isPanel .slab { margin-top: 16px; padding: 12px 34px; font-size: 15px; }
+.isPanel .isSub { font-size: 20px; color: var(--dim); }
+.isPanel .slab { margin-top: 16px; padding: 12px 34px; font-size: 20px; }
 /* 코치마크 — 첫 방송 전까지 첫 게임 아이콘이 민트 링으로 숨쉰다 */
 .dIcon.coach { position: relative; border-color: var(--plat); animation: coachPulse 1.8s infinite; }
 @keyframes coachPulse {
@@ -961,7 +972,7 @@ body.fullshow #dayChip { display: none; }
 }
 .coachTip {
   position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
-  white-space: nowrap; background: var(--plat); color: #06301e; font-size: 11.5px; font-weight: 700;
+  white-space: nowrap; background: var(--plat); color: #06301e; font-size: 20px; font-weight: 700;
   padding: 5px 10px; border-radius: 7px; pointer-events: none;
 }
 .coachTip::before {
@@ -991,17 +1002,17 @@ body.fullshow #dayChip { display: none; }
 }
 .pdCard img { width: 56px; height: 56px; border-radius: 8px; border: 1px solid #2c3036; flex: 0 0 auto; }
 .pdTop { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
-.pdWho { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); }
+.pdWho { font-size: 20px; letter-spacing: 2px; color: var(--dim); }
 .pdGrade { font-family: Georgia, serif; font-weight: bold; font-size: 27px; line-height: 1; }
 .pdGrade.gS { color: #ffd24a; text-shadow: 0 0 15px rgba(255,210,74,.75); }
 .pdGrade.gA { color: var(--plat2); text-shadow: 0 0 12px rgba(0,255,163,.5); }
 .pdGrade.gB { color: #9ec8e0; }
 .pdGrade.gC { color: var(--dim); }
 .pdGrade.gD { color: #ff8d7a; }
-.pdScore { font-size: 11px; color: var(--dim); }
-.pdLine { font-size: 13px; color: #ece7dd; margin-top: 4px; }
-.pdTip { font-size: 11.5px; color: var(--amber2); margin-top: 3px; }
-.pdMis { display: flex; flex-wrap: wrap; gap: 5px 14px; margin-top: 6px; font-size: 11.5px; }
+.pdScore { font-size: 20px; color: var(--dim); }
+.pdLine { font-size: 20px; color: #ece7dd; margin-top: 4px; }
+.pdTip { font-size: 20px; color: var(--amber2); margin-top: 3px; }
+.pdMis { display: flex; flex-wrap: wrap; gap: 5px 14px; margin-top: 6px; font-size: 20px; }
 .pdMis .hit { color: var(--ok); }
 .pdMis .miss { color: var(--dim); }
 .pdMis b { color: #ffd24a; }
@@ -1032,18 +1043,18 @@ body.fullshow #dayChip { display: none; }
 .shopItem .siBuy:hover { filter: brightness(1.08); box-shadow: none; color: #000; }
 
 /* ---------- 파트너 등급 (파트너 계약 ③) ---------- */
-.pdTier { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 11.5px; }
+.pdTier { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 20px; }
 .pdTier .tname { font-weight: 700; letter-spacing: 1px; }
-.pdTier.up .tname { font-size: 14px; text-shadow: 0 0 12px currentColor; }
+.pdTier.up .tname { font-size: 20px; text-shadow: 0 0 12px currentColor; }
 .pdTier .tbar { flex: 1; max-width: 180px; height: 6px; background: rgba(0,0,0,.35); border-radius: 3px; overflow: hidden; }
 .pdTier .tbar i { display: block; height: 100%; border-radius: 3px; }
 .pdTier .tpts { color: var(--dim); font-variant-numeric: tabular-nums; }
 #tbTier { font-weight: 700; letter-spacing: 1px; }
 .shopItem.locked { opacity: .55; }
-.shopItem .siLock { font-size: 15px; color: var(--dim); padding: 9px 0; }
+.shopItem .siLock { font-size: 20px; color: var(--dim); padding: 9px 0; }
 /* 다이아 오라 — 등급 한정 장식. 네온 간판과 둘 다 있으면 뒤(다이아)가 이긴다 */
 body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
-.rwCap .rwNote { color: var(--dim); font-size: 10px; }
+.rwCap .rwNote { color: var(--dim); font-size: 20px; }
 
 /* ---------- 인트로 4컷 만화 — 한 지면에 4컷 (AetherAI 컷 + HTML 캡션) ----------
    클릭할 때마다 다음 칸이 왼쪽에서 들어와 쌓인다. 4컷이 다 차면 지면이 화면의 80%(80vw×80vh)다.
@@ -1075,8 +1086,10 @@ body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 
   box-shadow: 0 14px 34px rgba(0,0,0,.55);
 }
 #introSplash .comic figcaption {
-  flex: 0 0 auto; font-size: 14px; color: #d5d9de; margin-top: 10px; line-height: 1.55;
-  min-height: 3.1em; padding: 0 4px; text-align: left;
+  /* 30pt (사용자 지정) — 만화 지면의 대사는 그림과 같은 거리에서 읽혀야 한다.
+     지면 높이는 고정이라 대사가 커진 만큼 그림이 줄어든다 (컷은 flex:1) */
+  flex: 0 0 auto; font-size: 30pt; color: #d5d9de; margin-top: 10px; line-height: 1.4;
+  min-height: 2.8em; padding: 0 4px; text-align: left;
 }
 #introSplash .comic figcaption b { color: var(--plat2); }
 #introSplash .comic figcaption .dia { color: #7de8ff; }
@@ -1091,7 +1104,7 @@ body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 
 }
 @keyframes cutCap { from { opacity: 0; } to { opacity: 1; } }
 /* 마지막 컷에 닿아야 서명 버튼이 열린다 — 그전엔 컷 번호·안내가 그 자리를 지킨다 */
-.isPanel .isSkip { font-size: 11.5px; color: var(--dim); margin: 0; }
+.isPanel .isSkip { font-size: 20px; color: var(--dim); margin: 0; }
 .isPanel .isSkip b { color: var(--plat2); letter-spacing: 1px; }
 #introSplash .isSub { visibility: hidden; }        /* 신선도 안내는 마지막 컷에서만 */
 #introSplash.done .isSub { visibility: visible; }
@@ -1128,15 +1141,19 @@ body.fullshow #scene { width: 100%; height: 100%; object-fit: contain; }
    레터박스 박스(--gx/--gw/--gbot)는 셸이 실측해 갱신한다 (Shell.fitHud) */
 body.fullshow #panel {
   position: fixed; left: var(--gx, 0px); width: var(--gw, 100%); right: auto;
-  bottom: calc(var(--gbot, 44px) + 40px); z-index: 6;
+  /* +76px = 그 아래 깔리는 foot(조작 안내) 띠의 높이. 40px이던 값을 글자 20px 기준
+     두 줄(64px)+여백에 맞춰 올렸다 — 안 올리면 패널 하단을 foot이 덮는다 */
+  bottom: calc(var(--gbot, 44px) + 76px); z-index: 6;
   background: linear-gradient(rgba(16,18,20,0), rgba(16,18,20,.9) 34%);
   padding: 10px 12px 6px;
 }
 body.fullshow #foot {
   position: fixed; left: var(--gx, 0px); width: var(--gw, 100%); right: auto;
-  bottom: var(--gbot, 44px); z-index: 6; height: 40px;
+  /* 높이 고정(40px)은 11.5px 글자 기준이었다 — 20px로 올리면서 둘째 줄이 잘렸다.
+     조작 안내는 잘리면 안 되는 텍스트라 내용에 맞춰 늘린다 */
+  bottom: var(--gbot, 44px); z-index: 6; min-height: 40px; max-height: 96px;
   overflow: hidden; background: rgba(11,12,14,.92);
-  font-size: 10.5px; line-height: 1.6; padding: 3px 12px; margin: 0;
+  font-size: 20px; line-height: 1.6; padding: 3px 12px; margin: 0;
 }
 body.fullshow #chatDock {
   top: 0; bottom: 44px; z-index: 6; pointer-events: none;
@@ -1167,11 +1184,11 @@ body.fullshow #overlay { z-index: 9; }
   width: 100%; height: auto; display: block; border-radius: 7px;
   border: 1px solid #2c3036; background: #000;
 }
-.clipSave figcaption { font-size: 13px; color: #c9cdd2; margin-top: 7px; line-height: 1.55; }
+.clipSave figcaption { font-size: 20px; color: #c9cdd2; margin-top: 7px; line-height: 1.55; }
 .clipSave figcaption b { color: var(--plat); }
-.csMeta { display: block; color: var(--dim); font-size: 11.5px; margin: 3px 0 6px; }
+.csMeta { display: block; color: var(--dim); font-size: 20px; margin: 3px 0 6px; }
 .csBtn {
-  display: inline-block; margin-right: 6px; padding: 4px 11px; font-size: 11.5px; cursor: pointer;
+  display: inline-block; margin-right: 6px; padding: 4px 11px; font-size: 20px; cursor: pointer;
   border: 1px solid #3a3f46; border-radius: 5px; background: #23262a; color: #c9cdd2; text-decoration: none;
 }
 .csBtn:hover { border-color: var(--plat); color: var(--plat); }
