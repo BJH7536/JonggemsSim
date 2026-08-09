@@ -41,9 +41,6 @@ $targets = @(
   'games\hwaryeok\img\pan.png', 'games\hwaryeok\img\cloche.png',
   'games\pocket\img\me-fire.png', 'games\pocket\img\me-water.png', 'games\pocket\img\me-grass.png',
   'games\pocket\img\foe-fire.png', 'games\pocket\img\foe-water.png', 'games\pocket\img\foe-grass.png',
-  'games\fishing\img\boat.png',
-  'games\fishing\img\fish-0.png', 'games\fishing\img\fish-1.png', 'games\fishing\img\fish-2.png',
-  'games\fishing\img\fish-3.png', 'games\fishing\img\fish-4.png',
   'games\bomb\img\bomb-body.png',
   # ui-* 아이콘은 트림하지 않는다 — 정사각 프레임을 유지해야 12~15px 표시 크기가 균일하다.
   # 버튼 플레이트만 예외: 투명 여백이 남으면 버튼 면과 클릭 영역이 어긋난다

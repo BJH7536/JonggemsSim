@@ -35,7 +35,6 @@
   var TIP_ART = {
     'giving-up': 'games/giving-up/img/sky-bg.jpg',
     pocket: 'games/pocket/img/arena-bg.jpg',
-    fishing: 'games/fishing/img/sea-bg.jpg',
     bomb: 'games/bomb/img/bench-bg.jpg',
   };
 
@@ -45,8 +44,8 @@
     hwaryeok: ['불 좀 꺼줄래?', '어? 어? 어어어', '노빠꾸 4구 풀가동', '주방 화재도 컨텐츠입니다'],
     'giving-up': ['아 손이 미끄러졌다고요', '이 구간만 백 번째', '정상 각 나왔다 (안 남)', '떨어지는 것도 실력입니다'],
     pocket: ['38%는 사실상 확정입니다', '이게 빗나가네 실화냐', '빈사 역전 장인 나야 나', '한 판만 더 (마지막 아님)'],
-    fishing: ['오늘 나락 한번 가봅니다', '입질 온다 입질 (아님)', '월척 잡을 때까지 퇴근 없음', '심해가 부른다 (환청)'],
     bomb: ['빨간 선이 국룰입니다', '이거 안 터짐 ㅇㅇ 믿으셈', '감으로 자르는 남자', '설명서는 접어두겠습니다'],
+    balloon: ['하나만 더 익힐게요', '욕심이 터뜨린 방송', '만개는 0.3초입니다', '오늘은 안 놓칩니다 (놓침)'],
   };
 
   // ---------- 공명 판정층 (ADR-004) ----------
@@ -474,16 +473,18 @@
     // 게임이 emit하는 이벤트 이름을 표정으로 번역한다. 새 게임이 기존 이름을 재사용하면
     // 캠은 공짜로 따라온다 — 목록에 없는 이벤트는 무표정 유지 (contract 4.2 참고).
     CAM_MOOD: {
-      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall',
-                 'bite', 'hook', 'new_bomb'],
+      // 심연낚시·광클쇼 삭제(2026-08-10)로 그 이벤트 이름들은 여기서 뺐다 —
+      // 남겨 두면 표가 "이 이벤트를 다룬다"고 거짓말한다 (bite·hook·line_snap·land_*·
+      // tension_edge·strike_miss·escape·trash / combo_max·combo_break)
+      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall', 'new_bomb'],
       panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death',
-              'line_snap', 'boom', 'streamer_scream'],
+              'boom', 'streamer_scream'],
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
             'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
-            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up',
-            'streamer_joy'],
+            'cut_paid', 'defused', 'defused_clutch', 'chain_up',
+            'bloom', 'streamer_joy'],
       confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
-                  'strike_miss', 'escape', 'trash', 'timeout_boom', 'streamer_selfmock'],
+                  'timeout_boom', 'burst', 'streamer_selfmock'],
       thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
       silence: ['streamer_silence'],
       question: ['milestone'],
@@ -1190,9 +1191,46 @@
     // 수치는 게임이 이미 gain으로 반영했다 — 여기는 화면 위 배너만 맡는다 (규약 5: 도네는
     // 양념이니 연출은 화려하게, 수치 관여는 없음). 배너끼리는 큐로 3.4초 간격 방출 (규약 3).
     // 닉네임은 채팅 페르소나를 빌려 쓴다 — 후원자가 관객석에 실재하는 인물로 읽히게.
-    DON_MSG: ['오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
-              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁',
-              '아니 이걸 이렇게 한다고? ㅋㅋ', '방금 장면 클립 각이던데', '구독 박고 갑니다'],
+    // 문구는 금액대로 결이 갈린다 — 만 코인 쏘면서 "밥은 먹고 방송해요"는 안 어울린다.
+    // 소액은 농담·훈수·리액션, 고액은 사연·응원. 액수가 곧 화자의 온도다.
+    DON_MSG: {
+      small: [
+        '오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
+        '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁',
+        '아니 이걸 이렇게 한다고? ㅋㅋ', '방금 장면 클립 각이던데', '구독 박고 갑니다',
+        '퇴근길에 보는 중입니다', '어제도 봤는데 오늘 또 왔어요', '커피값입니다 마시면서 해요',
+        '손이 왜 저래요 ㅋㅋㅋ', '지금부터 집중하면 됩니다', '이 구간만 세 번째 보는 중',
+        '알림 켜놨습니다', '조용히 응원하고 갑니다', '표정 관리 실패하셨어요',
+        '아까부터 참았는데 못 참고 쏩니다', '설명 좀 해주세요 방금 뭐 한 거예요',
+      ],
+      big: [
+        '오늘 하루 이 방송으로 버텼습니다', '늘 고맙습니다, 오래 해주세요',
+        '힘든 시기에 웃게 해줘서 고마워요', '이 채널 잘 될 겁니다 제가 압니다',
+        '월급 들어왔습니다 쏩니다', '오늘 좋은 일 있어서 나눕니다',
+        '제 인생 스트리머입니다', '기록 깨는 거 꼭 보고 싶습니다',
+        '장비 좀 바꾸세요 제발', '합격했습니다 여기서 자랑합니다',
+        '끝까지 갑시다 뒤에 제가 있습니다', '이거 보고 힘내서 다시 해보려고요',
+        '방송 시작하고 한 번도 안 나갔습니다', '큰 거 한 방 기대하고 쏩니다',
+      ],
+    },
+    DON_BIG: 3000,   // 이 금액부터 고액 결 — 사건 도네(규모 비례)가 대체로 여기 걸린다
+    // 셔플 백 — 순수 랜덤은 11줄 풀에서도 서너 번이면 같은 줄이 돌아온다 (실사용 지적).
+    // 한 바퀴를 다 쓸 때까지 안 겹치게 뽑고, 비면 다시 섞는다. 채팅의 비반복 게이트와
+    // 같은 목적이되 도네는 사실 슬롯이 없어 유사도 검사까지는 필요 없다.
+    _donBag: null,
+    pickDonMsg: function (amt) {
+      var tier = (amt >= this.DON_BIG) ? 'big' : 'small';
+      if (!this._donBag) this._donBag = {};
+      var bag = this._donBag[tier];
+      if (!bag || !bag.length) {
+        bag = this.DON_MSG[tier].slice();
+        for (var i = bag.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1)), t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+        }
+        this._donBag[tier] = bag;
+      }
+      return bag.pop();
+    },
     // 후원자 — 대부분 채팅 페르소나(관객석에 실재하는 인물로 읽히게), 가끔 익명 (치지직 문법)
     pickSponsor: function () {
       return Math.random() < .3
@@ -1207,7 +1245,7 @@
       this._donQ.push({
         amt: (facts && facts.d) ? String(facts.d) : '1,000',
         who: this.pickSponsor(),
-        msg: this.DON_MSG[Math.floor(Math.random() * this.DON_MSG.length)],
+        msg: this.pickDonMsg(amt),
       });
       this.drainDon();
     },
@@ -2427,12 +2465,16 @@
   // 실력이 모자라면 사슬 자체가 멈춰서, 30일 안에 마지막 게임을 만져보지도 못하고 시즌이
   // 끝났다 — 종겜(여러 게임을 도는 것)이라는 컨셉이 잠겨 버린다.
   // 방송 횟수로 바꾸면 해금은 반드시 진행되고, 실력은 등급·미션·시즌 목표에서 겨룬다.
+  // 관문은 전부 1회다 (사용자 지시). 방금 열린 게임을 한 판 하면 곧바로 다음이 열린다 —
+  // 사슬 전체가 4회. 2·2·3·3(10회)일 때는 새 게임을 만나기 전에 같은 게임을 두세 번 반복해야
+  // 했고, 그건 규약 4(신선도)가 벌주는 바로 그 플레이였다. 해금이 종겜을 막고 있었던 셈이다.
+  // 난이도는 등급·미션·시즌 목표가 맡는다 — 해금은 콘텐츠를 여는 문일 뿐이다.
   Shell.UNLOCK = [
     { id: 'hwaryeok' },                              // 첫 방송 — 항상 열려 있다
-    { id: 'giving-up', from: 'hwaryeok',  times: 2 },
-    { id: 'pocket',    from: 'giving-up', times: 2 },
-    { id: 'bomb',      from: 'pocket',    times: 3 },
-    { id: 'fishing',   from: 'bomb',      times: 3 },
+    { id: 'giving-up', from: 'hwaryeok',  times: 1 },
+    { id: 'pocket',    from: 'giving-up', times: 1 },
+    { id: 'bomb',      from: 'pocket',    times: 1 },
+    { id: 'balloon',   from: 'bomb',      times: 1 },   // 심연낚시 자리를 이어받는다
   ];
 
   // 정산이 부르는 기록기 — 등급과 무관하게 "방송했다"는 사실만 센다

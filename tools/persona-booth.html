@@ -110,7 +110,7 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
 <script src="../data/events/giving-up.js"></script>
 <script src="../data/events/pocket.js"></script>
 <script src="../data/events/bomb.js"></script>
-<script src="../data/events/fishing.js"></script>
+<script src="../data/events/balloon.js"></script>
 <script>
 (function () {
   'use strict';
@@ -158,15 +158,11 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
       donation: function () { return { d: fmt(rnd(10, 900)) }; },
       milestone: function () { return { v: fmt(pick([1000, 5000, 15000, 60000])) }; },
     } },
-    fishing: { title: '심연낚시', data: window.FISHING_CHAT, facts: {
-      cast: function () { return { zone: pick(['연안', '근해', '심해']) }; },
-      tension_edge: function () { return { t: rnd(80, 99) }; },
-      land_small: function () { return { name: pick(['피라미', '구피', '멸치']), gain: fmt(rnd(100, 500)) }; },
-      land_mid: function () { return { name: pick(['잉어', '메기', '가물치']), gain: fmt(rnd(500, 2000)) }; },
-      land_big: function () { return { name: pick(['상어', '돌고래', '개복치']), gain: fmt(rnd(2000, 8000)) }; },
-      land_legend: function () { return { name: pick(['리바이어던', '심연군주', '유령해파리']), gain: fmt(rnd(10000, 40000)) }; },
-      trash: function () { return { name: pick(['조개', '소라', '불가사리']) }; },
-      line_snap: function () { return { gain: fmt(rnd(800, 4000)) }; },
+    balloon: { title: '풍선쇼', data: window.BALLOON_CHAT, facts: {
+      bloom: function () { return { gain: fmt(rnd(90, 400)) }; },
+      flood: function () { return { n: String(rnd(6, 11)) }; },
+      round_up: function () { return { r: String(rnd(2, 6)) }; },
+      perfect_round: function () { return { r: String(rnd(1, 6)) }; },
       donation: function () { return { d: fmt(rnd(10, 900)) }; },
       milestone: function () { return { v: fmt(pick([1000, 5000, 15000, 60000])) }; },
     } },

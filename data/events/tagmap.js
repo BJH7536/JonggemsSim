@@ -59,17 +59,14 @@ window.JONG_TAGMAP = {
     "milestone": ["numbers_revealed"],
     "idle": ["idle"]
   },
-  "fishing": {
-    "cast": ["retry_success"],
-    "land_mid": ["clean_execution"],
-    "land_big": ["longplan_paid"],
-    "land_legend": ["rng_jackpot"],
-    "line_snap": ["greed_punished"],
-    "escape": ["rng_disaster"],
-    "strike_miss": ["misclick"],
-    "trash": ["absurd_outcome"],
+  "balloon": {
+    "bloom": ["longplan_paid"],
+    "pop": ["no_stakes"],
+    "burst": ["greed_punished"],
+    "flood": ["state_flip", "absurd_outcome"],
+    "perfect_round": ["clean_execution"],
     "milestone": ["numbers_revealed"],
-    "idle": ["idle"]
+    "idle": ["idle", "no_stakes"]
   },
   "bomb": {
     "boom": ["catastrophic_fail"],
