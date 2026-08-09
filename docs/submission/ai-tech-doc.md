@@ -271,7 +271,7 @@ v1(제출본)에 실제로 실린 것은 **이 설계의 산출물인 페르소�
 | `@anthropic-ai/sdk` (npm) | MIT — Anthropic 공식 SDK | 프록시의 Claude API 호출 |
 | Vercel Serverless | 상용 PaaS (무료 티어) | LLM 프록시 호스팅 |
 | Claude (claude-haiku-4-5) | Anthropic 상용 API | AI 시청자 발화 생성 |
-| 게임 그래픽 — 생성 이미지 **102종** | **AetherAI(AetherForge) 경유 GPT Image 1.5로 팀이 직접 생성.** 이용약관상 상업적 이용·재배포·오픈소스 포함 허용, 저작자 표시 불요 (2026-08-07 확인). 생성 정의·프롬프트 원문 전량: `tools/aether-assets.json` | 아래 내역 |
+| 게임 그래픽 — 생성 이미지 **102종** | **AetherAI(AetherForge)로 팀이 직접 생성.** 정지 이미지 **93종은 GPT Image 1.5**(`POST generate/image`), 스킬·폭발 VFX **9종은 이펙트 생성기 v2**(`POST generate/effect/v2` — 프레임 16장 시트를 한 번에 뽑는 전용 엔드포인트라 모델 지정 인자가 없다). 이용약관상 상업적 이용·재배포·오픈소스 포함 허용, 저작자 표시 불요 (2026-08-07 확인). 생성 정의·프롬프트 원문 전량: `tools/aether-assets.json`, 호출부: `tools/aether-gen.js` | 아래 내역 |
 | 스트리머 캠 표정 7종 (`games/shell/faces/`) | **위 102종에 포함 — AetherAI 생성.** 팀원(현재)의 기존 프로젝트 *TheSword*의 자체 캐릭터(Adventurer) 일러스트를 **레퍼런스 이미지로 넣고 표정만 교체**하는 방식으로 생성했다(`cam-*` 프롬프트: *"Use the reference image as the exact same character … Change ONLY the facial expression"*). 레퍼런스 원본의 출처·자작 판정: `Assets/ThowSword_Assets/SOURCES.md` | 방송 연출 · 인트로 만화의 인물 일관성 레퍼런스 |
 | 곡괭이 2종 (`games/giving-up/img/hammer.png`, `곡괭이-원본.png`) | **팀 자작** — 팀원(현재)이 직접 그린 픽셀아트. 생성물이 아니므로 **AetherAI 파이프라인에서 의도적으로 제외**했다(재생성이 덮어쓰지 않게). 근거: 커밋 `59a801e` | GUOI 조작 오브젝트 |
 | 게임 그래픽 — 벡터 | 전량 코드 생성 (Canvas 드로잉) — 외부 에셋 0건 | 인터랙션 요소(와이어·게이지·타이머 등)는 벡터 유지 |
@@ -309,12 +309,8 @@ v1(제출본)에 실제로 실린 것은 **이 설계의 산출물인 페르소�
   ③ 총 종수 114 → 102 (매니페스트 등재분과 배포 파일 104개를 대조한 값)
 - [x] **기획 트랙 반영** — 시청자 페르소나 100종(§1.5) · 정량 진단과 PAE 설계(§2.1) (2026-08-09)
 - [x] **무대 신규 시스템 반영** — 반응 도감 · 티키타카 · 텐션 · 클립(§1.6) (2026-08-09)
-- [ ] ⚠ **현재 확인 요청 1건** — `ai_model` 필드가 비어 있는 항목은 **9종**이고
-  (앞서 23종으로 적힌 것은 구분자 항목까지 센 수치였다) **전부 VFX 시트**다:
-  `vfx-tackle`·`vfx-fire`·`vfx-water`·`vfx-grass`·`vfx-ult-fire`·`vfx-ult-water`·
-  `vfx-ult-grass`·`vfx-boom`·`vfx-splash`. PR #7·#12 기록상 같은 GPT Image 파이프라인
-  (흰 배경 키잉 경로)을 탄 것으로 보이나, **모델명을 문서에 단정하지 않고 비워 두었다** —
-  생성 당사자가 확인해 `aether-assets.json`의 `ai_model`을 채우면 이 줄을 지울 수 있다.
-  용도별 내역 표의 분류는 파일 경로 기준이다
+- [x] **VFX 9종 생성 경로 확인 완료** (2026-08-10) — `ai_model`이 비어 있던 것은 누락이
+  아니라 **다른 생성기를 썼기 때문**이다. 아래 §3 각주에 반영했다. 용도별 내역 표의
+  분류는 파일 경로 기준이다
 - [ ] PDF 변환·팀 검토
 - [ ] 심사 종료까지 프록시 유지 (`DISABLED` 킬 스위치·사용량 알람은 `proxy/README.md` 5절)
