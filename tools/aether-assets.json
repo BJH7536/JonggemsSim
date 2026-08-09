@@ -478,6 +478,33 @@
       "out": "games/shell/img/ui-coin.png",
       "ai_model": "GPT Image 1.5",
       "prompt": "Tiny flat vector UI icon for a dark streaming platform app: a shiny gold coin seen head-on with a simple star emboss, warm gold (#ffd24a) main color with amber (#ffb447) shading. Extremely simple bold shape with thick rounded strokes, readable at 16 pixels, centered with generous padding. Isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow and no shadow. No text."
+    },
+    "",
+    "풍선쇼 (반사속도 게임) — 3D 무대·아이콘·설명 아트·파열 VFX",
+    {
+      "id": "icon-balloon",
+      "out": "games/shell/img/icon-balloon.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Square game launcher icon, flat vector style, isolated on a solid flat pure magenta (#FF00FF) background with no gradient, no glow, no vignette and no shadow cast on the background. Subject centered with padding: three glossy party balloons floating together seen head on — one hot pink (#ff6b8a), one amber (#ffb347), one cyan (#7de8ff) — with short curling strings and a small white highlight on each, plus a few bright confetti flecks. Bold simple shapes, thick clean dark outline, high contrast, readable at 96 pixels. No text, no letters, no numbers."
+    },
+    {
+      "id": "bg-balloon",
+      "out": "games/balloon/img/stage-bg.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Dark indoor variety-show stage back wall for a game background, wide horizontal composition with the central band kept simple and uncluttered: deep violet-navy gradient (#1b1830 to #0e0d18), two soft purple spotlight cones washing down from above, a faint circular stage truss silhouette, subtle confetti glitter drifting in the air, a low dark stage floor edge across the bottom third. Flat 2D game style, muted, very dark, soft smooth gradients only, no banding, no text, no people, no balloons."
+    },
+    {
+      "id": "tip-balloon",
+      "out": "games/balloon/img/tip.png",
+      "ai_model": "GPT Image 1.5",
+      "prompt": "Wide horizontal key art for a party balloon popping game: a cluster of glossy balloons in hot pink (#ff6b8a), amber (#ffb347), cyan (#7de8ff), lime (#a8e063) and violet (#c58aff) floating upward across a dark violet-navy stage (#1b1830), one large balloon caught at the instant of bursting into a spray of bright confetti and rubber fragments, purple spotlight beams behind, energetic and celebratory. Flat 2D game illustration style, thick clean outlines, vivid saturated colors against the dark background, no text, no people."
+    },
+    {
+      "id": "vfx-pop",
+      "out": "games/balloon/img/vfx-pop.png",
+      "endpoint": "effect2",
+      "frame": 16,
+      "prompt": "Cartoon balloon burst game VFX animation on a pure black background: a bright ring of rubber shreds snapping outward from the center, a puff of white air, and a spray of colorful confetti flecks in pink, amber, cyan and lime scattering outward then fading. Flat 2D game style, thick shapes, celebratory, no text."
     }
   ]
 }

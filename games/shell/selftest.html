@@ -38,6 +38,7 @@
 <script src="../../data/events/bomb.js"></script>
 <script src="../bomb/game.js"></script>
 <script src="../../data/events/balloon.js"></script>
+<script src="../balloon/gl.js"></script>
 <script src="../balloon/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
@@ -899,7 +900,7 @@ var SHIPPED = [
   '../../data/events/giving-up.js', '../giving-up/game.js',
   '../../data/events/pocket.js', '../pocket/game.js',
   '../../data/events/bomb.js', '../bomb/game.js',
-  '../../data/events/balloon.js', '../balloon/game.js',
+  '../../data/events/balloon.js', '../balloon/gl.js', '../balloon/game.js',
 ];
 // 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
 var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']
@@ -909,7 +910,10 @@ var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'qu
 // 여기서 예산이 터진다 — 그게 이 목록에 넣는 이유다.
 FACES = FACES.concat(['img/desktop-wallpaper.jpg', 'img/icon-hwaryeok.png',
   'img/icon-giving-up.png', 'img/icon-pocket.png',
-  'img/icon-bomb.png']);
+  'img/icon-bomb.png', 'img/icon-balloon.png']);
+// 풍선쇼 아트 (AetherAI — 3D 무대 배경 · 설명창 키아트 · 파열 VFX 4x4 시트)
+FACES = FACES.concat(['../balloon/img/stage-bg.jpg', '../balloon/img/tip.jpg',
+  '../balloon/img/vfx-pop.jpg']);
 // 주머니 괴수 아트 (AetherAI — 몬스터 6종 알파 PNG, 스킬 VFX 시트 7종 JPEG)
 FACES = FACES.concat(
   ['me-fire', 'me-water', 'me-grass', 'foe-fire', 'foe-water', 'foe-grass']

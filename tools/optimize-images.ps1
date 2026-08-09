@@ -65,6 +65,37 @@ public static class Chroma {
   // VFX 시트용 — 생성 모델이 "검은 배경" 지시를 무시하고 흰 배경으로 준다(실측).
   // 흰색일수록 투명(a = 1 − min(R,G,B)/255)으로 보고 검정 위에 눕힌다: out = C × a.
   // 게임이 'screen' 블렌드로 얹으므로 검정은 0 기여 — 결과적으로 이펙트 선만 떠오른다.
+  /* 코너 샘플 배경 치환 — 생성 모델이 지정한 배경색을 안 지킬 때의 구제 경로.
+     KeyMagenta는 순수 #FF00FF와의 거리로 판정하는데, 모델이 핫핑크(251,7,140)를 깔면
+     배경이 절반만 지워진 채 남는다. 여기서는 **실제로 온 코너 색**을 배경으로 보고
+     지정색으로 갈아 끼운다. tol은 전경과 배경의 색 거리보다 작게 잡을 것 —
+     풍선 아이콘 기준 배경(251,7,140) vs 분홍 풍선(255,107,138) 거리가 약 100이라 60이면 안전하다. */
+  public static void SwapCornerBg(Bitmap bmp, int nr, int ng, int nb, double tol) {
+    var r = new Rectangle(0, 0, bmp.Width, bmp.Height);
+    var d = bmp.LockBits(r, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+    int n = Math.Abs(d.Stride) * bmp.Height;
+    byte[] px = new byte[n];
+    Marshal.Copy(d.Scan0, px, 0, n);
+    int stride = Math.Abs(d.Stride);
+    // 네 모서리 평균 — 한 곳만 보면 서명·글리터가 끼었을 때 통째로 어긋난다
+    int[] xs = { 2, bmp.Width - 3, 2, bmp.Width - 3 };
+    int[] ys = { 2, 2, bmp.Height - 3, bmp.Height - 3 };
+    double sr = 0, sg = 0, sb = 0;
+    for (int k = 0; k < 4; k++) {
+      int o = ys[k] * stride + xs[k] * 4;
+      sb += px[o]; sg += px[o + 1]; sr += px[o + 2];
+    }
+    double kr = sr / 4, kg = sg / 4, kb = sb / 4;
+    for (int i = 0; i < n; i += 4) {
+      double dr = px[i + 2] - kr, dg = px[i + 1] - kg, db = px[i] - kb;
+      if (Math.Sqrt(dr * dr + dg * dg + db * db) <= tol) {
+        px[i] = (byte)nb; px[i + 1] = (byte)ng; px[i + 2] = (byte)nr; px[i + 3] = 255;
+      }
+    }
+    Marshal.Copy(px, 0, d.Scan0, n);
+    bmp.UnlockBits(d);
+  }
+
   public static void WhiteToBlack(Bitmap bmp) {
     var r = new Rectangle(0, 0, bmp.Width, bmp.Height);
     var d = bmp.LockBits(r, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
@@ -89,7 +120,7 @@ public static class Chroma {
 $root = Join-Path $PSScriptRoot ".."
 
 function Resize-Image {
-  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false, [bool]$Despill = $false, [bool]$Contain = $false)
+  param([string]$Src, [string]$Dst, [int]$W, [int]$H, [string]$Fmt, [int]$Quality = 80, [bool]$Key = $false, [bool]$WhiteKey = $false, [bool]$Despill = $false, [bool]$Contain = $false, [bool]$BgSwap = $false)
 
   # 주의: 파라미터가 [string]$Src 이고 PowerShell은 변수명 대소문자를 구분하지 않는다.
   # $src 에 Image를 대입하면 선언 타입에 맞춰 문자열로 변환된다. 반드시 다른 이름을 쓸 것.
@@ -115,6 +146,8 @@ function Resize-Image {
   if ($Key) { [Chroma]::KeyMagenta($bmp) }
   if ($Despill) { [Chroma]::DespillAll($bmp) }
   if ($WhiteKey) { [Chroma]::WhiteToBlack($bmp) }
+  # 무대색(#1b1830)으로 치환 — 다른 런처 아이콘들이 어두운 배경을 구워 온 것과 같은 결과
+  if ($BgSwap) { [Chroma]::SwapCornerBg($bmp, 27, 24, 48, 60.0) }
 
   if ($Fmt -eq 'jpg') {
     $codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
@@ -206,6 +239,17 @@ $jobs = @(
   @{ Dir = 'games\bomb\img'; In = 'bench-bg.png';  Out = 'bench-bg.jpg';  W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
   @{ Dir = 'games\bomb\img'; In = 'bomb-body.png'; Out = 'bomb-body.png'; W = 512; H = 512; Fmt = 'png'; Key = $true; Contain = $true },
   @{ Dir = 'games\bomb\img'; In = 'vfx-boom.png';  Out = 'vfx-boom.jpg';  W = 512; H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  # ── 풍선쇼 (3D 무대 배경 + 설명 아트 + 파열 VFX 4x4 시트) ──
+  # 배경은 WebGL 3D 뒤에 깔리는 2D 플레이트다 (gl.js는 투명 클리어 후 합성한다)
+  @{ Dir = 'games\balloon\img'; In = 'stage-bg.png'; Out = 'stage-bg.jpg'; W = 1280; H = 574; Fmt = 'jpg'; Q = 76 },
+  # 설명창(툴팁) 아트 — 표시 280px대라 800폭이면 레티나까지 충분
+  @{ Dir = 'games\balloon\img'; In = 'tip.png';      Out = 'tip.jpg';      W = 800;  H = 360; Fmt = 'jpg'; Q = 74 },
+  # 생성물이 "검은 배경" 지시를 또 무시하고 흰 배경으로 왔다 (코너 실측 246~254) — 화이트키잉
+  @{ Dir = 'games\balloon\img'; In = 'vfx-pop.png';  Out = 'vfx-pop.jpg';  W = 512;  H = 512; Fmt = 'jpg'; Q = 80; WhiteKey = $true },
+  # 아이콘도 "어두운 배경으로 채워라"를 두 번 무시하고 회색 배지를 붙여 왔다 (코너 실측
+  # 166,159,173 → 135,129,146). 몬스터와 같은 경로로 내렸다 — 마젠타 배경 + 크로마키.
+  # 투명 PNG라 데스크탑의 .dIconArt 어두운 타일이 그대로 배경이 된다
+  @{ Dir = 'games\shell\img';   In = 'icon-balloon.png'; Out = 'icon-balloon.png'; W = 96; H = 96; Fmt = 'png'; BgSwap = $true },
   # ── UI 크롬 아이콘 (마젠타 키잉 → 알파 PNG). 표시 12~15px → 64px이면 충분 ──
   @{ Dir = 'games\shell\img'; In = 'ui-logo.png';  Out = 'ui-logo.png';  W = 64; H = 64; Fmt = 'png'; Key = $true },
   @{ Dir = 'games\shell\img'; In = 'ui-chat.png';  Out = 'ui-chat.png';  W = 64; H = 64; Fmt = 'png'; Key = $true },
@@ -248,8 +292,9 @@ foreach ($j in $jobs) {
   $wkey = if ($j.ContainsKey('WhiteKey')) { $j.WhiteKey } else { $false }
   $desp = if ($j.ContainsKey('Despill')) { $j.Despill } else { $false }
   $cont = if ($j.ContainsKey('Contain')) { $j.Contain } else { $false }
+  $bgsw = if ($j.ContainsKey('BgSwap')) { $j.BgSwap } else { $false }
   # 변환이 실패했는데도 원본을 지우거나 "줄었다"고 출력하면 안 된다 (실제로 그런 적 있음)
-  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey -Despill $desp -Contain $cont }
+  try { Resize-Image -Src $src -Dst $tmp -W $j.W -H $j.H -Fmt $j.Fmt -Quality $q -Key $key -WhiteKey $wkey -Despill $desp -Contain $cont -BgSwap $bgsw }
   catch {
     Write-Host ("실패    {0} — {1}" -f $j.In, $_.Exception.Message)
     if (Test-Path $tmp) { Remove-Item $tmp -Force }

@@ -36,6 +36,9 @@
     'giving-up': 'games/giving-up/img/sky-bg.jpg',
     pocket: 'games/pocket/img/arena-bg.jpg',
     bomb: 'games/bomb/img/bench-bg.jpg',
+    // 풍선쇼만 배경 대신 전용 키아트를 쓴다 — 3D 무대 배경은 조명만 있는 빈 무대라
+    // 툴팁에서 "무슨 게임인지"를 못 말한다 (다른 게임은 배경 자체가 설명이 된다)
+    balloon: 'games/balloon/img/tip.jpg',
   };
 
   // 밈 감성으로 통일 — 제목은 "각오"가 아니라 "이미 망할 걸 아는 사람의 농담"이다.
@@ -2346,6 +2349,9 @@
   }
   var sfxLast = {};
   Shell.sfx = {
+    // BGM처럼 지속되는 소리는 tone/noise로 못 만든다 (노드를 들고 있어야 멈출 수 있다).
+    // 컨텍스트를 두 개 만들면 브라우저 상한에 걸리고 음량도 따로 논다 — 하나를 나눠 쓴다
+    ctx: audio,
     // 같은 효과음의 동시 다발 재생은 100ms 안에서 1회로 병합 — 큰 자극 겹침 방지 (규약 3, critic M2)
     gate: function (key) {
       var t = performance.now();
