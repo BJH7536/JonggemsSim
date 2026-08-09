@@ -15,8 +15,14 @@ NAN 2026은 **외부 에셋 사용 시 출처와 라이선스를 AI 활용 기�
 - **원본 위치**: `C:/stopresent/Unity/TheSword/Assets/@Resources/Sprites/Emoji`
 - **판정**: 사용 승인 — 팀 자작 (사용자 확인 2026-08-07, "무료라고 판단되는 것들은 사용" 지시)
 - **근거**: TheSword 자체 캐릭터(Adventurer/MagicalSword)를 그린 손그림 말풍선 리액션 시퀀스. 스톡에서 나올 수 없는 IP 종속 아트.
-- **배포 사본**: `games/shell/faces/` — Adventurer 7종을 96px로 가공해 스트리머 캠으로 사용 중.
-  제출물 4번(AI 활용 기술 문서)의 에셋 출처란에 "팀 자작 (TheSword 프로젝트)"로 기재할 것.
+- **배포 사본**: `games/shell/faces/` — 처음에는 Adventurer 7종을 96px로 가공해 그대로 썼다.
+- **⚠ 정정 (2026-08-10)**: 현재 배포 중인 `games/shell/faces/*.png` 7종은 **이 손그림이 아니다.**
+  커밋 `e11c487`에서 AetherAI(GPT Image 1.5) 생성물로 전량 교체됐고
+  (`tools/aether-assets.json`의 `cam-*`), 이 손그림은 그 생성의 **레퍼런스 이미지**로 쓰였다
+  (프롬프트: *"Use the reference image as the exact same character … Change ONLY the facial expression"*).
+  따라서 제출물 4번 에셋 출처란에는 **"AetherAI 생성 — 팀 자작 일러스트를 레퍼런스로 사용"**으로
+  기재한다 (`docs/submission/ai-tech-doc.md` §3 반영 완료). 원본 손그림 자체는 배포물이
+  참조하지 않으므로 이 디렉터리는 여전히 스테이징이다.
 
 | 파일 | 크기 |
 |---|--:|
