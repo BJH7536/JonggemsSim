@@ -421,6 +421,7 @@
       this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
       this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
+      if (Shell.Crowd) Shell.Crowd.init(); // 시청자 100종 중 88명을 발화층에 합류 (관측단 제외)
       if (Shell.Dex) Shell.Dex.init(); // 영입된 캐스트를 채팅에 복원 (ADR-006)
       if (Shell.Clips) Shell.Clips.init(); // 보관된 클립 개수 (아이콘 배지용)
       this.applyGear(); // 보유 방송용품(장식)을 화면에 반영

@@ -47,6 +47,9 @@
     roster: function () {
       var st = this.load(), out = [];
       (window.JONG_CAST || []).forEach(function (p) {
+        // 군중(crowd.js가 합류시킨 100종 발화 개체)은 판정층이 아니다 — 도감 칸을 열지 않는다.
+        // 발화층/판정층 분리(§) 유지: 파장이 발화 성공 여부에 물들면 C3b가 깨진다
+        if (p.crowd) return;
         out.push({ p: p, evs: DATA.base_triggers[p.nick] || [] });
       });
       DATA.unlocks.forEach(function (u) {

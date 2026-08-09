@@ -125,6 +125,10 @@
     MEMORY: global.JONG_REGULARS || {},
     pickByTone: function (tone) {
       var c = this.personas.filter(function (p) { return p.tones.indexOf(tone) >= 0; });
+      // 단골 기억은 저작 캐스트가 맡는다 — "3회차부터 봤어요"를 군중 개체가 말하면 기억이
+      // 아니라 소음이 된다. 저작 캐스트에 해당 톤이 없을 때만 군중까지 내려간다
+      var core = c.filter(function (p) { return !p.crowd; });
+      if (core.length) c = core;
       return c.length ? c[rnd(0, c.length - 1)] : null;
     },
     // 동기 코어 — selftest가 직접 호출한다. 성공 시 발화 텍스트, 폐기 시 null.
@@ -185,6 +189,15 @@
       if (wantFact) {
         pool = T.facts.slice();
       } else {
+        // 개체 고유 발화 — 자기 목소리를 가진 개체(100종 speech.exemplars, data/personas/viewers.js)는
+        // 공용 어휘보다 자기 줄을 먼저 시도한다. 상황은 버스트 무게로 가른다 (큰 사건 = spike).
+        // 게이트에 걸리면 아래 공용 어휘로 그대로 내려간다 — 침묵이 늘지 않는다.
+        var own = persona.say && persona.say[(this.BURST[ev] || 1) >= 3 ? 'spike' : 'observe'];
+        if (own && this.verify(own, {})) {
+          this.history.push(own);
+          if (this.history.length > 10) this.history.shift();
+          return own;
+        }
         pool = T.flavor.filter(function (f) { return persona.tones.indexOf(f[0]) >= 0; });
         pool = (pool.length ? pool : T.flavor).slice();
       }
@@ -234,7 +247,8 @@
       var w = [], sw = 0;
       for (i = 0; i < pool.length; i++) {
         var rel = share(pool[i].arch) * archN; // 1.0 = 평균적인 존재감
-        w[i] = CAST_FLOOR + rel * rel;
+        // 개체별 등장 가중치 (군중 100종의 spawn×volume). 없으면 1.0 — 저작 캐스트는 그대로다
+        w[i] = (CAST_FLOOR + rel * rel) * (pool[i].weight != null ? pool[i].weight : 1);
         sw += w[i];
       }
       var r = Math.random() * sw;

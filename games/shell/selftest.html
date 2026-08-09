@@ -27,6 +27,7 @@
 <script src="../../engine/llm.js"></script>
 <script src="shell.js"></script>
 <script src="dex.js"></script>
+<script src="crowd.js"></script>
 <script src="../../data/events/hwaryeok.js"></script>
 <script src="../hwaryeok/game.js"></script>
 <script src="../../data/events/giving-up.js"></script>
@@ -173,6 +174,33 @@ ok('캐스트 톤이 전부 공인 6종 안이다', Chat.personas.every(function
     return ['hype', 'worry', 'info', 'mock', 'cheer', 'question'].indexOf(t) >= 0;
   });
 }));
+// ---- 군중 합류 (crowd.js) — 100종 판정층 중 88명이 발화층에 올라왔는지 ----
+// 조용히 빠지면 채팅이 8명 돌려막기로 되돌아간다. 그 퇴화는 눈으로는 잘 안 보인다.
+Shell.Crowd.init(); // 부팅 경로 없이 단독 호출 (joined 플래그로 멱등)
+ok('군중 88명이 발화 캐스트에 합류한다 (관측단 12명 제외)', Shell.Crowd.joined === 88);
+ok('관측단은 발화층에 없다 (발화층/판정층 분리 — ADR-006)', (function () {
+  var imm = window.JONG_VIEWERS.immortal_observers;
+  var names = window.JONG_VIEWERS.personas.filter(function (p) { return imm.indexOf(p.id) >= 0; })
+    .map(function (p) { return p.name; });
+  return Chat.personas.every(function (p) { return names.indexOf(p.nick) < 0; });
+})());
+ok('군중은 도감 칸을 열지 않는다 (파장이 발화에 물들지 않는다 — C3b)',
+   Shell.Dex.roster().every(function (r) { return !r.p.crowd; }));
+// 군중이 저작 캐스트를 덮으면 티키타카(ADR-003)·단골 기억이 조용히 사라진다 — 88 대 8이라
+// 배율(crowd.js CROWD_GAIN) 하나만 어긋나도 그렇게 된다. 표본 2000회로 대역을 못박는다.
+ok('저작 캐스트 8명이 군중에 묻히지 않는다 (발화 몫 25~50%)', (function () {
+  var core = 0;
+  for (var i = 0; i < 2000; i++) if (!Chat.pickPersona({}).crowd) core++;
+  return core / 2000 > 0.25 && core / 2000 < 0.5;
+})());
+ok('군중 개체도 원형·톤 계약을 지킨다', Chat.personas.filter(function (p) { return p.crowd; })
+   .every(function (p) {
+     return p.tones.length && ['thrill', 'fan', 'expert', 'casual'].indexOf(p.arch) >= 0 &&
+       p.tones.every(function (t) {
+         return ['hype', 'worry', 'info', 'mock', 'cheer', 'question'].indexOf(t) >= 0;
+       });
+   }));
+
 Chat.init(document.createElement('div'));
 Chat.load({
   t: { facts: ['수습 +{gain}!!'], flavor: [['hype', '와 미쳤다'], ['mock', '운빨 ㅋㅋ']] },
@@ -191,6 +219,17 @@ ok('어휘에 없는 이벤트는 조용히 무시된다 (셸이 죽지 않는�
 Chat.history.length = 0;
 var composed = Chat.compose({ nick: 'x', color: '#fff', tones: ['hype'] }, 't', { gain: '9,999' }, true);
 eq('슬롯 치환 결과', composed, '수습 +9,999!!');
+
+// ---- 개체 고유 발화 (crowd.js speech.exemplars) — 자기 목소리가 공용 어휘를 이긴다 ----
+Chat.history.length = 0;
+eq('고유 발화가 공용 어휘보다 먼저 나온다',
+   Chat.compose({ nick: 'y', color: '#fff', tones: ['hype'], say: { observe: '내 목소리' } }, 't', {}, false),
+   '내 목소리');
+Chat.history.length = 0;
+eq('상황에 맞는 고유 발화가 없으면 공용 어휘로 내려간다',
+   Chat.compose({ nick: 'y', color: '#fff', tones: ['mock'], say: { spike: '스파이크 전용' } }, 't', {}, false),
+   '운빨 ㅋㅋ');
+Chat.history.length = 0;
 
 // ---- 티키타카·관계 변수 (ADR-003) — 연출 전용이지만 조용히 죽으면 채팅이 1홉으로 퇴화한다 ----
 // 주의: trust 검사는 Chat.load로 어휘를 갈아치우므로 위의 어휘 의존 검사들 "뒤"에 있어야 한다.
@@ -688,9 +727,12 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 // 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
-  '../../index.html', 'shell.css', 'config.js', 'shell.js', 'dex.js',
+  '../../index.html', 'shell.css', 'config.js', 'shell.js', 'dex.js', 'clips.js', 'crowd.js',
   '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js', '../../data/tikitaka.js',
   '../../data/regulars.js', '../../data/dex.js',
+  // 100종 캐리어 — 도감 관측단(12명)에 이어 군중 발화(88명)까지 여기서 온다. 88KB로
+  // 배포물 중 가장 무겁다: 예산 감시 목록에서 빠져 있으면 조용히 자라도 아무도 모른다
+  '../../data/personas/viewers.js',
   '../../data/events/hwaryeok.js', '../hwaryeok/game.js',
   '../../data/events/giving-up.js', '../giving-up/game.js',
   '../../data/events/pocket.js', '../pocket/game.js',

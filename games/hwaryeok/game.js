@@ -19,10 +19,11 @@
   var SHOW_TIME = 180;
   var START_VIEWERS = 300;
 
+  // 모드 선택 UI는 없다 — 화구에 팬을 올리면 자동으로 현재 등급이 붙는다.
+  // '정석'(×1.0)은 제외: 사고를 피하는 선택지는 이 게임의 반대말이다.
   var MODES = [
-    { n: '정석', rate: 0.05, mul: 1.0 },
     { n: '속성', rate: 0.25, mul: 1.8 },
-    { n: '무모', rate: 0.60, mul: 3.2, lockAt: 90000 },
+    { n: '무모', rate: 0.60, mul: 3.2 }, // 90,000명 언락 후 자동 승격
   ];
   var ACC = [
     { n: '팬 과열',    win: 2.5, ok: 180, fail: '요리 손실' },
@@ -111,7 +112,7 @@
     // ---------- 화구 조작 스트립 ----------
     function buildStrip() {
       panel.innerHTML = '<div class="strip4">' + st.burners.map(function (b) {
-        return '<div class="bcol" id="hwcol' + b.i + '"></div>';
+        return '<div class="bcol" id="hwcol' + b.i + '" data-act="press" data-b="' + b.i + '"></div>';
       }).join('') + '</div>';
       st.burners.forEach(function (b) { buildCol(b.i); });
     }
@@ -132,13 +133,10 @@
         return;
       }
       if (!b.dish) {
+        var m = curMode();
         el.innerHTML = '<div class="bnum">화구 ' + (i + 1) + '</div>' +
-          '<div class="modes">' + MODES.map(function (m, mi) {
-            var locked = m.lockAt && !st.unlocked.mode3;
-            return '<button data-act="start" data-b="' + i + '" data-m="' + mi + '"' + (locked ? ' disabled' : '') + '>' +
-              (locked ? '<img class="uiIco lock" src="games/shell/img/ui-lock.png" alt=""> ' : '') + m.n + ' ×' + m.mul + '</button>';
-          }).join('') + '</div>' +
-          '<div class="bhint">사고율 ' + MODES.map(function (m) { return Math.round(m.rate * 100) + '%'; }).join(' / ') +
+          '<div class="bdish" style="color:#ffb447">' + (i + 1) + ' — 팬 올리기</div>' +
+          '<div class="bhint">' + m.n + ' · 수입 ×' + m.mul + ' · 사고율 ' + Math.round(m.rate * 100) + '%' +
           '<br>빈 화구는 시청자가 샌다</div>';
         return;
       }
@@ -147,19 +145,18 @@
         var a = ACC[b.acc.ti], fm = FRESH_MULT[st.fresh[b.acc.ti]];
         accHtml = '<div class="accname">⚠ ' + a.n + ' <span class="accfresh">신선도 ' + Math.round(fm * 100) + '%</span></div>' +
           '<div class="win"><i id="hwwin' + i + '" style="width:100%"></i></div>' +
-          '<button class="fixbtn" id="hwfix' + i + '" data-act="fix" data-b="' + i + '">' + (i + 1) + ' — 수습! ×1.0</button>';
+          '<button class="fixbtn" id="hwfix' + i + '">' + (i + 1) + ' — 수습! ×1.0</button>';
       }
       el.innerHTML = '<div class="bnum">화구 ' + (i + 1) + '</div>' +
         '<div class="bdish">' + b.dish.n + '</div>' +
         '<div class="bmode">' + b.mode.n + ' · 수입 ×' + b.mode.mul + '</div>' +
         '<div class="prog"><i id="hwprog' + i + '" style="width:' + Math.round(b.p * 100) + '%"></i></div>' +
-        (accHtml || '<div class="bhint" style="margin-top:10px">조리 중…</div>');
+        (accHtml || '<div class="bhint" style="margin-top:10px">조리 중… <b>' + (i + 1) + '</b> 누르면 팬을 내린다</div>');
     }
     function onPanelClick(e) {
-      var t = e.target.closest('[data-act]');
+      var t = e.target.closest('[data-act="press"]');
       if (!t || !stage.live) return;
-      if (t.dataset.act === 'start') startDish(+t.dataset.b, +t.dataset.m);
-      else if (t.dataset.act === 'fix') fix(+t.dataset.b);
+      press(+t.dataset.b);
     }
     panel.addEventListener('click', onPanelClick);
 
@@ -184,14 +181,28 @@
     }
 
     // ---------- 조리 ----------
-    function startDish(i, mi) {
+    function curMode() { return st.unlocked.mode3 ? MODES[1] : MODES[0]; }
+
+    // 번호 키 = 화구 하나의 유일한 조작. 상태가 무엇을 할지 정한다:
+    // 사고 중이면 수습, 조리 중이면 팬 내림(오조작 페널티), 비었으면 팬 올림.
+    function press(i) {
       var b = st.burners[i];
-      if (!b.on || b.broken > 0 || b.dish || !stage.live) return;
-      if (MODES[mi].lockAt && !st.unlocked.mode3) return;
+      if (!b || !b.on || b.broken > 0 || !stage.live) return;
+      if (b.acc) fix(i);
+      else if (b.dish) pullPan(b);
+      else startDish(i);
+    }
+    function startDish(i) {
+      var b = st.burners[i];
       b.dish = DISHES[rnd(0, DISHES.length - 1)];
-      b.mode = MODES[mi]; b.p = 0; b.acc = null;
+      b.mode = curMode(); b.p = 0; b.acc = null;
       sfxIgnite();
       buildCol(i);
+    }
+    function pullPan(b) { // 규약 2 — 손실은 연출하지 않는다. 조용히 사라진다
+      stage.ticker('화구 ' + (b.i + 1) + ' — 팬을 내렸다 (' + b.dish.n + ' 폐기)', true);
+      b.dish = null; b.mode = null; b.p = 0;
+      buildCol(b.i);
     }
     function completeDish(b) {
       var gain = Math.round(40 * b.mode.mul);
@@ -297,7 +308,7 @@
 
     buildStrip();
     renderHUD();
-    stage.ticker('방송 시작! 화구에 요리를 올려라', false);
+    stage.ticker('방송 시작! 1~4 키로 화구에 팬을 올려라', false);
 
     // ================= 인스턴스 =================
     return {
@@ -371,7 +382,7 @@
 
       key: function (e) {
         var n = parseInt(e.key, 10);
-        if (n >= 1 && n <= 4) fix(n - 1);
+        if (n >= 1 && n <= 4) press(n - 1);
       },
 
       summary: function () {
@@ -472,8 +483,8 @@
 
       // 가스 불꽃 (모드별 색·세기)
       var mi = MODES.indexOf(b.mode);
-      var cols = [['#4aa0ff', '#b0d8ff'], ['#ff9040', '#ffd27a'], ['#ff4a2d', '#ffb447']][mi] || ['#4aa0ff', '#b0d8ff'];
-      var power = [8, 12, 17][mi] || 8;
+      var cols = [['#ff9040', '#ffd27a'], ['#ff4a2d', '#ffb447']][mi] || ['#ff9040', '#ffd27a'];
+      var power = [12, 17][mi] || 12;
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       for (var k = 0; k < 8; k++) {
         var ang = k / 8 * TAU;
@@ -622,7 +633,9 @@
     usesChain: true,
     chat: window.HWARYEOK_CHAT,
     preload: loadArt,
-    foot: '<kbd>1</kbd>~<kbd>4</kbd> 또는 버튼으로 수습 — <b>빨리 반응하라.</b> 배율은 사고 유형이 정한다(창이 짧을수록 높다, 최대 ×2.5)<br>' +
+    foot: '화구 번호 <kbd>1</kbd>~<kbd>4</kbd> 하나로 전부 조작한다 — 빈 화구면 <b>팬을 올리고</b>, 사고 중이면 <b>수습</b>. ' +
+          '조리 중에 누르면 팬이 내려가니 <b>수습할 때만 눌러라.</b><br>' +
+          '수습은 <b>빨리 반응하라</b> — 배율은 사고 유형이 정한다(창이 짧을수록 높다, 최대 ×2.5)<br>' +
           '같은 사고만 반복 수습하면 시청자가 물린다(신선도 감쇠) · 기름 화재를 놓치면 대참사(+시청자 폭등, 화구 12초 파손) · 빈 화구는 조용히 시청자를 잃는다',
     thumb: function (c, w, h) {
       var g = c.createLinearGradient(0, 0, 0, h);
