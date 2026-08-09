@@ -94,13 +94,16 @@ moments: [{ nick, trust, line: ['tone', '발화'] }]               // 관계 변
 
 `data/dex.js` — `window.JONG_DEX = { base_triggers, unlocks }` (ADR-002 JSON 캐리어).
 판정·해금 로직은 `games/shell/dex.js`(무대), 데이터 스키마는 관객, 값은 기획 소유.
-시뮬 레이어 v0.2 §5·§8의 최소 실장 — 칸 = (개체, 이벤트), 36태그 데이터 착지 시 태그로 승격.
+시뮬 레이어 v0.2 §5·§8의 최소 실장 — **칸 = (개체, 태그)** (2026-08-09 태그 승격, ADR-006 예고분).
+이벤트 → 태그 번역은 `data/events/tagmap.js`(v0.2 §6.2 초안, §11.2-2 미결)가 맡고,
+판정층 로스터에는 100종 데이터(`data/personas/viewers.js`)의 **불멸 관측단 12종**이
+발화 없이 합류한다 (발화층/판정층 분리 — `data/personas/README.md`).
 
 ```js
-base_triggers: { "닉": ["이벤트", ...] }          // 기본 캐스트 8종의 반응 칸
+base_triggers: { "닉": ["태그", ...] }            // 기본 캐스트 8종의 반응 칸 (36태그)
 unlocks: [{ nick, color, tones, arch,             // cast.js와 같은 페르소나 스키마 +
             cost: { subs?, coins? },              // 해금 비용 — 구독자(시청자 파생)·코인(도네 파생) 소비
-            triggers: [...], repellents: [...],   // 반응 칸 — 전 게임 이벤트 이름만 (validate가 도달 가능성 검사)
+            triggers: [...], repellents: [...],   // 반응 칸 — tagmap이 발행하는 36태그만 (validate가 도달 가능성 검사)
             desc }]
 ```
 

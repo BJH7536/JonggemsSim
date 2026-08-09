@@ -114,6 +114,47 @@ for (const name of eventFiles) {
   }
 }
 
+// ---- 3.5 태그 매핑 — data/events/tagmap.js (시뮬 레이어 v0.2 §6.2, 태그 승격의 다리) ----
+// 판정층이 도달할 수 있는 태그 우주 = tagmap이 발행하는 태그의 합집합.
+// 태그 어휘의 정본은 100종 JSON(소윤) — 매핑이 어휘 밖 태그를 쓰면 오타다.
+const reachTags = new Set();
+{
+  const file = 'data/events/tagmap.js';
+  const src = readFileSync(join(ROOT, file), 'utf8');
+  const m = src.match(/window\.JONG_TAGMAP\s*=\s*(\{[\s\S]*\});/);
+  let map = null;
+  if (!m) bad(file, 'window.JONG_TAGMAP = {...}; 대입문이 없다');
+  else try { map = JSON.parse(m[1]); }
+  catch (e) { bad(file, `우변이 엄격한 JSON이 아니다 — ${e.message}`); }
+  const vocab = new Set();
+  try {
+    const pj = JSON.parse(readFileSync(join(ROOT, 'data/personas/viewer_personas_100_v02.json'), 'utf8'));
+    pj.personas.forEach(p => { (p.triggers || []).forEach(t => vocab.add(t)); (p.repellents || []).forEach(t => vocab.add(t)); });
+  } catch (e) { bad('data/personas/viewer_personas_100_v02.json', `읽기 실패 — ${e.message}`); }
+  if (map) for (const [gid, evs] of Object.entries(map)) {
+    for (const [ev, tags] of Object.entries(evs)) {
+      if (!allEvents.has(ev)) bad(file, `${gid}.${ev}: 어느 게임 어휘에도 없는 이벤트`);
+      tags.forEach(t => {
+        if (vocab.size && !vocab.has(t)) bad(file, `${gid}.${ev}: '${t}'는 36태그 어휘에 없다 (오타)`);
+        reachTags.add(t);
+      });
+    }
+  }
+  // 불멸 관측단(판정층 상시 캐스트, dex 로스터 합류) — 개체당 최소 1개 trigger 도달 가능 (§11.3).
+  // 전 태그 도달을 요구하지 않는 이유: 표현축(§6.4) 등 미착지 태그가 원본 데이터에 이미 있다 —
+  // "전부 도달 불가 = 영원히 침묵"만이 결함이다.
+  try {
+    const pj = JSON.parse(readFileSync(join(ROOT, 'data/personas/viewer_personas_100_v02.json'), 'utf8'));
+    const byId = new Map(pj.personas.map(p => [p.id, p]));
+    (pj.immortal_observers || []).forEach(id => {
+      const p = byId.get(id);
+      if (!p) return bad('data/personas/viewer_personas_100_v02.json', `불멸 관측자 '${id}'가 personas에 없다`);
+      if (!(p.triggers || []).some(t => reachTags.has(t)))
+        bad('data/dex.js', `관측단 ${id}(${p.name}): 도달 가능한 trigger가 0개 — 영원히 침묵한다`);
+    });
+  } catch (e) { /* 위에서 이미 bad 처리 */ }
+}
+
 // ---- 4. 반응 도감·캐스트 해금 — data/dex.js (contract.md 7절, ADR-006) ----
 {
   const file = 'data/dex.js';
@@ -125,9 +166,10 @@ for (const name of eventFiles) {
   catch (e) { bad(file, `우변이 엄격한 JSON이 아니다 (쌍따옴표·후행 콤마 확인) — ${e.message}`); }
   if (dex) {
     const ARCHES = ['thrill', 'fan', 'expert', 'casual'];
-    // 칸 도달 가능성 (v0.2 §11.3) — 없는 이벤트를 트리거로 쓰면 영원히 침묵하는 칸이다
+    // 칸 도달 가능성 (v0.2 §11.3) — 태그 승격 후 칸 = (개체, 태그). tagmap이 발행하지 않는
+    // 태그를 트리거로 쓰면 영원히 침묵하는 칸이다 (스트리머 표현축 태그는 착지 시 합류)
     const reachable = (who, evs) => evs.forEach(ev => {
-      if (!allEvents.has(ev)) bad(file, `${who}: '${ev}'는 어느 게임 어휘에도 없다 — 도달 불가 칸`);
+      if (!reachTags.has(ev)) bad(file, `${who}: '${ev}'는 tagmap이 발행하지 않는 태그 — 도달 불가 칸`);
     });
     for (const [nick, evs] of Object.entries(dex.base_triggers || {})) {
       if (!castByNick.has(nick)) bad(file, `base_triggers '${nick}': 캐스트에 없다`);

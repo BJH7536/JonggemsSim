@@ -318,6 +318,7 @@ body {
 .dexBar { flex: 1; max-width: 220px; height: 6px; background: rgba(0,0,0,.4); border: 1px solid #2a2437; border-radius: 3px; overflow: hidden; }
 .dexBar i { display: block; height: 100%; background: var(--amber); border-radius: 3px; }
 .dexN { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.dexObs { flex: 0 0 auto; font-size: 9px; font-style: normal; letter-spacing: 1px; color: var(--dim); border: 1px solid #2a2437; border-radius: 3px; padding: 0 4px; }
 .dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px; margin-top: 7px; }
 .dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
 .dexCard b { font-size: 13px; }
@@ -360,7 +361,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 /* 리플레이 창 — 진짜 스트리머의 OBS 리플레이 소스. 게임 위 좌상단에서 클립 영상이
    실제로 재생된다 (INSTANT REPLAY / 하이라이트 다시보기 공용). 면은 AetherAI 플레이트 */
 #replayWin {
-  position: absolute; top: 76px; left: -460px; z-index: 3; width: 340px;
+  position: absolute; top: 76px; left: -720px; z-index: 3; width: 680px;
   border: 1px solid rgba(0,255,163,.55); border-radius: 9px; overflow: hidden;
   box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 26px rgba(0,255,163,.2);
   pointer-events: none; opacity: 0;
@@ -371,7 +372,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   font-size: 10px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
 }
 .rwHead .rwSave { margin-left: auto; color: #c8ffe8; font-weight: 400; letter-spacing: 0; }
-#replayWin video, #replayWin img { display: block; width: 100%; height: 133px; object-fit: cover; background: #000; }
+#replayWin video, #replayWin img { display: block; width: 100%; height: 266px; object-fit: cover; background: #000; }
 .rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
 .rwCap b { color: #7dffd0; }
 /* 클립 하단 후원 줄 (치지직 문법) — 연출 전용, 코인 무관 */
@@ -382,7 +383,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 /* 리플레이가 실제로 재생될 시간을 준다 — 6.6초 (진입 + 재생 ~5.6 + 퇴장) */
 #replayWin.show { animation: rwin 6.6s cubic-bezier(.2,.9,.3,1) forwards; }
 @keyframes rwin {
-  0% { left: -460px; opacity: 0; }
+  0% { left: -720px; opacity: 0; }
   5% { left: 12px; opacity: 1; }
   92% { left: 12px; opacity: 1; }
   100% { left: 12px; opacity: 0; transform: translateY(-8px); }
@@ -929,7 +930,7 @@ body.fullshow #chatCol { background: transparent; }
 
 /* 클립 미디어 비율 — 합성 녹화(1260:430)와 구판 스틸(960:430)이 섞이므로 비율 고정 대신 auto */
 .clipCard img, .clipCard video { height: auto; }
-#replayWin video, #replayWin img { height: auto; max-height: 170px; } /* 영상이 창의 주인공 */
+#replayWin video, #replayWin img { height: auto; max-height: 300px; } /* 영상이 창의 주인공 — 2배 확대 (사용자 피드백). 300 상한 = 구판 스틸(960:430)이 뷰포트 바닥을 안 뚫는 선 */
 /* 전체화면에선 하단 HUD(패널+풋)가 캠 자리를 덮는다 — 캠을 HUD 위로 올린다 */
 body.fullshow #camBox { bottom: 235px; }
 

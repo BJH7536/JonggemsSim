@@ -829,7 +829,7 @@
           if (ev === 'donation') self.showDonation(facts);
           self.camReact(ev); Chat.react(ev, facts);
           self.maybeClip(ev); // 관측 전용 — 흥미도 판정·클립 캡처 (수치 무관여, C3)
-          if (Shell.Dex) Shell.Dex.judge(ev); // 반응 도감 — 결정론 칸 판정 (메타 통화만, ADR-006)
+          if (Shell.Dex) Shell.Dex.judge(self.game.id, ev); // 반응 도감 — 결정론 칸 판정 (메타 통화만, ADR-006)
         },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },

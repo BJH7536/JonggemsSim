@@ -20,6 +20,8 @@
 <script src="../../data/tikitaka.js"></script>
 <script src="../../data/regulars.js"></script>
 <script src="../../data/dex.js"></script>
+<script src="../../data/personas/viewers.js"></script>
+<script src="../../data/events/tagmap.js"></script>
 <script src="config.js"></script>
 <script src="../../engine/chat.js"></script>
 <script src="../../engine/llm.js"></script>
@@ -215,19 +217,30 @@ ok('없는 키는 조용히 침묵한다', Chat.memoryNow('없는키', {}) === n
   try {
     Shell.Dex.st = null; localStorage.removeItem('jgs-dex-v1');
     Shell.Dex.newShow();
-    ok('트리거 매치가 칸을 열고 파장을 올린다', (function () {
-      Shell.Dex.judge('disaster'); // 불멍장인·ㅋㅋ자판기·잠수함(미영입) — 활성 2칸
-      return Shell.Dex.waveNew === 2;
+    // 태그 승격 후: disaster → catastrophic_fail (tagmap) →
+    // 발화 캐스트 불멍장인·ㅋㅋ자판기 + 관측단 V-051·V-076 = 4칸 (잠수함·밈제조기는 미영입)
+    ok('트리거 매치가 칸을 열고 파장을 올린다 (태그 판정)', (function () {
+      Shell.Dex.judge('hwaryeok', 'disaster');
+      return Shell.Dex.waveNew === 4;
     })());
     ok('같은 칸 반복은 파장을 다시 올리지 않는다 (미개봉→들음 전이만)', (function () {
-      Shell.Dex.judge('disaster');
-      return Shell.Dex.waveNew === 2;
+      Shell.Dex.judge('hwaryeok', 'disaster');
+      return Shell.Dex.waveNew === 4;
     })());
-    ok('미등록 이벤트는 조용히 무시된다', (function () {
-      try { Shell.Dex.judge('없는이벤트'); return Shell.Dex.waveNew === 2; } catch (e) { return false; }
+    ok('매핑에 없는 이벤트·게임은 조용히 무시된다', (function () {
+      try {
+        Shell.Dex.judge('hwaryeok', '없는이벤트');
+        Shell.Dex.judge('없는게임', 'disaster');
+        return Shell.Dex.waveNew === 4;
+      } catch (e) { return false; }
+    })());
+    ok('streamer_* 태그는 번역 없이 직접 판정된다 (표현축 경로)', (function () {
+      // streamer_scream trigger는 관측단 V-051(절규수집가)뿐 — 1칸
+      Shell.Dex.judge('hwaryeok', 'streamer_scream');
+      return Shell.Dex.waveNew === 5;
     })());
     ok('파장 배율 = 1 + 0.15×칸, 상한 8칸', (function () {
-      var m2 = Math.abs(Shell.Dex.waveMult() - 1.3) < 1e-9;
+      var m2 = Math.abs(Shell.Dex.waveMult() - 1.75) < 1e-9; // 5칸
       Shell.Dex.waveNew = 99;
       var mCap = Math.abs(Shell.Dex.waveMult() - 2.2) < 1e-9;
       return m2 && mCap;
@@ -241,10 +254,12 @@ ok('없는 키는 조용히 침묵한다', Chat.memoryNow('없는키', {}) === n
       return r === 'ok' && Shell.ch.subs === 5 && joined;
     })());
     ok('중복 영입은 거부·잔액 불변', Shell.Dex.hire('유목민') === 'owned' && Shell.ch.subs === 5);
-    ok('영입 캐스트의 트리거도 칸을 연다', (function () {
+    ok('영입 캐스트·관측단 repellent 칸도 열린다 (§5.1)', (function () {
       Shell.Dex.newShow();
-      Shell.Dex.judge('stuck'); // 길가던행인 + 유목민(영입됨)
-      return Shell.Dex.waveNew === 2;
+      // stuck → no_stakes: 길가던행인 + 유목민(영입) + 관측단 repellent 6
+      // (V-001·V-006·V-051·V-071·V-076·V-090) = 8칸
+      Shell.Dex.judge('giving-up', 'stuck');
+      return Shell.Dex.waveNew === 8;
     })());
   } finally {
     Shell.ch = savedCh;
