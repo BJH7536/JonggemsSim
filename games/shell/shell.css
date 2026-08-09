@@ -1057,6 +1057,19 @@ body:has(#overlay:not(.hidden)) #dayChip { display: none; }
 .pdNote .rlab { font-size: 21px; margin-bottom: 8px; }
 .pdnRow { font-size: 23px; color: #c9cdd2; padding: 2px 0; }
 .pdnRow b { color: var(--amber2); }
+.pdnRow.miss { color: var(--dim); }
+/* 쪽지 안에서는 한 줄에 하나씩 — 리포트처럼 가로로 흘리면 어느 미션이 끝났는지 안 읽힌다 */
+.pdNote .pdMis { flex-direction: column; gap: 4px; font-size: 22px; }
+/* 미션 완료 — 획득은 과하게 (규약 2). 미달 줄은 위의 .miss로 조용히 */
+.pdnGot { margin-top: 8px; font-size: 23px; color: var(--plat2); }
+.pdnGot b { color: var(--plat); }
+.pdNote .rlab.pdNew { color: var(--plat); }
+/* 결과 → 새 미션 교체가 갈아끼운 티가 나야 "새로 왔다"가 읽힌다 */
+.pdIn { animation: pdin .42s ease-out; }
+@keyframes pdin {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
 /* ---------- AetherAI 면 오버라이드 — 수제 CSS 그라데이션 금지 방침 (2026-08-08 지시) ---------- */
 /* #donBanner의 금색 배너 면은 제거됨 — 도네는 판 없이 글자만 얹는다 (사용자 요청) */
@@ -1198,10 +1211,13 @@ body.fullshow #overlay { z-index: 9; }
 /* ---------- 클립 보관함 (clips.js) — 지난 방송 클립 다시보기 ---------- */
 .panel.clipWin { width: min(1520px, 96%); max-height: 86vh; overflow-y: auto; }
 /* 카드 폭 720px 고정 — 좁은 화면에선 100%로 줄고, 넓으면 두 장씩 붙는다 (사용자 요청: 3배) */
+/* 항상 2열 (사용자 요청) — 카드 폭 고정(720px) + auto-fill이라 창 폭에 따라 1~2열을
+   오가던 것을 고정한다. 좁은 화면에서만 1열로 접는다 (2열이면 영상이 못 알아볼 만큼 작다) */
 .clipSaveGrid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 720px), 720px));
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-content: center; gap: 18px; margin: 12px 0 4px;
 }
+@media (max-width: 900px) { .clipSaveGrid { grid-template-columns: 1fr; } }
 .clipSave { margin: 0; }
 .clipSave video {
   width: 100%; height: auto; display: block; border-radius: 7px;

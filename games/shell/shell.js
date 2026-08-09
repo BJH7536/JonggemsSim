@@ -632,14 +632,37 @@
       // 김 피디의 미션 쪽지 — 다음 방송의 명시적 목표 (유지 장치). makeMissions는 결정론이라
       // 여기 표시와 _launch 시점 평가가 항상 같은 값을 본다.
       var mis = Shell.makeMissions(this.ch);
-      var pdNote = '<div class="pdNote">' +
-        '<img src="games/shell/img/kim-pd.png" alt="" onerror="this.style.display=\'none\'">' +
-        '<div><div class="rlab">김 피디의 오늘 미션 — <span style="color:' +
-        Shell.TIERS[this.ch.tier || 0].c + '">' + Shell.TIERS[this.ch.tier || 0].n + ' 파트너</span></div>' +
+      var tierN = Shell.TIERS[this.ch.tier || 0];
+      // 새 미션 블록 — 결과를 먼저 보여준 뒤 이 내용으로 갈아 끼운다
+      this._misNextHtml = '<div class="rlab">김 피디의 오늘 미션 — <span style="color:' +
+        tierN.c + '">' + tierN.n + ' 파트너</span></div>' +
         mis.map(function (m) {
           return '<div class="pdnRow">' + m.label + ' <b>' + m.target.toLocaleString() + '</b> · 보상 ' +
             m.reward.toLocaleString() + '코인</div>';
-        }).join('') + '</div></div>';
+        }).join('');
+
+      // 방송 직후라면 지난 미션 결과를 먼저 띄운다 — 부품이 왜 늘었는지 여기서 말해야 한다
+      var rep = this._misReport; this._misReport = null;
+      var body;
+      if (rep) {
+        var done = rep.rows.filter(function (r) { return r.hit; }).length;
+        body = '<div class="rlab">지난 방송 미션 결과</div>' +
+          '<div class="pdMis">' + rep.rows.map(function (r) {
+            return '<span class="' + (r.hit ? 'hit' : 'miss') + '">' + (r.hit ? '✓' : '—') + ' ' +
+              r.label + ' ' + r.target.toLocaleString() +
+              (r.hit ? '' : ' (기록 ' + r.got.toLocaleString() + ')') + '</span>';
+          }).join('') + '</div>' +
+          // 획득은 과하게, 미달은 조용히 (규약 2)
+          (done
+            ? '<div class="pdnGot"><b>미션 ' + done + '건 완료!</b> +' + rep.parts + ' 부품 · +' +
+              rep.coins.toLocaleString() + '코인</div>'
+            : '<div class="pdnRow miss">이번엔 채우지 못했다</div>');
+      } else {
+        body = this._misNextHtml;
+      }
+      var pdNote = '<div class="pdNote">' +
+        '<img src="games/shell/img/kim-pd.png" alt="" onerror="this.style.display=\'none\'">' +
+        '<div id="pdBody">' + body + '</div></div>';
 
       $('desktop').innerHTML =
         '<div class="deskIcons">' + icons + '</div>' +
@@ -665,6 +688,21 @@
 
       this.bindHub();
       this.renderDay(); // 쪽지가 새로 그려졌으니 D-Day 위젯도 그 아래로 다시 맞춘다
+      // 결과를 읽을 시간을 준 뒤 새 미션으로 갈아 끼운다. 한 화면에 둘 다 쌓으면
+      // "무엇이 끝났고 무엇이 새로 왔는지"가 섞인다 — 순서가 곧 설명이다
+      clearTimeout(this._misSwapT);
+      if (rep) {
+        var selfM = this;
+        Shell.sfx.tone(784, .09, 'triangle', .07);
+        Shell.sfx.tone(1047, .14, 'triangle', .06, .09);
+        this._misSwapT = setTimeout(function () {
+          var b = $('pdBody');
+          if (!b || selfM.phase !== 'hub') return;
+          b.innerHTML = '<div class="rlab pdNew">새 미션 도착</div>' + selfM._misNextHtml;
+          b.classList.remove('pdIn'); void b.offsetWidth; b.classList.add('pdIn');
+          selfM.renderDay();
+        }, 2600);
+      }
       // 시즌 판정은 허브 복귀 시점 한 곳에서만 — 방송 종료도 휴방도 결국 여기로 온다
       var camp = Shell.campaign(this.ch);
       if (camp.state !== 'run') this.showSeasonEnd(camp);
@@ -808,6 +846,7 @@
       var g = this.games.filter(function (x) { return x.id === gameId; })[0];
       if (!g) return;
       if (this.phase === 'starting') return; // 카운트다운 중 재진입 방지
+      clearTimeout(this._misSwapT);          // 허브를 떠나면 미션 교체 예약도 버린다
       // 해금 사슬 — 아이콘이 disabled라 보통은 여기 오지 않지만, 키보드 'r'(다시 방송)과
       // 콘솔 호출도 같은 문을 지나야 한다 (걸쇠는 한 곳에)
       var lock = Shell.unlockState(this.ch, gameId);
@@ -1941,6 +1980,14 @@
       // 부품은 미션에서만 나온다 (ADR-008 §6.2). 코인으로 살 수 있게 하면 도네(랜덤 파생)가
       // 강화 속도를 정하게 되어 양념이 뼈대를 밀어낸다 (규약 5)
       this.ch.parts = (this.ch.parts || 0) + mParts;
+      // 홈으로 들고 갈 미션 결과 — 리포트에서만 보여주면 "부품이 왜 늘었지"로 끝난다.
+      // 채널에 저장하지 않는다: 방송 직후 한 번만 보여주고 사라져야 하는 정보다
+      this._misReport = {
+        rows: missions.map(function (r) {
+          return { label: r.m.label, target: r.m.target, reward: r.m.reward, hit: r.hit, got: r.got };
+        }),
+        parts: mParts, coins: mBonus,
+      };
       // 장비 유지비 — 이번 방송 수입을 이력에 넣기 전에 걷는다 (이번 수입이 이번 청구서에
       // 섞이면 안 된다). 못 내면 조용히 한 단계 강등 (규약 2 — 손실 무연출)
       var upkeep = Shell.rigSettle(this.ch, earned);
