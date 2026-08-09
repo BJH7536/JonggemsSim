@@ -20,6 +20,25 @@
   // 사분면 색 — ARCH(공명 판정층)와 같은 시각 언어. Q1 팬덤 핑크 / Q2 분석가 앰버 /
   // Q3 불구경 오렌지 / Q4 뜨내기 블루 (100종 2축이 4원형과 정확히 일치하지는 않지만 근사)
   var QCOLOR = { "Q1": "#ffb0c8", "Q2": "#ffd27a", "Q3": "#ff8d5a", "Q4": "#a8c8f0" };
+  // 36태그의 화면 표기 — 태그 아이디(catastrophic_fail)가 그대로 플레이어에게 노출되고
+  // 있었다 (사용자 지적). 어휘의 정본은 data/personas/viewer_personas_100_v02.json(소윤)이고
+  // 여기는 표기만 가진다 — 없는 태그는 아이디를 그대로 보여준다(조용히 비우지 않는다).
+  var TAG_KO = {
+    absurd_outcome: '어이없는 결과',   bug_glitch: '버그·글리치',      build_shown: '세팅 공개',
+    catastrophic_fail: '대참사',       clean_execution: '깔끔한 처리',  efficient_resource: '효율 운영',
+    explanation_absent: '설명 없는 플레이', greed_punished: '욕심의 대가', idle: '늘어지는 순간',
+    improbable_survival: '기적의 생존', longplan_paid: '장기 계획 결실', menu_long: '메뉴만 오래',
+    meta_choice: '선택의 갈림길',      misclick: '손 미끄러짐',        no_hit: '무피격',
+    no_stakes: '위험 없는 진행',       numbers_revealed: '숫자 공개',   optimal_line: '최적 루트',
+    record_pace: '신기록 페이스',      repeat_content: '반복되는 내용', retry_success: '재도전 성공',
+    rng_disaster: '운 없는 사고',      rng_jackpot: '운의 대박',        skill_comeback: '실력의 역전',
+    state_flip: '판세 뒤집기',         sudden_death: '즉사',            synergy_found: '시너지 발견',
+    total_wipe: '전멸',
+    streamer_fatigue: '지친 스트리머', streamer_joy: '환호',            streamer_promise: '공약 선언',
+    streamer_scream: '비명',           streamer_selfmock: '자조',       streamer_silence: '침묵',
+    streamer_story: '잡담·썰',         streamer_tilt: '멘탈 흔들림',
+  };
+  function tagKo(t) { return TAG_KO[t] || t; }
   var WAVE_RATE = 0.15; // §8.3 구독자 전환 가산 — 미검증 초기값
   var WAVE_CAP = 8;     // 파장 상한. 축당 파라미터 2개 동결 (튜닝 표면 방지 — 주요⑥)
   var KEY = 'jgs-dex-v1';
@@ -189,7 +208,7 @@
           : u.cost.subs.toLocaleString() + ' 구독자';
         return '<div class="dexCard"><b style="color:' + u.color + '">' + u.nick + '</b>' +
           '<span class="dexDesc">' + u.desc + '</span>' +
-          '<span class="dexTr">반응: ' + (u.triggers || []).join(' · ') + '</span>' +
+          '<span class="dexTr">반응: ' + (u.triggers || []).map(tagKo).join(' · ') + '</span>' +
           '<button class="siBuy" data-hire="' + u.nick + '">' + cost + '로 영입</button></div>';
       }).join('');
       $('overlay').innerHTML = '<div class="panel dexWin">' +
