@@ -283,7 +283,10 @@
     // ---------- 자연 파열 (규약 2 — 무연출·무효과음) ----------
     function burst(b) {
       var p = proj(b);
-      stage.lose(BURST_LOSS);
+      // 손실은 상수(140)가 설계값이지만, 시작 시청자가 300이라 두 번만 놓치면 10초 만에
+      // 방송이 죽는다 — 처음 잡아 보는 사람은 반드시 두어 번 놓친다. 채널 규모의 1/4로
+      // 상한을 둬 초반 즉사만 막는다. 채널이 크면(560명 이상) 원래 상수 그대로다
+      stage.lose(Math.min(BURST_LOSS, Math.max(30, stage.viewers * .25)));
       st.bursts++; st.roundMiss++;
       st.combo = 0; st.comboMile = 0;          // 콤보는 조용히 끊긴다 (손실 무연출)
       st.puffs.push({ x: p.x, y: p.y, r: b.r * p.scale, c: '#5a5650', born: stage.now, dull: true });
@@ -429,8 +432,12 @@
           var list = st.balloons.slice().sort(function (a, b) { return a.z - b.z; });
           gl.render(list.map(function (b) {
             var rt = ripe(b);
+            // 호흡 — 익을수록 빠르고 깊게 헐떡인다. 고무가 버티는 소리를 눈으로 보여 준다.
+            // 부피는 유지(가로가 늘면 세로가 준다)해야 부푸는 게 아니라 '눌리는' 것으로 읽힌다
+            var br = 1 + .045 * rt * Math.sin(t * (5 + rt * 16) + b.sway);
             return {
               x: b.x + Math.sin(t * 1.7 + b.sway) * (2 + rt * 3), y: b.y, z: b.z, r: b.r,
+              sx: br, sy: 1 / br,
               rgb: b.rgb, bloom: rt >= BLOOM_T ? (.5 + .5 * Math.sin(t * 18)) : 0,
             };
           }), 1);
@@ -495,6 +502,22 @@
 
     // 만개 창은 못 보면 "지금 터뜨릴까"라는 선택 자체가 성립하지 않는다 — 3D 위에 덧그린다
     function drawGlow(ctx, t) {
+      // 파열 임박 링 — 만개 전부터 조여 온다. 0.3초짜리 만개 창만으로는 반응할 시간이 없어
+      // "언제 터질지"가 운이 된다. 링이 닫히는 속도가 곧 남은 시간이다
+      ctx.save();
+      st.balloons.forEach(function (b) {
+        var rt = ripe(b);
+        if (rt < .72) return;
+        var p = b._p || proj(b), rr = b.r * p.scale;
+        var k = (rt - .72) / .28;                       // 0 → 1 로 조여든다
+        ctx.strokeStyle = 'rgba(255,150,180,' + (.25 + .5 * k) + ')';
+        ctx.lineWidth = 1.5 + 2 * k;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, rr * (2.2 - 1.05 * k), 0, TAU);
+        ctx.stroke();
+      });
+      ctx.restore();
+
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       st.balloons.forEach(function (b) {
         var rt = ripe(b);

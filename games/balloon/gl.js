@@ -187,7 +187,9 @@
           var b = list[i], w = toWorld(b.x, b.y, b.z);
           // 몸통 — 세로로 살짝 길고 아래가 도톰한 풍선 비례
           gl.uniform3f(uCenter, w[0], w[1], w[2]);
-          gl.uniform3f(uScale, b.r * 0.92, b.r * 1.06, b.r * 0.92);
+          // sx/sy = 호흡(고무의 압력) 스쿼시. 없으면 1
+          var sx = b.sx || 1, sy = b.sy || 1;
+          gl.uniform3f(uScale, b.r * 0.92 * sx, b.r * 1.06 * sy, b.r * 0.92 * sx);
           gl.uniform3f(uColor, b.rgb[0], b.rgb[1], b.rgb[2]);
           gl.uniform1f(uBloom, b.bloom || 0);
           gl.drawElements(gl.TRIANGLES, mesh.idx.length, gl.UNSIGNED_SHORT, 0);
