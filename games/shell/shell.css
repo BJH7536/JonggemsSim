@@ -121,7 +121,11 @@ body {
 #donBanner .uiIco { width: 20px; height: 20px; }
 #donBanner .amt { color: #ffdf9e; font-size: 15px; }
 #donBanner .dmsg { color: #d8cdb4; font-size: 12px; margin-top: 4px; }
-#donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; }
+#donBanner.show { animation: donin 3.4s cubic-bezier(.2,.9,.3,1) forwards; pointer-events: auto; cursor: pointer; }
+/* 도네 읽어주기 — 배너가 떠 있는 동안 클릭 가능. 읽으면 민트 확인 (응답 루프, 연출 전용) */
+#donBanner .dhint { margin-top: 4px; font-size: 10.5px; color: #9fd8ff; opacity: .85; }
+#donBanner.read { border-color: #00ffa3; box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 22px rgba(0,255,163,.3); }
+#donBanner.read .dhint { color: #7dffd0; }
 @keyframes donin {
   0% { right: -420px; opacity: 0; }
   9% { right: 12px; opacity: 1; }

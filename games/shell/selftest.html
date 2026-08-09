@@ -178,8 +178,8 @@ ok('큰 이벤트(버스트 무게 3+)만 trust를 누적한다', (function () {
 })());
 
 // ---- 단골 기억 발화 — 방송 간 기억의 연출층 (data/regulars.js). 조용히 죽으면 기억이 침묵한다 ----
-ok('단골 기억 데이터가 로드된다 (키 6종 · 각 6줄 이상)',
-   ['first', 'same_again', 'after_dead', 'best', 'regular', 'record_live']
+ok('단골 기억 데이터가 로드된다 (키 7종 · 각 6줄 이상)',
+   ['first', 'same_again', 'after_dead', 'best', 'regular', 'record_live', 'don_read']
      .every(function (k) { return (Chat.MEMORY[k] || []).length >= 6; }));
 ok('기억 발화 톤이 전부 공인 6종 안이다', (function () {
   var TONES = ['hype', 'worry', 'info', 'mock', 'cheer', 'question'];

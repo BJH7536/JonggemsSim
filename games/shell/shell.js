@@ -116,6 +116,8 @@
       $('followBtn').addEventListener('click', function () {
         self2.showTicker('본인 채널은 팔로우할 수 없습니다', true);
       });
+      // 도네 읽어주기 — 배너가 떠 있는 3.4초 동안만 클릭이 통한다 (CSS pointer-events)
+      $('donBanner').addEventListener('click', function () { self2.readDonation(); });
       // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
       $('introSplash').classList.remove('hidden');
       $('introGo').addEventListener('click', function () {
@@ -635,15 +637,40 @@
       el.innerHTML = '<div class="dhead"><img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
         '<b style="color:' + d.who.color + '">' + d.who.nick + '</b>님이 <b class="amt">' +
         d.amt + '코인</b> 후원!</div>' +
-        '<div class="dmsg">' + d.msg + '</div>';
-      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+        '<div class="dmsg">' + d.msg + '</div>' +
+        '<div class="dhint">클릭해서 읽어주기</div>';
+      d.read = false; this._donShown = d; // 읽어주기 대상 — 배너가 사라지면 기회도 사라진다
+      el.classList.remove('show', 'read'); void el.offsetWidth; el.classList.add('show');
       // 도네 알림음은 기본 — 코인 딸랑 두 음. 팡파레(상점 용품)는 그 위에 얹는다 (순수 장식)
       Shell.sfx.tone(1175, .07, 'triangle', .06); Shell.sfx.tone(1568, .1, 'triangle', .05, .07);
       if (this.ch.gear.fanfare) {
         Shell.sfx.tone(1047, .09, 'triangle', .07); Shell.sfx.tone(1319, .1, 'triangle', .06, .08);
         Shell.sfx.tone(1568, .18, 'triangle', .06, .16);
       }
-      setTimeout(function () { self._donBusy = false; self.drainDon(); }, 3400);
+      setTimeout(function () {
+        self._donBusy = false; self._donShown = null;
+        $('donBanner').classList.remove('show', 'read'); // 애니메이션 종료 시점 — 시각적 무변화
+        self.drainDon();
+      }, 3400);
+    },
+
+    // ---------- 도네 읽어주기 (응답 루프 — 연출 전용) ----------
+    // 실제 스트리머의 핵심 기술은 "플레이하면서 채팅을 상대하는 것" — 배너를 클릭하는 손이
+    // 잠깐 게임에서 떨어지는 것 자체가 비용이자 몰입 장치다. 읽어주면 후원자가 반갑게
+    // 반응하고(don_read, 화자 = 후원자 본인) trust(방송 간 관계 변수, ADR-003)가 쌓인다.
+    // ponytail: 경제 무관여 — 시청자·코인 이득 없음. 유입을 붙이려면 공명 모델 게이트(§5) 뒤에.
+    readDonation: function () {
+      var d = this._donShown;
+      if (!d || d.read || this.phase !== 'live') return;
+      d.read = true;
+      var el = $('donBanner');
+      el.classList.add('read');
+      var h = el.querySelector('.dhint'); if (h) h.textContent = '읽어줬다 — 후원자가 답한다';
+      this.camReact('donation'); // aha 표정 — 도네를 보고 웃는 얼굴
+      this.showTicker('"' + d.msg + '" — ' + d.who.nick + '님 감사합니다!');
+      Chat.memory('don_read', {}, d.who, 700 + Math.random() * 500); // 사람이 읽고 답하는 템포
+      Chat.bumpTrust(); // 소통도 큰 사건이다 — 방송 간 관계에 쌓인다
+      Shell.sfx.tone(880, .08, 'triangle', .07); Shell.sfx.tone(1319, .12, 'triangle', .06, .09);
     },
 
     // ---------- 상점 (방송용품) ----------
