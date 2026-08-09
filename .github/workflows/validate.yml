@@ -1,0 +1,12 @@
+# data/·게임 어휘 계약 검증 (contract.md 5절). 통과 = data/ 변경 셀프 머지 가능 (CONTRIBUTING 규칙 2)
+name: validate
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node tools/validate.mjs
