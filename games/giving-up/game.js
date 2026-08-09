@@ -19,6 +19,15 @@
  *       주르륵 미끄러지는 데 있고, 사각형만으로는 그 질감이 안 나온다.
  * 그 외: 카메라 감속 추종, 사거리 링, 접점 하이라이트, 먼지, 'clutch'(살렸다) 이벤트 배선.
  *
+ * ── 조작감 4차 (2026-08-09) — 걸쇠 제거, 원작(GOI) 물리 복원 ──────────────
+ * 3차의 앵커 고정 + 윈치 + 스윙/슬랙 릴리스는 "걸리면 달라붙는" 자석 감각이라 원작과
+ * 달랐다 (사용자 피드백). 걸쇠 상태 기계를 전부 없앴다. 곡괭이는 이제 T자 콜라이더
+ * (자루 막대 + 끝의 헤드 크로스바)를 가진 강체이고, 커서가 정하는 몸-상대 자세로
+ * TIP_SPEED만큼씩 따라간다. 지형에 박히면 관통 해소가 "몸"을 민다 — 매달리기(중력이
+ * 헤드를 턱에 누른다)·끌어올리기(커서를 당기면 자세가 당겨지며 몸이 올라온다)·
+ * 장대 밀기·플릭이 전부 충돌 하나에서 나온다. 붙잡는 상태가 없으니 각도가 빠지면
+ * 그냥 미끄러진다 — 그게 원작의 긴장이다.
+ *
  * ⚠ 밸런스 주의: 화력쇼와 달리 이 게임은 전략 스윕 검증을 거치지 않았다.
  *   상수는 데모용 조율값이다 — 05-hwaryeok-spec.md급 검증 기록이 없다는 점을 감안할 것.
  */
@@ -114,9 +123,12 @@
   var HAMMER_MAX = 128;     // 사거리. 실제 길이는 커서까지의 거리로 정해진다
   var HAMMER_MIN = 22;      // 몸통 안으로 말려들지 않게
   var SHAFT_STEPS = 9;      // 자루를 훑는 표본 수 (막대 충돌)
+  var HEAD_HALF = 15;       // T자 헤드 크로스바 절반 길이 — 이 폭이 턱에 "걸리는" 실체다
+  var HEAD_STEPS = 3;       // 크로스바 편측 표본 수 (총 7점, ~5px 간격)
+  var TIP_SPEED = 1400;     // 곡괭이 끝의 커서 추적 속도(px/s) — 순간이동하면 얇은 턱을 관통한다
   var GRAV = 1500;
   var MAX_V = 1600;
-  var MAX_STEP = 30;        // 박힌 망치가 한 프레임에 몸을 밀 수 있는 거리 (텔레포트 방지)
+  var MAX_STEP = 30;        // 박힌 곡괭이가 한 프레임에 몸을 밀 수 있는 거리 (텔레포트 방지)
 
   // 규약 4 — 추락 신선도: 같은 짓만 반복하면 물린다. 신기록 높이 갱신으로만 회복된다.
   var FALL_FRESH = [1, .7, .45, .25, .1];
@@ -201,8 +213,12 @@
     var st = {
       px: START_X, py: GROUND_Y - PR, vx: 0, vy: 0,
       len: HAMMER_MAX, tipX: 560, tipY: GROUND_Y - 90,
-      mx: 590, my: GROUND_Y - 60,   // 월드 좌표
-      planted: false, contact: null, anchorX: 0, anchorY: 0, camY: 0,
+      hoX: -80, hoY: -74,           // 곡괭이 끝의 몸-상대 오프셋 (커서를 TIP_SPEED로 추적)
+      // 커서는 "몸-상대 자세"로 저장한다 (마우스 이벤트 시점에 변환). 월드 고정으로 두면
+      // 몸이 움직일 때마다 자세 오차가 재생성돼, 걸어두고 가만히 있어도 그립 지렛대가
+      // 자동 윈치처럼 폭주한다 (헤드리스 시뮬 실측). 원작도 망치는 몸 주위 상대 자세다.
+      mrx: -50, mry: -44,
+      planted: false, contact: null, camY: 0,
       best: 0, paidM: 0, peak: 0,
       fallFresh: 0, recoverAcc: 0,
       falls: 0, maxDrop: 0, saves: 0, cleared: false,
@@ -222,8 +238,8 @@
         '<div class="cell"><div class="lab">현재 높이</div><div class="val" id="guH">0.0m</div></div>' +
         '<div class="cell"><div class="lab">최고 높이</div><div class="val" id="guB">0.0m</div></div>' +
         '<div class="cell"><div class="lab">추락 신선도</div><div class="val" id="guF">100%</div></div>' +
-        '<div class="hint"><b>마우스를 움직이면 곡괭이가 그쪽으로 뻗는다</b> — 발판에 걸리면 갈고리가 고정된다.<br>' +
-        '걸린 채 <b>마우스를 몸 쪽으로 당기면 감겨 올라가고</b>, 밀면 밀려난다. 조준을 크게 꺾으면 갈고리가 빠지며 그 속도로 날아간다(플릭).</div>' +
+        '<div class="hint"><b>마우스를 움직이면 곡괭이가 그쪽으로 뻗는다</b> — T자 머리를 턱에 <b>걸치고</b> 마우스를 몸 쪽으로 당기면 몸이 끌려 올라온다.<br>' +
+        '밀면 장대처럼 밀려난다. 고정 걸쇠는 없다 — 걸침이 빠지는 각도면 그대로 미끄러지고, 빠르게 끌던 중 놓치면 그 속도로 날아간다(플릭).</div>' +
       '</div>';
 
     function renderPanel() {
@@ -271,81 +287,97 @@
       return hit;
     }
 
+    // T자 콜라이더 표본점 — 자루(몸통 가장자리→끝) + 끝에서 수직인 헤드 크로스바.
+    // 몸이 밀릴 때마다 재계산해야 하므로 함수로 뽑는다 (오프셋은 몸-상대라 같이 움직인다).
+    function tPoints() {
+      var pts = [];
+      var hl = Math.hypot(st.hoX, st.hoY) || 1;
+      var ux = st.hoX / hl, uy = st.hoY / hl;
+      for (var k = 1; k <= SHAFT_STEPS; k++) {
+        var f = PR / hl + (1 - PR / hl) * (k / SHAFT_STEPS);
+        if (f > 1) break;
+        pts.push({ x: st.px + ux * hl * f, y: st.py + uy * hl * f });
+      }
+      for (var j = -HEAD_STEPS; j <= HEAD_STEPS; j++) {
+        var t = j / HEAD_STEPS * HEAD_HALF;
+        pts.push({ x: st.px + st.hoX - uy * t, y: st.py + st.hoY + ux * t });
+      }
+      return pts;
+    }
+
+    // 곡괭이 관통 해소 — 박힌 표본점을 표면으로 밀어내되, 움직이는 건 "몸"이다 (강체 결합).
+    // 걸쇠 상태가 없다: 헤드가 턱 위에 있고 중력이 몸을 당기면 관통→해소가 매 프레임
+    // 반복되며 매달림이 되고, 커서를 당겨 자세가 당겨지면 같은 해소가 몸을 끌어올린다.
+    function resolveHammer() {
+      var sx = st.px, sy = st.py, hit = null;
+      for (var pass = 0; pass < 3; pass++) {
+        var pts = tPoints();
+        for (var i = 0; i < pts.length; i++) {
+          var s = shapeAt(pts[i].x, pts[i].y);
+          if (!s) continue;
+          hit = s;
+          var surf = surfaceOf(s, pts[i].x, pts[i].y);
+          var pushX = surf.x - pts[i].x, pushY = surf.y - pts[i].y;
+          st.px += pushX; st.py += pushY;
+          var d = Math.hypot(pushX, pushY) || 1;
+          var nx = pushX / d, ny = pushY / d;
+          var vn = st.vx * nx + st.vy * ny;
+          if (vn < 0) { st.vx -= vn * nx; st.vy -= vn * ny; }
+          // 곡면은 미끄러지고 평면은 박힌다 — resolveBody와 같은 질감 대비.
+          // 표본이 여럿 박히면 마찰이 복리로 걸린다 — 곡괭이 끝이 "무는" 감각이라 의도대로 둔다.
+          var fric = s.t === 'c' ? .965 : .84;
+          st.vx *= fric; st.vy *= .975;
+          pts = tPoints();
+        }
+      }
+      // 깊은 관통을 한 프레임에 다 풀면 순간이동이 된다 — 나머지는 다음 프레임이 푼다
+      var mdx = st.px - sx, mdy = st.py - sy, m = Math.hypot(mdx, mdy);
+      if (m > MAX_STEP) { st.px = sx + mdx / m * MAX_STEP; st.py = sy + mdy / m * MAX_STEP; }
+      return hit;
+    }
+
     function physics(dt) {
-      var prevX = st.px, prevY = st.py, wasPlanted = st.planted;
+      var prevX = st.px, prevY = st.py, wasHooked = st.planted;
 
-      // 망치는 커서 방향으로, 커서까지의 거리만큼만 뻗는다 (사거리 상한 HAMMER_MAX)
-      var dx = st.mx - st.px, dy = st.my - st.py;
+      // 곡괭이는 커서가 정하는 몸-상대 자세(방향×커서까지 거리, 사거리 상한)를 향해
+      // TIP_SPEED로 "따라간다". 순간이동이 아니라서 얇은 턱을 건너뛰지 않고, 커서가
+      // 몸통에 붙었을 때의 조준 뒤집힘(2·3차의 34px 데드존 사유)도 자연히 감쇠된다.
+      var dx = st.mrx, dy = st.mry;
       var dist = Math.hypot(dx, dy) || 1;
-      var dirX = dx / dist, dirY = dy / dist;
-      st.len = clamp(dist, HAMMER_MIN, HAMMER_MAX);
-
-      // ── 걸쇠(갈고리) 유지 판정 — 곡괭이 전환 후 핵심 수정 (2026-08-08 플레이 피드백:
-      // "발판을 걸어서 위로 올라가는 게 불가능하다").
-      // 기존엔 자루 스윕이 매 프레임 지형에 재히트해야만 박힘이 유지됐다. 그래서 커서를
-      // 몸 쪽으로 당기면(자루 단축) 스윕이 지형에 못 닿아 그 순간 걸쇠가 풀렸다 —
-      // 갈고리 당겨 오르기가 원리적으로 불가능. 이제 한 번 걸리면 앵커가 고정되고,
-      // 조준이 앵커 방향에서 ~63도 이상 벗어나야 빠진다 (스윙 릴리스 = 플릭 발사).
-      // 근접 데드존 — 커서가 몸통에 붙으면(윈치로 감아 들어올 때) 조준 방향이 프레임마다
-      // 뒤집혀 걸쇠가 저절로 빠졌다 (실측). 34px 안에서는 마지막 안정 조준을 유지한다.
-      if (dist >= 34 || !st.aimX) { st.aimX = dirX; st.aimY = dirY; }
-      var aimX = st.aimX, aimY = st.aimY;
-
+      var wl = clamp(dist, HAMMER_MIN, HAMMER_MAX);
+      var gx = dx / dist * wl - st.hoX, gy = dy / dist * wl - st.hoY;
+      var gd = Math.hypot(gx, gy), cap = TIP_SPEED * dt;
+      if (gd > cap) { gx *= cap / gd; gy *= cap / gd; }
+      var levX = 0, levY = 0;
       if (st.planted) {
-        var adx = st.anchorX - st.px, ady = st.anchorY - st.py, ad = Math.hypot(adx, ady) || 1;
-        if (dist >= 34 && (aimX * adx + aimY * ady) / ad < .45) {
-          st.planted = false; st.contact = null; // 스윙 릴리스 — 크게 꺾으면 빠진다 (플릭)
-        } else if (st.len > ad + 10) {
-          // 슬랙 릴리스 (GOI 오마주 핵심) — 걸쇠는 "당기는 동안(자루 팽팽)"만 유지된다.
-          // 자루가 앵커 거리보다 길어지면(밀기·끌기·이동) 즉시 풀고 아래의 원본식
-          // 슬라이딩 접촉으로 복귀 — 같은 프레임에 재스윕되므로 밀기는 끊기지 않는다.
-          // 이게 없으면 갈고리가 영구히 걸려 전진 이동 자체가 불가능하다 (플레이 피드백).
-          st.planted = false; st.contact = null;
-        }
+        // 접점 그립(정지 마찰) — 박혀 있는 동안 마우스 이동은 끝을 표면 위로 미끄러뜨리는
+        // 대신 몸을 지렛대로 민다: 당기면 몸이 끌려 올라오고, 밀면 장대처럼 밀려난다.
+        // 걸쇠 상태가 아니라 마찰 계수다 — 끝이 기하를 벗어나면(턱을 넘거나 곡면에서
+        // 미끄러지면) 접촉이 사라지며 그냥 풀린다. 바위는 여기서도 미끄럽다 (질감 대비).
+        var grip = st.contact && st.contact.t === 'c' ? .25 : .9;
+        levX = -gx * grip; levY = -gy * grip;
+        st.px += levX; st.py += levY;
       }
+      st.hoX += gx; st.hoY += gy;
+      st.len = Math.hypot(st.hoX, st.hoY);
 
-      if (!st.planted) {
-        // 자루를 몸통 바깥으로 훑어 처음 닿는 지점을 접점으로 — 끝점만 보면 얇은 발판을 통과한다
-        var hitS = null, hitT = 0;
-        for (var k = 1; k <= SHAFT_STEPS; k++) {
-          var f = PR / st.len + (1 - PR / st.len) * (k / SHAFT_STEPS);
-          if (f > 1) break;
-          var s = shapeAt(st.px + dirX * st.len * f, st.py + dirY * st.len * f);
-          if (s) { hitS = s; hitT = f; break; }
-        }
-        if (hitS) {
-          var cxp = st.px + dirX * st.len * hitT, cyp = st.py + dirY * st.len * hitT;
-          var surf = surfaceOf(hitS, cxp, cyp);
-          // 립 스냅 — 발판 윗면 12px 안쪽에 들어온 접점은 윗면(립)에 건다. 아래에서
-          // 턱을 노리면 최소거리 투영이 옆면을 고르는데, 그러면 갈고리로 감아도
-          // 옆에 매달릴 뿐 위로 못 오른다 (곡괭이 걸어 오르기의 핵심 수정)
-          if (!hitS.wall && hitS.t === 'r' && cyp - hitS.y < 12 && surf.y > hitS.y) {
-            surf = { x: clamp(cxp, hitS.x, hitS.x + hitS.w), y: hitS.y - .5 };
-          }
-          st.anchorX = surf.x; st.anchorY = surf.y;
-          st.planted = true; st.contact = hitS;
-          // 경계에서 접점이 프레임마다 붙었다 떨어졌다 하면 틱음이 연발된다 —
-          // 0.15초 이상 떨어져 있다 다시 박혔을 때만 "박힘" 소리를 낸다
-          if (st.unplantT > 0.15) { sfxTick(); puff(surf.x, surf.y, 4); }
-          st.unplantT = 0;
-        }
-      }
+      // 중력은 항상 작동한다 — 걸려 있는 동안의 지탱은 상태가 아니라 아래 충돌 해소가 만든다
+      st.vy += GRAV * dt;
+      st.px += st.vx * dt; st.py += st.vy * dt;
 
+      var hitH = resolveHammer();
+      st.planted = !!hitH;
+      st.contact = hitH;
+      st.tipX = st.px + st.hoX; st.tipY = st.py + st.hoY;
       if (st.planted) {
-        // 커서 거리 = 자루 길이. 앵커는 고정 — 당기면 윈치(몸이 감겨 올라간다),
-        // 밀면 폴 확장(몸이 밀려난다). 몸 이동은 MAX_STEP으로 캡 (텔레포트 방지)
-        var tX = st.anchorX - aimX * st.len, tY = st.anchorY - aimY * st.len;
-        var mdx = tX - st.px, mdy = tY - st.py, m = Math.hypot(mdx, mdy);
-        if (m > MAX_STEP) { mdx = mdx / m * MAX_STEP; mdy = mdy / m * MAX_STEP; }
-        st.px += mdx; st.py += mdy;
-        st.tipX = st.anchorX; st.tipY = st.anchorY;
+        // 경계에서 접점이 프레임마다 붙었다 떨어졌다 하면 틱음이 연발된다 —
+        // 0.15초 이상 떨어져 있다 다시 박혔을 때만 "박힘" 소리를 낸다
+        if (!wasHooked && st.unplantT > 0.15) { sfxTick(); puff(st.tipX, st.tipY, 4); }
         st.unplantT = 0;
-        if (wasPlanted && m > 6) { sfxSlide(); if (Math.random() < .25) puff(st.anchorX, st.anchorY, 1); }
+        var hm = Math.hypot(st.px - prevX, st.py - prevY);
+        if (wasHooked && hm > 6) { sfxSlide(); if (Math.random() < .25) puff(st.tipX, st.tipY, 1); }
       } else {
-        st.tipX = st.px + dirX * st.len; st.tipY = st.py + dirY * st.len;
         st.unplantT += dt;
-        st.vy += GRAV * dt;
-        st.px += st.vx * dt; st.py += st.vy * dt;
       }
 
       var touching = resolveBody();
@@ -361,21 +393,17 @@
       st.px = clamp(st.px, WALL_LIP + PR, W - WALL_LIP - PR);
       st.py = Math.min(st.py, GROUND_Y - PR + 40);
 
-      // 몸이 밀린 뒤 곡괭이 끝을 다시 잡는다 — 걸린 동안엔 앵커에 고정(갈고리),
-      // 안 걸렸을 땐 커서 방향으로. 접점을 옛 좌표로 두면 "조준이 안 먹는" 감각이 된다.
-      if (st.planted) {
-        st.tipX = st.anchorX; st.tipY = st.anchorY;
-      } else {
-        var fdx = st.mx - st.px, fdy = st.my - st.py, fd = Math.hypot(fdx, fdy) || 1;
-        st.tipX = st.px + fdx / fd * st.len;
-        st.tipY = st.py + fdy / fd * st.len;
-      }
+      // 몸이 밀린 뒤 곡괭이 끝을 다시 잡는다 — 오프셋이 몸-상대라 끝은 몸을 따라온다.
+      // 접점을 옛 좌표로 두면 "조준이 안 먹는" 감각이 된다.
+      st.tipX = st.px + st.hoX; st.tipY = st.py + st.hoY;
 
-      if (st.planted) {
-        // 밀린 만큼이 곧 속도 — 손을 떼는 순간 이 속도로 날아간다 (플릭)
+      if (st.planted && (levX || levY)) {
+        // 지렛대로 끌던 속도가 곧 몸의 속도 — 빠르게 끌던 중 걸림이 풀리면 그대로 날아간다
+        // (플릭). 접촉 "해소" 변위는 여기 넣지 않는다 — 모서리 스침 몇 px가 발사 임펄스로
+        // 증폭되던 원인이었다 (헤드리스 시뮬 실측 vx=144). 해소는 위치와 법선 속도만 다룬다.
         var kk = .7;
-        st.vx = st.vx * (1 - kk) + (st.px - prevX) / dt * kk;
-        st.vy = st.vy * (1 - kk) + (st.py - prevY) / dt * kk;
+        st.vx = st.vx * (1 - kk) + levX / dt * kk;
+        st.vy = st.vy * (1 - kk) + levY / dt * kk;
       }
       st.vx = clamp(st.vx, -MAX_V, MAX_V); st.vy = clamp(st.vy, -MAX_V, MAX_V);
 
@@ -511,7 +539,7 @@
         });
       },
 
-      pointer: function (p) { st.mx = p.x; st.my = p.y + st.camY; },
+      pointer: function (p) { st.mrx = p.x - st.px; st.mry = p.y + st.camY - st.py; },
 
       // 튜닝 계측용 상태 노출 — ?guoidebug 를 붙였을 때만. 배포 경로에서는 죽은 코드다.
       // 자동 플레이 하네스가 px/py/camY/planted 를 읽어 난이도를 실측하는 데 쓴다.
@@ -724,7 +752,7 @@
   Shell.register({
     id: 'giving-up',
     title: 'Giving Up On It',
-    tagline: '갈고리 곡괭이 하나로 절벽을 오른다. 조금씩 오르면 조금 벌고, 크게 떨어지면 왕창 번다 — 여기서도 안전한 플레이가 최악이다.',
+    tagline: 'T자 곡괭이 하나로 절벽을 오른다. 조금씩 오르면 조금 벌고, 크게 떨어지면 왕창 번다 — 여기서도 안전한 플레이가 최악이다.',
     duration: SHOW_TIME,
     startViewers: START_VIEWERS,
     usesChain: false,
@@ -739,7 +767,7 @@
       WALL_HOLDS: WALL_HOLDS, WALL_LIP: WALL_LIP,
       START_X: START_X, PR: PR, HEAD_ROOM_MIN: HEAD_ROOM_MIN, FIRST_HOOK_MAX: FIRST_HOOK_MAX,
     },
-    foot: '<b>마우스</b>로 곡괭이를 움직인다 — 발판에 걸리면 갈고리가 <b>고정</b>되고, 당기면 감겨 올라간다. 조준을 크게 꺾으면 빠진다(플릭). 키보드는 쓰지 않는다.<br>' +
+    foot: '<b>마우스</b>로 곡괭이를 뻗는다 — T자 머리를 턱에 <b>걸어</b> 당기면 오르고, 밀면 밀려난다. 고정 걸쇠는 없다 — 각도가 빠지면 미끄러진다. 키보드는 쓰지 않는다.<br>' +
           '둥근 바위는 미끄럽고 평평한 발판은 붙잡힌다 · 큰 추락일수록 시청자가 폭증하지만 <b>반복하면 물린다</b>(추락 신선도) — 회복하려면 더 높이 올라가야 한다',
     thumb: function (c, w, h) {
       var g = c.createLinearGradient(0, 0, 0, h);
