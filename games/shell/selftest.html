@@ -245,6 +245,10 @@ ok('없는 키는 조용히 침묵한다', Chat.memoryNow('없는키', {}) === n
       var mCap = Math.abs(Shell.Dex.waveMult() - 2.2) < 1e-9;
       return m2 && mCap;
     })());
+    ok('record_pace(셸 직접 발행)는 관측단의 칸을 연다', (function () {
+      var hit = Shell.Dex.judge('hwaryeok', 'record_pace');
+      return hit.indexOf('스프레드시트파') >= 0 && hit.indexOf('통계인용러') >= 0;
+    })());
     // 해금 — 구독자·코인 소비 계약
     Shell.ch = { subs: 20, coins: 0, gear: {} };
     ok('재화 부족은 거부·잔액 불변', Shell.Dex.hire('안티') === 'poor' && Shell.ch.subs === 20);

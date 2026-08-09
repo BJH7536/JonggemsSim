@@ -555,6 +555,8 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 }
 #dTip:empty { display: none; }
 #dTip .gthumb { display: block; width: 100%; height: auto; }
+/* 대표컷 이미지 — 로드 전에도 툴팁 높이가 흔들리지 않게 고정 (위치 계산이 offsetHeight를 읽는다) */
+#dTip img.gthumb { height: 126px; object-fit: cover; }
 .dwInfo { padding: 10px 12px 4px; }
 .dwInfo .tipTitle { display: block; font-size: 14px; color: var(--plat2); margin-bottom: 5px; }
 .dwInfo .gd { font-size: 11.5px; color: var(--dim); margin: 0 0 7px; line-height: 1.5; }

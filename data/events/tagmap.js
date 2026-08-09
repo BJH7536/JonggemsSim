@@ -12,8 +12,9 @@
  *   - 아래 매핑만으로: 100종 중 92 도달, 불멸 관측자 12/12, 사분면 Q1 21/25 · Q2 24/25 ·
  *     Q3 22/25 · Q4 25/25
  *   - 스트리머 표현축 v1 5태그(scream/joy/selfmock/silence/fatigue, §6.4) 추가 시: 99/100
- *   - 유일한 침묵 개체 V-049(속도주행측정, Q2) — trigger 전부가 ⚠ emit-미발행 태그
- *     (record_pace·optimal_line·efficient_resource). §6.2 처방대로 게임 emit 한 줄이 해법.
+ *   - V-049(속도주행측정, Q2)의 침묵은 record_pace로 해소 — 신기록 페이스는 셸(채널 기록
+ *     소유자)이 직접 관측해 방송당 1회 발행한다 (dex.js DIRECT, shell.js paceTag). 이로써
+ *     100종 전원이 도달 가능 (V-049는 영입 확장 시, 관측단 V-034·V-044는 즉시).
  *
  * 매핑에 없는 이벤트(start·end·donation·nag 등)는 판정층이 조용히 무시한다 — 도네·시작은
  * 태그 축이 아니라 별도 경제/연출 경로다 (§8.2는 후속).

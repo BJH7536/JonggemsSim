@@ -108,8 +108,11 @@
     // 결정론 판정 — stage.emit 관측 지점에서 호출된다. 반환: 반응한 닉 목록 (연출용).
     // 이벤트 → 태그 번역은 tagmap(초안, §11.2-2), streamer_* 접두는 태그 직접 발행
     // (스트리머 표현 축 §6.4 — 플레이어 입력이므로 C3 위반이 아니다)
+    // DIRECT = 셸이 판 상태를 직접 관측해 발행하는 태그 (게임 이벤트가 아니라 번역 불필요).
+    // record_pace: 신기록 페이스는 게임이 모르고 셸(채널 기록 소유자)만 안다 — §6.2 ⚠ 처방
+    DIRECT: ['record_pace'],
     judge: function (gameId, ev) {
-      var tags = ev.lastIndexOf('streamer_', 0) === 0
+      var tags = ev.lastIndexOf('streamer_', 0) === 0 || this.DIRECT.indexOf(ev) >= 0
         ? [ev]
         : ((window.JONG_TAGMAP || {})[gameId] || {})[ev] || [];
       if (!tags.length) return [];

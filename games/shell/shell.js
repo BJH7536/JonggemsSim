@@ -30,6 +30,15 @@
 
   // 방송 제목 풀 — 순수 연출. 실제 종겜 스트리머의 "오늘의 각오" 제목 감성.
   // 게임 id 로 찾고, 없으면 태그라인을 쓴다 (새 게임이 등록돼도 깨지지 않는다).
+  // 툴팁 대표컷 — 게임의 실제 배경 아트 (AetherAI, 각 게임이 인게임에서 쓰는 그 컷).
+  // 화력쇼는 배경 아트가 없어 벡터 thumb 폴백. 새 게임이 목록에 없어도 깨지지 않는다.
+  var TIP_ART = {
+    'giving-up': 'games/giving-up/img/sky-bg.jpg',
+    pocket: 'games/pocket/img/arena-bg.jpg',
+    fishing: 'games/fishing/img/sea-bg.jpg',
+    bomb: 'games/bomb/img/bench-bg.jpg',
+  };
+
   var SHOW_TITLES = {
     hwaryeok: ['불 좀 끄고 올게요', '오늘 대참사 0회 도전', '4구 풀가동 각입니다'],
     'giving-up': ['오늘 정상 못 가면 삭발', '항아리 유산소 하는 날', '떨어질수록 커집니다'],
@@ -655,8 +664,11 @@
       }
 
       var tip = $('dTip');
+      var art = TIP_ART[g.id]; // 실제 게임 아트 컷 — 없으면(화력쇼) 벡터 thumb 폴백
       tip.innerHTML =
-        '<canvas class="gthumb" data-thumb width="280" height="126"></canvas>' +
+        (art
+          ? '<img class="gthumb" data-tipimg src="' + art + '" alt="">'
+          : '<canvas class="gthumb" data-thumb width="280" height="126"></canvas>') +
         '<div class="dwInfo">' +
           '<b class="tipTitle">' + g.title + '</b>' +
           '<p class="gd">' + g.tagline + '</p>' +
@@ -668,15 +680,25 @@
         '</div>' +
         '<div class="dwHint">▶ <b>더블클릭</b>하면 방송이 시작됩니다</div>';
 
-      // 썸네일은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
-      var cv = tip.querySelector('[data-thumb]');
-      var c = cv.getContext('2d');
-      if (g.thumb) g.thumb(c, cv.width, cv.height);
-      else {
-        c.fillStyle = '#1e2023'; c.fillRect(0, 0, cv.width, cv.height);
-        c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
-        c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
-      }
+      // 벡터 썸네일 — 아트가 없는 게임은 게임이 직접 그린다 (thumb 없으면 타이틀 카드)
+      var drawVec = function (cv) {
+        var c = cv.getContext('2d');
+        if (g.thumb) g.thumb(c, cv.width, cv.height);
+        else {
+          c.fillStyle = '#1e2023'; c.fillRect(0, 0, cv.width, cv.height);
+          c.fillStyle = '#ffd27a'; c.font = 'bold 18px Georgia, serif'; c.textAlign = 'center';
+          c.fillText(g.title, cv.width / 2, cv.height / 2 + 6);
+        }
+      };
+      var cv0 = tip.querySelector('[data-thumb]');
+      if (cv0) drawVec(cv0);
+      // 아트 미배포 환경(파일 누락) — 조용히 벡터 썸네일로 강등, 툴팁은 항상 그림을 가진다
+      var im = tip.querySelector('[data-tipimg]');
+      if (im) im.addEventListener('error', function () {
+        var c2 = document.createElement('canvas');
+        c2.className = 'gthumb'; c2.width = 280; c2.height = 126;
+        im.replaceWith(c2); drawVec(c2);
+      });
       // 위치 — 아이콘 오른쪽. 렌더된 실제 높이로 화면 아래 잘림을 보정한다
       var r = btn.getBoundingClientRect();
       tip.style.left = (r.right + 14) + 'px';
@@ -790,7 +812,7 @@
       $('obsDot').classList.add('live');
 
       this._marks.length = 0; this._shownV = 0;
-      this._recordStamped = false; this._lastGainAt = this.now;
+      this._recordStamped = false; this._paceTagged = false; this._lastGainAt = this.now;
       $('liveBar').classList.remove('cold');
       $('paceChip').classList.add('hidden');
       $('donBanner').classList.remove('show');
@@ -1333,8 +1355,10 @@
           // 단골이 종전 기록을 기억하고 있다 — 스탬프(큰 자극)와 겹치지 않게 한 박자 뒤 (규약 3)
           Chat.memory('record_live', { best: best.toLocaleString() }, null, 900);
         }
+        this.paceTag();
       } else if (best > 0 && v > best * 0.8) {
         txt = '신기록 페이스 — 기록 ' + best.toLocaleString();
+        this.paceTag();
       } else {
         for (var i = 0; i < this.MILESTONES.length; i++) {
           var m = this.MILESTONES[i];
@@ -1345,6 +1369,14 @@
       chip.innerHTML = txt.replace(/★/g, STAR); // 내부 상수만 들어온다
       chip.classList.toggle('hidden', !txt);
       chip.classList.toggle('hot', hot);
+    },
+
+    // 신기록 페이스 = 셸만 아는 판 상태 — 방송당 1회 record_pace 태그 발행 (도감 §6.2 ⚠ 처방).
+    // 관측단 스프레드시트파·통계인용러의 칸이 여기서 열린다. 메타 통화만 — 시청자 수 무관여
+    paceTag: function () {
+      if (this._paceTagged || !Shell.Dex || !this.game) return;
+      this._paceTagged = true;
+      Shell.Dex.judge(this.game.id, 'record_pace');
     },
 
     showTicker: function (text, muted) {
