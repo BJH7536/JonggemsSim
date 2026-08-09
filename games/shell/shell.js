@@ -35,7 +35,6 @@
   var TIP_ART = {
     'giving-up': 'games/giving-up/img/sky-bg.jpg',
     pocket: 'games/pocket/img/arena-bg.jpg',
-    fishing: 'games/fishing/img/sea-bg.jpg',
     bomb: 'games/bomb/img/bench-bg.jpg',
   };
 
@@ -45,8 +44,8 @@
     hwaryeok: ['불 좀 꺼줄래?', '어? 어? 어어어', '노빠꾸 4구 풀가동', '주방 화재도 컨텐츠입니다'],
     'giving-up': ['아 손이 미끄러졌다고요', '이 구간만 백 번째', '정상 각 나왔다 (안 남)', '떨어지는 것도 실력입니다'],
     pocket: ['38%는 사실상 확정입니다', '이게 빗나가네 실화냐', '빈사 역전 장인 나야 나', '한 판만 더 (마지막 아님)'],
-    fishing: ['오늘 나락 한번 가봅니다', '입질 온다 입질 (아님)', '월척 잡을 때까지 퇴근 없음', '심해가 부른다 (환청)'],
     bomb: ['빨간 선이 국룰입니다', '이거 안 터짐 ㅇㅇ 믿으셈', '감으로 자르는 남자', '설명서는 접어두겠습니다'],
+    balloon: ['하나만 더 익힐게요', '욕심이 터뜨린 방송', '만개는 0.3초입니다', '오늘은 안 놓칩니다 (놓침)'],
   };
 
   // ---------- 공명 판정층 (ADR-004) ----------
@@ -481,9 +480,10 @@
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
             'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
             'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up',
-            'streamer_joy'],
+            'bloom', 'combo_max', 'streamer_joy'],
       confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
-                  'strike_miss', 'escape', 'trash', 'timeout_boom', 'streamer_selfmock'],
+                  'strike_miss', 'escape', 'trash', 'timeout_boom', 'burst', 'combo_break',
+                  'streamer_selfmock'],
       thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
       silence: ['streamer_silence'],
       question: ['milestone'],
@@ -2464,12 +2464,16 @@
   // 실력이 모자라면 사슬 자체가 멈춰서, 30일 안에 마지막 게임을 만져보지도 못하고 시즌이
   // 끝났다 — 종겜(여러 게임을 도는 것)이라는 컨셉이 잠겨 버린다.
   // 방송 횟수로 바꾸면 해금은 반드시 진행되고, 실력은 등급·미션·시즌 목표에서 겨룬다.
+  // 관문은 전부 1회다 (사용자 지시). 방금 열린 게임을 한 판 하면 곧바로 다음이 열린다 —
+  // 사슬 전체가 4회. 2·2·3·3(10회)일 때는 새 게임을 만나기 전에 같은 게임을 두세 번 반복해야
+  // 했고, 그건 규약 4(신선도)가 벌주는 바로 그 플레이였다. 해금이 종겜을 막고 있었던 셈이다.
+  // 난이도는 등급·미션·시즌 목표가 맡는다 — 해금은 콘텐츠를 여는 문일 뿐이다.
   Shell.UNLOCK = [
     { id: 'hwaryeok' },                              // 첫 방송 — 항상 열려 있다
-    { id: 'giving-up', from: 'hwaryeok',  times: 2 },
-    { id: 'pocket',    from: 'giving-up', times: 2 },
-    { id: 'bomb',      from: 'pocket',    times: 3 },
-    { id: 'fishing',   from: 'bomb',      times: 3 },
+    { id: 'giving-up', from: 'hwaryeok',  times: 1 },
+    { id: 'pocket',    from: 'giving-up', times: 1 },
+    { id: 'bomb',      from: 'pocket',    times: 1 },
+    { id: 'balloon',   from: 'bomb',      times: 1 },   // 심연낚시 자리를 이어받는다
   ];
 
   // 정산이 부르는 기록기 — 등급과 무관하게 "방송했다"는 사실만 센다

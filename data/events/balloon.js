@@ -22,6 +22,13 @@ window.BALLOON_CHAT = {
       ['hype', '만개!!!'], ['cheer', '이거지 이거!!'], ['mock', '심장 쫄깃했지? ㅋㅋ'],
       ['info', '만개 창은 0.3초뿐이다'], ['question', '저거 어떻게 타이밍 재요?'],
       ['hype', '손 미쳤다 ㄷㄷ'], ['worry', '더 참으면 터진다니까요'] ] },
+    // 즉시 터뜨림(안전 플레이) — 자주 일어나므로 게임이 낮은 확률로만 발행한다.
+    // gain(ev)의 원형 배분 키이기도 하다: 이 어휘가 없으면 안전 플레이가 관객 구성에
+    // 아무 색도 남기지 못한다 (화력쇼 done과 같은 규약)
+    pop: { facts: [], flavor: [
+      ['mock', '또 바로 눌렀네 ㅋㅋ'], ['info', '작을 때 터뜨리면 ×1.0이다'], ['cheer', '착실하네요'],
+      ['question', '왜 안 기다려요?'], ['mock', '겁쟁이 플레이 ㅋㅋ'], ['worry', '그렇게 벌어서 언제 뜨려고'],
+      ['info', '안전한 만큼 단가가 바닥이다'] ] },
     burst: { facts: [], flavor: [
       ['mock', '아 터졌네 ㅋㅋ'], ['worry', '욕심이 과했다…'], ['info', '자연 파열은 손실이 제일 크다'],
       ['mock', '조금만 일찍 누르지 그랬어'], ['question', '방금 몇 명 빠진 거예요?'],
@@ -50,7 +57,9 @@ window.BALLOON_CHAT = {
       ['cheer', '수고하셨습니다!!'], ['question', '다음 방송 언제예요?'], ['cheer', '잘 봤습니다'],
       ['mock', '마지막에 터진 거 아쉽다 ㅋㅋ'], ['hype', '오늘 만개 레전드'], ['info', '클립 정리하러 갑니다'] ] },
   },
-  BURST: { bloom: 3, perfect_round: 3, flood: 2, burst: 2, round_up: 1,
+  // bloom = 4 — 이 게임의 설계 피크. 무게 4라야 임팩트 계층(ADR-009)이 붙는다.
+  // burst(손실)는 2로 묶어 둔다: 규약 2 — 손실에는 스팅이 붙으면 안 된다
+  BURST: { bloom: 4, perfect_round: 3, flood: 2, burst: 2, round_up: 1, pop: 1,
            start: 2, end: 2, milestone: 2, donation: 1, nag: 1, idle: 1 },
   // [위험, 파괴, 숙련, 유머] — pop·bloom은 gain(ev)로도 쓰인다 (원형 배분)
   STIM: {

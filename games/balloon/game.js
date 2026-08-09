@@ -134,6 +134,8 @@
         st.blooms++;
         stage.flash(.18); stage.shake(4);
         stage.emit('bloom', { gain: actual.toLocaleString() });
+      } else if (Math.random() < .12) {
+        stage.emit('pop'); // 초당 여러 번이라 낮은 확률로만 — 채팅이 도배되면 안 된다
       }
       // 연쇄 미터를 익음배수 표시로 재사용 — 마지막으로 터뜨린 값이 떠 있는다
       stage.setChain(mul);
