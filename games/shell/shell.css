@@ -377,12 +377,14 @@ body {
 .shopItem img { width: 92px; height: 92px; border-radius: 10px; margin-bottom: 10px; }
 .shopItem .siName { font-size: 20px; color: #ece7dd; font-weight: 700; }
 .shopItem .siDesc { font-size: 20px; color: var(--dim); margin: 5px 0 11px; line-height: 1.4; min-height: 40px; }
-.shopItem .siBuy {
-  width: 100%; padding: 9px 0; border-radius: 8px; border: 1px solid #4a4232;
+/* 장비(.rigItem)와 용품(.shopItem)은 구매 버튼 생김새를 공유한다 — 같은 창의 같은 행동이다.
+   장비 쪽만 선택자에서 빠져 있어 브라우저 기본 버튼으로 나왔다 (사용자 지적) */
+.shopItem .siBuy, .rigItem .siBuy {
+  width: 100%; padding: 9px 14px; border-radius: 8px; border: 1px solid #4a4232;
   background: linear-gradient(#2a2416, #1c1810); color: #ffd24a; font-size: 20px;
-  font-weight: 700; cursor: pointer;
+  font-weight: 700; cursor: pointer; font-family: inherit;
 }
-.shopItem .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
+.shopItem .siBuy:hover, .rigItem .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
 .shopItem .siOwned { font-size: 20px; color: var(--plat2); padding: 9px 0; }
 
 /* ---------- 방송용품 효과 — 전부 순수 장식 (body.g-<id>) ---------- */
@@ -794,7 +796,9 @@ body {
    둘의 차이(성능+유지비 vs 순수 장식)가 이 게임의 규약이라 제목이 그걸 설명한다 */
 .shopSec { margin: 16px 0 8px; font-size: 20px; color: var(--amber2); letter-spacing: 1px; }
 .shopSec .fine { color: var(--dim); letter-spacing: 0; }
-.rigGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 9px; }
+/* 210px일 때는 구매 버튼 라벨("Lv2 · 6,000 코인 · 부품 5 · 실버 이상")이 두 줄로 접혀
+   버튼 이미지 밖으로 삐져나왔다 — 용품 버튼처럼 한 줄로 들어가는 폭을 준다 */
+.rigGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 12px; }
 .rigItem {
   display: flex; flex-direction: column; gap: 6px; padding: 10px 12px;
   border: 1px solid #2e3138; border-radius: 8px; background: rgba(23,25,28,.75);
@@ -1077,11 +1081,16 @@ body:has(#overlay:not(.hidden)) #dayChip { display: none; }
   background: linear-gradient(rgba(23,25,28,.6), rgba(23,25,28,.6)),
     url('img/ui-panelbg.jpg') center/cover, #17191c;
 }
-.shopItem .siBuy {
-  background: url('img/ui-button.png') center/100% 100% no-repeat, linear-gradient(#4a3f28, #2c2414);
-  border: none; color: #06301e; text-shadow: 0 1px 0 rgba(255,255,255,.22);
+/* 9-슬라이스 — 버튼 폭이 원본(252×73)의 2배를 넘으면 center/100% 100%로는 둥근 끝과
+   테두리가 옆으로 늘어나 비율이 깨진다 (장비 버튼 526px). 네 모서리는 원본 비율 그대로
+   두고 가운데 띠만 늘린다. 24 = 모서리 반경 + 테두리 + 아래 그림자를 덮는 슬라이스 */
+.shopItem .siBuy, .rigItem .siBuy {
+  background: none; border-radius: 0; padding: 0 6px;
+  border: 16px solid transparent;
+  border-image: url('img/ui-button.png') 24 fill / 16px stretch;
+  color: #06301e; text-shadow: 0 1px 0 rgba(255,255,255,.22);
 }
-.shopItem .siBuy:hover { filter: brightness(1.08); box-shadow: none; color: #000; }
+.shopItem .siBuy:hover, .rigItem .siBuy:hover { filter: brightness(1.08); box-shadow: none; color: #000; }
 
 /* ---------- 파트너 등급 (파트너 계약 ③) ---------- */
 .pdTier { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 20px; }
