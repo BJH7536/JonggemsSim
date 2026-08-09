@@ -40,7 +40,7 @@
 | Giving Up On It | `fall_legend` | `summit` |
 | 해체쇼 | `boom` | `defused_clutch` |
 | 심연낚시 | `line_snap` | `land_legend` |
-| 주머니 괴수 | — | `comeback` |
+| 주머니 괴수 | — (2026-08-10 `wipe` 승격안 계측 기각 — ADR-010) | `comeback` |
 
 급등 문턱은 `Shell.DON.BURST`를 재사용한다. 셸이 이미 "대참사급 = 시청자의 30%가 한 번에
 움직임"으로 쓰는 값이라, 사건 도네와 임팩트가 **같은 순간을 가리킨다**.

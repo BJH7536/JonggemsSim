@@ -75,6 +75,10 @@ window.POCKET_CHAT = {
       ['cheer', '수고하셨습니다!!'], ['question', '다음 방송 언제예요?'], ['cheer', '잘 봤습니다'],
       ['mock', '마지막 판 아쉬웠다 ㅋㅋ'], ['hype', '오늘 역전극 레전드였다'], ['info', '연승 기록 정리하러 갑니다'] ] },
   },
+  // wipe는 무게 3에 남긴다. 무게 4(= ADR-009 임팩트 문턱)로 올리는 안을 계측으로 기각했다:
+  // 전멸이 런당 5~10회라 "설계 피크"가 될 만큼 드물지 않다. 다른 게임의 피크는 전부 크기
+  // 문턱을 넘은 사건인데(GUOI는 낙차 25m 이상만 fall_legend) 전멸에는 문턱이 없다.
+  // 피크가 필요하면 "높은 연승에서의 전멸"처럼 문턱이 달린 별도 이벤트여야 한다 (ADR-010 후속)
   BURST: { comeback: 4, ultra_hit: 3, crit: 3, wipe: 3, enemy_ko: 2, risky_hit: 2, faint: 2,
            advantage: 2, near_death: 2, start: 2, end: 2 },
   // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)

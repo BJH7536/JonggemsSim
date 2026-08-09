@@ -57,6 +57,14 @@
   var CRIT = 0.12;
   var MILES = [1000, 5000, 15000, 60000, 150000];
 
+  // 전멸 복귀 2지선다 (ADR-010) — 8초 락아웃은 연출도 없고 시청자만 새던 순손실 구간이었다.
+  // 대기를 벌칙에서 도박으로 바꾼다: 짧게 나가면 약한 채로 뛴다. 40%는 빈사(20%) 구간에
+  // 금방 닿아 comeback(최대 수익) 사정권이므로, "지르는 쪽"이 공통 명제와 같은 방향이다.
+  var REVIVE = { fastT: 1.0, fastHp: .40, fullT: 5.0, fullHp: 1 };
+  // 연출 정지 — meDown/foeDown 애니는 st.anim.t 1.4초까지 살아 있어 다음 턴과 겹쳐 흘려도
+  // 시각적으로 끊기지 않는다. 남는 시간은 전부 플레이어의 입력 기회로 돌린다 (ADR-010)
+  var KO_PAUSE = 0.9, FAINT_PAUSE = 0.8;
+
   // ---------- AetherAI 생성 아트 (tools/aether-assets.json) ----------
   // 몬스터 6종(타입별 아군 뒤태/적 정면)과 스킬 VFX 시트 7종. 파일이 없거나 아직
   // 로드 전이면 기존 캔버스 벡터로 그대로 폴백한다 — 아트는 얹는 층이지 의존성이 아니다.
@@ -97,9 +105,10 @@
       enemy: null, wins: 0, streak: 1, maxStreak: 1,
       mfresh: [0, 0, 0, 0], mrec: [0, 0, 0, 0],
       lastMoves: [], safeSpamAt: -1,
-      phase: 'player',           // player | busy | heal
+      phase: 'player',           // player | busy | choice | heal
       timers: [], healT: 0, idleT: 0, warnedND: false,
-      kos: 0, faints: 0, crits: 0, comebacks: 0,
+      buf: null, reviveHp: 1,    // 선입력 1칸 · 이번 복귀로 회복할 비율 (ADR-010)
+      kos: 0, faints: 0, crits: 0, comebacks: 0, wipes: 0, fastRevives: 0,
       anim: null, hitFlash: { me: 0, foe: 0 }, floaters: [], vfx: [],
       chatT: 3, mileIdx: 0,
     };
@@ -138,9 +147,17 @@
     }
     function buildPanel() {
       var m = me(), names = MOVE_NAMES[m.t];
+      // 선입력 (ADR-010): 연출 중에도 버튼은 살아 있다. 지금 누르면 큐에 들어가고
+      // 연출이 끝나는 프레임에 소비된다 — 연출 길이를 하나도 줄이지 않고 체감 대기만 없앤다.
+      // 복귀 선택 중에는 받지 않는다: 그건 대기가 아니라 결정이라 앞질러 눌러선 안 된다.
+      var takesMv = st.phase === 'player' || st.phase === 'busy' || st.phase === 'heal';
+      var takesSw = st.phase === 'player' || st.phase === 'busy';
+      // 큐에 든 입력은 테두리로 표시한다 — 눌렀는데 아무 일도 안 일어나면 버그로 읽힌다
+      var bufMark = ' style="border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)"';
       var moves = MOVES.map(function (mv, i) {
         var fm = FRESH[st.mfresh[i]];
-        return '<button class="pkmove" data-mv="' + i + '"' + (st.phase !== 'player' ? ' disabled' : '') + '>' +
+        return '<button class="pkmove" data-mv="' + i + '"' + (takesMv ? '' : ' disabled') +
+          (st.buf && st.buf.mv === i ? bufMark : '') + '>' +
           '<b>' + (i + 1) + '. ' + names[i] + '</b>' +
           '<span>명중 ' + Math.round(mv.acc * 100) + '% · 위력 ' + mv.pow + '</span>' +
           '<span class="' + (fm < 1 ? 'warn' : '') + '">신선도 ' + Math.round(fm * 100) + '%</span></button>';
@@ -148,23 +165,56 @@
       var bench = st.bench.map(function (b, i) {
         var pct = Math.round(b.hp / b.max * 100);
         return '<button class="pkmon' + (i === st.active ? ' on' : '') + (b.hp <= 0 ? ' dead' : '') + '"' +
-          ' data-sw="' + i + '"' + (st.phase !== 'player' || i === st.active || b.hp <= 0 ? ' disabled' : '') + '>' +
+          ' data-sw="' + i + '"' + (!takesSw || i === st.active || b.hp <= 0 ? ' disabled' : '') +
+          (st.buf && st.buf.sw === i ? bufMark : '') + '>' +
           '<b style="color:' + TYPES[b.t].c + '">' + b.n + '</b><span>' + TYPES[b.t].n + '</span>' +
           '<div class="pkhp"><i style="width:' + pct + '%;background:' + (pct > 50 ? '#6fd98f' : pct > 25 ? '#ffb447' : '#ff5a4a') + '"></i></div></button>';
       }).join('');
       var foe = st.enemy ? '<div class="pkfoe">상대 <b style="color:' + TYPES[st.enemy.t].c + '">' + st.enemy.n + '</b> · ' +
         TYPES[st.enemy.t].n + ' · 유리 배수 ×' + typeMult(me().t, st.enemy.t).toFixed(2) + '</div>' : '';
+      // 복귀 중에는 오른쪽(상대·벤치)만 카운트다운으로 바뀐다. 기술 버튼은 그대로 남겨야
+      // 미리 눌러둘 수 있다 — 선입력이 되는 대기와 안 되는 대기는 체감이 완전히 다르다
+      var side = st.phase === 'heal'
+        ? '<div class="pkheal">🏥 복귀 중 — <b><span id="pkHeal">' + Math.max(0, st.healT).toFixed(1) +
+          '</span>초</b><br><span>기술을 미리 눌러두면 복귀하는 순간 바로 나간다</span></div>'
+        : foe + '<div class="pkbench">' + bench + '</div>';
       panel.innerHTML = '<div class="pkbar"><div class="pkmoves">' + moves + '</div>' +
-        '<div class="pkside">' + foe + '<div class="pkbench">' + bench + '</div></div></div>';
+        '<div class="pkside">' + side + '</div></div>';
       renderHUD();
     }
     function onPanelClick(e) {
-      var t = e.target.closest('[data-mv],[data-sw]');
-      if (!t || t.disabled || !stage.live || st.phase !== 'player') return;
-      if (t.dataset.mv != null) playerMove(+t.dataset.mv);
-      else playerSwitch(+t.dataset.sw);
+      var t = e.target.closest('[data-mv],[data-sw],[data-rv]');
+      if (!t || t.disabled || !stage.live) return;
+      if (t.dataset.rv != null) chooseRevive(+t.dataset.rv);
+      else if (t.dataset.mv != null) input({ mv: +t.dataset.mv });
+      else input({ sw: +t.dataset.sw });
     }
     panel.addEventListener('click', onPanelClick);
+
+    // 입력 한 곳 — 내 턴이면 즉시, 연출 중이면 큐에 1칸. 마지막 입력이 이긴다
+    // (격겜의 선입력과 같은 규약: 헷갈려서 두 번 누른 사람이 원한 건 나중 것이다)
+    function input(cmd) {
+      if (st.phase === 'player') {
+        if (cmd.mv != null) playerMove(cmd.mv);
+        else if (cmd.sw !== st.active && st.bench[cmd.sw].hp > 0) playerSwitch(cmd.sw);
+        return;
+      }
+      if (st.phase === 'busy' || (st.phase === 'heal' && cmd.mv != null)) {
+        st.buf = cmd;
+        buildPanel();
+      }
+    }
+
+    // 연출이 끝나 조작권이 돌아오는 유일한 통로 — 큐가 있으면 여기서 소비한다.
+    // 소비 시점에 다시 검사하는 이유: 큐에 넣은 뒤 기절·교체로 판이 바뀌었을 수 있다
+    function toPlayer() {
+      st.phase = 'player';
+      var b = st.buf; st.buf = null;
+      buildPanel();
+      if (!b) return;
+      if (b.mv != null) playerMove(b.mv);
+      else if (b.sw !== st.active && st.bench[b.sw].hp > 0) playerSwitch(b.sw);
+    }
 
     // ---------- 신선도 (규약 4 — 기술 단위) ----------
     function useFresh(i) {
@@ -247,7 +297,7 @@
         nearDeath ? { hp: me().hp, gain: actual.toLocaleString() }
                   : { name: st.enemy.n, streak: st.wins, gain: actual.toLocaleString() });
       st.anim = { who: 'foeDown', t: 0 };
-      after(1.3, function () { newEnemy(); st.phase = 'player'; buildPanel(); });
+      after(KO_PAUSE, function () { newEnemy(); toPlayer(); });
       renderHUD();
     }
 
@@ -275,7 +325,7 @@
         } else {
           stage.ticker('상대의 공격이 빗나갔다', true);
         }
-        st.phase = 'player'; buildPanel();
+        toPlayer();
       });
     }
 
@@ -288,16 +338,22 @@
       stage.emit('faint', { name: m.n });
       st.anim = { who: 'meDown', t: 0 };
       var next = st.bench.findIndex(function (b) { return b.hp > 0; });
-      if (next < 0) { // 전멸 — 회복 타임. 파손 화구와 같은 원리: 방치 구간은 샌다
-        st.phase = 'heal'; st.healT = 8;
+      if (next < 0) { // 전멸 — 복귀 방식을 고른다 (ADR-010). 고르는 동안에도 샌다
+        st.wipes++;
+        // 예약된 연출 타이머를 끊는다. step()은 phase와 무관하게 큐를 소진하므로,
+        // 남은 enemyTurn 하나가 복귀 대기 중에 깨어나면 전멸한 팀을 또 때린다.
+        // 정상 흐름에선 비어 있지만, 비어 있음에 기대는 것과 보장하는 것은 다르다
+        st.timers.length = 0;
+        st.phase = 'choice'; st.buf = null;
         stage.emit('wipe');
-        buildPanel();
+        buildChoice();
+        renderHUD();
         return;
       }
-      after(1.1, function () {
+      after(FAINT_PAUSE, function () {
         st.active = next; st.warnedND = false;
         sfxSwap();
-        st.phase = 'player'; buildPanel();
+        toPlayer();
       });
       renderHUD();
     }
@@ -315,6 +371,34 @@
       }
       buildPanel();
       after(0.7, enemyTurn); // 교체도 한 턴 — 공짜면 상성이 퍼즐이 아니라 버튼이 된다
+    }
+
+    // ---------- 전멸 복귀 (ADR-010) ----------
+    // 8초를 그냥 태우던 자리에 선택을 놓는다. 둘 다 손해지만 손해의 종류가 다르다:
+    // 시간을 잃을 것인가, 체력을 잃을 것인가. 규모가 클수록 4초가 비싸진다
+    function buildChoice() {
+      panel.innerHTML = '<div class="pkbar"><div class="pkheal">💀 <b>전원 전멸</b> — 어떻게 복귀할까?' +
+        '<span>고르는 동안에도 시청자는 조용히 빠져나간다</span>' +
+        '<div class="pkmoves" style="grid-template-columns:repeat(2,1fr);max-width:540px;margin:12px auto 0">' +
+        '<button class="pkmove" data-rv="0"><b>1. 즉시 복귀</b>' +
+        '<span>' + REVIVE.fastT.toFixed(1) + '초 · 체력 ' + Math.round(REVIVE.fastHp * 100) + '%</span>' +
+        '<span class="warn">약한 채로 바로 뛴다</span></button>' +
+        '<button class="pkmove" data-rv="1"><b>2. 완전 회복</b>' +
+        '<span>' + REVIVE.fullT.toFixed(1) + '초 · 체력 ' + Math.round(REVIVE.fullHp * 100) + '%</span>' +
+        '<span>대신 ' + (REVIVE.fullT - REVIVE.fastT).toFixed(1) + '초를 더 잃는다</span></button>' +
+        '</div></div></div>';
+    }
+    function chooseRevive(kind) {
+      if (st.phase !== 'choice') return;
+      var fast = kind === 0;
+      if (fast) st.fastRevives++;
+      st.reviveHp = fast ? REVIVE.fastHp : REVIVE.fullHp;
+      st.healT = fast ? REVIVE.fastT : REVIVE.fullT;
+      st.phase = 'heal';
+      sfxSwap();
+      stage.ticker(fast ? '즉시 복귀 — 체력 ' + Math.round(REVIVE.fastHp * 100) + '%로 바로 뛴다'
+                        : '괴수센터로 — 완전 회복까지 ' + REVIVE.fullT.toFixed(1) + '초', !fast);
+      buildPanel();
     }
 
     function ambient() {
@@ -344,20 +428,23 @@
           if (st.timers[i].t <= 0) { var fn = st.timers[i].fn; st.timers.splice(i, 1); fn(); }
         }
 
+        // 복귀 선택 중에도 샌다 (규약 2 — 조용히). 고민이 공짜면 2지선다가 아니라
+        // 무료 일시정지가 된다: 지금 어느 쪽이 싼지는 시청자 규모가 정한다
+        if (st.phase === 'choice') stage.lose(Math.max(1, stage.viewers * 0.007) * dt);
+
         if (st.phase === 'heal') {
           st.healT -= dt;
           stage.lose(Math.max(1, stage.viewers * 0.007) * dt); // 회복 타임 — 조용히 샌다
           var h = document.getElementById('pkHeal');
           if (h) h.textContent = Math.max(0, st.healT).toFixed(1);
-          else panel.querySelector('.pkbar') && (panel.innerHTML =
-            '<div class="pkbar"><div class="pkheal">🏥 괴수센터 회복 중 — <b><span id="pkHeal">' +
-            st.healT.toFixed(1) + '</span>초</b><br><span>회복하는 동안 시청자가 조용히 빠져나간다</span></div></div>');
           if (st.healT <= 0) {
-            st.bench.forEach(function (b) { b.hp = b.max; });
-            st.active = 0; st.phase = 'player'; st.warnedND = false;
+            var frac = st.reviveHp;
+            st.bench.forEach(function (b) { b.hp = Math.max(1, Math.round(b.max * frac)); });
+            st.active = 0; st.warnedND = false;
             stage.emit('revive');
-            stage.ticker('전원 회복! 다시 달리자', false);
-            buildPanel();
+            stage.ticker(frac >= 1 ? '전원 회복! 다시 달리자'
+                                   : '체력 ' + Math.round(frac * 100) + '%로 복귀 — 한 대도 못 맞는다', false);
+            toPlayer(); // 미리 눌러둔 기술이 있으면 여기서 바로 나간다
           }
         }
 
@@ -381,7 +468,9 @@
 
       key: function (e) {
         var n = parseInt(e.key, 10);
-        if (n >= 1 && n <= 4 && st.phase === 'player') playerMove(n - 1);
+        if (!(n >= 1 && n <= 4)) return;
+        if (st.phase === 'choice') { if (n <= 2) chooseRevive(n - 1); return; }
+        input({ mv: n - 1 }); // 내 턴이면 즉시, 연출·복귀 중이면 큐로
       },
 
       // 튜닝 계측용 상태 노출 — ?guoidebug 를 붙였을 때만 (GUOI와 같은 규약).
@@ -393,6 +482,7 @@
           ['연승 / KO', st.wins + '연승 / ' + st.kos + '회'],
           ['최고 배수 / 급소', '×' + st.maxStreak.toFixed(1) + ' / ' + st.crits],
           ['빈사 역전 / 기절', st.comebacks + ' / ' + st.faints],
+          ['전멸 / 즉시 복귀', st.wipes + '회 / ' + st.fastRevives + '회'],
         ];
       },
 
@@ -561,8 +651,9 @@
     usesChain: true,
     chat: window.POCKET_CHAT,
     preload: loadArt,
-    tuning: { MOVES: MOVES, FRESH: FRESH, CRIT: CRIT, TYPES: 3 },
+    tuning: { MOVES: MOVES, FRESH: FRESH, CRIT: CRIT, TYPES: 3, REVIVE: REVIVE, KO_PAUSE: KO_PAUSE, FAINT_PAUSE: FAINT_PAUSE },
     foot: '<kbd>1</kbd>~<kbd>4</kbd> 또는 버튼으로 기술 — <b>명중이 낮을수록 시청자가 크게 반응한다.</b> 벤치 클릭으로 교체(한 턴 소모, 유리 상성 교체는 보상)<br>' +
+          '연출 중에도 미리 눌러두면 큐에 들어간다 · 전멸하면 <b>즉시 복귀(체력 40%)</b>와 <b>완전 회복(5초)</b> 중 고른다<br>' +
           '같은 기술만 쓰면 물린다(기술 신선도) · 빈사 상태에서의 역전 KO가 최대 수익 · 기절·전멸·장고는 조용히 시청자를 잃는다',
     thumb: function (ctx, w, h) {
       var g = ctx.createLinearGradient(0, 0, 0, h);
