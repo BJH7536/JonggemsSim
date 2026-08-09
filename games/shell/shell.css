@@ -895,27 +895,35 @@ body {
   color: #06301e;
 }
 
-/* ---------- 시즌 카운터 (30일 계약) ----------
-   상단 중앙 고정. 방송 중에는 ON AIR 띠의 빈 가운데에 얹히고, 허브에서는 바탕화면 위에 뜬다.
+/* ---------- 시즌 카운터 (30일 계약) — D-Day 위젯 ----------
+   바탕화면 오른쪽, 김 피디 미션 쪽지(.pdNote) 바로 아래에 같은 크기로 붙는다 (사용자 요청).
+   세로 위치는 쪽지 높이가 미션 수에 따라 변해서 renderDay가 실측해 맞춘다.
    남은 날이 곧 압박이라 숨기면 기간 제한이 없는 것과 같다 */
 #dayChip {
-  position: fixed; top: 3px; left: 50%; transform: translateX(-50%); z-index: 45;
-  display: flex; align-items: center; gap: 9px; pointer-events: none;
-  padding: 3px 13px; border-radius: 999px;
-  background: rgba(8,10,12,.82); border: 1px solid #2e3138;
-  font-size: 11.5px; color: #c9cdd2; text-shadow: 0 1px 3px #000; white-space: nowrap;
+  position: fixed; right: 324px; top: 200px; z-index: 45; width: 600px; max-width: 88vw;
+  pointer-events: none; padding: 20px 24px; border-radius: 14px;
+  background: linear-gradient(rgba(23,25,28,.85), rgba(23,25,28,.85)),
+    url('img/ui-panelbg.jpg') center/cover, #17191c;
+  border: 1px solid #2e3138; font-size: 18px; color: #c9cdd2;
 }
-#dayChip b { color: var(--ink); font-size: 14px; font-family: Georgia, serif; }
-#dayChip .dcOf { color: var(--dim); }
-#dayChip .dcGoal b { font-size: 11.5px; color: var(--plat2); font-family: inherit; }
+/* 방송 중에는 바탕화면이 통째로 가려진다 — 위젯도 함께 물러난다 */
+body.fullshow #dayChip { display: none; }
+#dayChip .dcTop { display: flex; align-items: baseline; gap: 14px; }
+#dayChip .dcDday {
+  font-family: Georgia, serif; font-size: 44px; line-height: 1; color: var(--ink);
+  letter-spacing: 1px;
+}
+#dayChip .dcOf { font-size: 18px; color: var(--dim); }
+#dayChip .dcGoal { display: block; margin-top: 10px; font-size: 20px; }
+#dayChip .dcGoal b { color: var(--plat2); }
 #dayChip .dcBar {
-  display: block; width: 84px; height: 5px; border-radius: 3px;
+  display: block; width: 100%; height: 9px; border-radius: 5px; margin-top: 12px;
   background: #23262b; overflow: hidden;
 }
 #dayChip .dcBar i { display: block; height: 100%; background: var(--plat); }
 /* 막바지 — 손실 무연출(규약 2)에 맞춰 색만 바뀐다. 깜빡이지 않는다 */
 #dayChip.last { border-color: var(--tally); }
-#dayChip.last b { color: #ff8d7a; }
+#dayChip.last .dcDday { color: #ff8d7a; }
 
 /* 시즌 종료 — 첫 방문 스플래시(.isPanel)를 그대로 쓴다 */
 #seasonEnd {
@@ -999,7 +1007,8 @@ body {
 .pdMis b { color: #ffd24a; }
 /* 김 피디의 오늘 미션 — 오른쪽 위, 2배. 아래는 최근 방송 자리다 */
 .pdNote {
-  position: absolute; right: 24px; top: 26px; max-width: 600px;
+  /* D-Day 위젯(#dayChip)이 바로 아래에 같은 크기로 붙는다 — 폭을 고정해 둘이 어긋나지 않게 */
+  position: absolute; right: 24px; top: 26px; width: 600px; max-width: 88vw; box-sizing: border-box;
   display: flex; gap: 18px; align-items: flex-start;
   padding: 20px 24px; border: 1px solid #2e3138; border-radius: 14px;
   background: linear-gradient(rgba(23,25,28,.85), rgba(23,25,28,.85)),
@@ -1036,27 +1045,44 @@ body {
 body.g-diaaura #viewport { outline: 2px solid rgba(125,232,255,.6); box-shadow: 0 14px 44px #000c, 0 0 34px rgba(125,232,255,.35); }
 .rwCap .rwNote { color: var(--dim); font-size: 10px; }
 
-/* ---------- 인트로 4컷 만화 — 한 화면에 한 컷 (AetherAI 컷 + HTML 캡션) ---------- */
-.isPanel { width: min(520px, 94%); }
-/* 컷마다 이미지·캡션 길이가 달라도 패널이 출렁이지 않게 무대 높이를 고정한다 */
-#introSplash .comic { margin: 18px 0 10px; min-height: 366px; }
-#introSplash .comic figure { margin: 0; display: none; }
-#introSplash .comic figure.on { display: block; animation: cutDrop .42s cubic-bezier(.2,.9,.3,1.35) both; }
+/* ---------- 인트로 4컷 만화 — 한 지면에 4컷 (AetherAI 컷 + HTML 캡션) ----------
+   클릭할 때마다 다음 칸이 왼쪽에서 들어와 쌓인다. 4컷이 다 차면 지면이 화면의 80%(80vw×80vh)다.
+   빈 칸은 display:none이 아니라 visibility:hidden — 자리를 미리 잡아 둬야 이미 나온 컷이
+   새 컷 때문에 밀려 흔들리지 않는다 (만화 지면은 처음부터 그 크기로 있다) */
+/* px 상한을 두지 않는다 — 넓은 화면에서 상한에 걸리면 지면이 화면의 80%를 못 채운다 */
+#introSplash .isPanel { width: 88vw; padding: 14px 20px 16px; }
+#introSplash .isLogo { font-size: 22px; }
+#introSplash .isPanel h1 { margin: 4px 0 6px; font-size: 21px; }
+#introSplash .isPanel .slab { margin-top: 8px; padding: 10px 30px; }
+#introSplash .comic {
+  display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr);
+  /* 80vh를 노리되 로고·제목·서명 버튼이 잘릴 만큼 화면이 낮으면 그만큼 양보한다 */
+  gap: 14px; width: 80vw; height: min(80vh, calc(100vh - 200px)); margin: 10px auto 8px;
+}
+#introSplash .comic figure {
+  margin: 0; min-height: 0; display: flex; flex-direction: column;
+  visibility: hidden; opacity: 0;
+}
+#introSplash .comic figure.on {
+  visibility: visible; opacity: 1;
+  animation: cutSlideIn .46s cubic-bezier(.2,.9,.3,1.15) both;
+}
 #introSplash .comic figure.on img { animation: cutFlash .42s ease-out; }
 #introSplash .comic figure.on figcaption { animation: cutCap .34s ease-out .18s both; }
 #introSplash .comic img {
-  width: min(300px, 78%); aspect-ratio: 1; object-fit: cover; border-radius: 10px;
-  border: 1px solid #2c3036; display: block; margin: 0 auto; background: #101214;
+  flex: 1 1 auto; min-height: 0; width: 100%; object-fit: cover; border-radius: 10px;
+  border: 1px solid #2c3036; display: block; background: #101214;
   box-shadow: 0 14px 34px rgba(0,0,0,.55);
 }
 #introSplash .comic figcaption {
-  font-size: 14px; color: #d5d9de; margin-top: 14px; line-height: 1.65;
-  min-height: 3.3em; padding: 0 6px;
+  flex: 0 0 auto; font-size: 14px; color: #d5d9de; margin-top: 10px; line-height: 1.55;
+  min-height: 3.1em; padding: 0 4px; text-align: left;
 }
 #introSplash .comic figcaption b { color: var(--plat2); }
 #introSplash .comic figcaption .dia { color: #7de8ff; }
-@keyframes cutDrop {
-  from { opacity: 0; transform: translateY(18px) scale(.94); }
+/* 만화 컷은 왼쪽에서 들어온다 — 읽는 방향과 같은 방향 (사용자 요청) */
+@keyframes cutSlideIn {
+  from { opacity: 0; transform: translateX(-80px); }
   to   { opacity: 1; transform: none; }
 }
 @keyframes cutFlash {
