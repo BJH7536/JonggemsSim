@@ -178,7 +178,7 @@
     for (var try_ = 0; try_ < 26; try_++) {
       var z = rnd(Z_FAR, Z_NEAR);
       var x = rnd(70, 890), y = rnd(76, 366);
-      var p = gl ? gl.project(x, y, z) : { x: x, y: y, scale: 1 };
+      var p = gl ? gl.project(x, y, z) : { x: x, y: y, scale: 1 };  // 스폰 시점은 흔들림 0
       if (p.x < 300 && p.y < 62) continue;        // HUD 명판
       if (p.x > 762 && p.y > 288) continue;       // 스트리머 캠
       if (p.x < 40 || p.x > 920 || p.y < 50 || p.y > 392) continue;
@@ -213,9 +213,11 @@
     function comboMul() { return MATH.comboMul(st.combo); }
 
     // 투영 — WebGL이 없으면 z를 무시한 1:1 (2D 폴백)
-    function proj(b) {
-      return gl ? gl.project(b.x, b.y, b.z) : { x: b.x, y: b.y, scale: 1 };
-    }
+    function projAt(x, y, z) { return gl ? gl.project(x, y, z) : { x: x, y: y, scale: 1 }; }
+    // 흔들림까지 반영한 화면 좌표. 3D는 흔들린 자리에 그리는데 오버레이(실·임박 링·글로우)와
+    // 클릭 판정이 흔들림 없는 좌표를 쓰면 서로 어긋난다 — 보이는 곳과 눌리는 곳이 달라진다
+    function swayX(b) { return b.x + Math.sin(stage.now * 1.7 + b.sway) * (2 + ripe(b) * 3); }
+    function proj(b) { return projAt(swayX(b), b.y, b.z); }
 
     // ---------- HUD · 조작 안내 ----------
     stage.hud('⏱ 방송 <b id="blTime">3:00</b> · R<b id="blRnd">1</b>/6 · ' +
@@ -457,7 +459,7 @@
             // 부피는 유지(가로가 늘면 세로가 준다)해야 부푸는 게 아니라 '눌리는' 것으로 읽힌다
             var br = 1 + .045 * rt * Math.sin(t * (5 + rt * 16) + b.sway);
             return {
-              x: b.x + Math.sin(t * 1.7 + b.sway) * (2 + rt * 3), y: b.y, z: b.z, r: b.r,
+              x: swayX(b), y: b.y, z: b.z, r: b.r,
               sx: br, sy: 1 / br,
               rgb: b.rgb, bloom: rt >= BLOOM_T ? (.5 + .5 * Math.sin(t * 18)) : 0,
             };
@@ -512,11 +514,11 @@
       ctx.strokeStyle = 'rgba(255,255,255,.16)';
       st.balloons.forEach(function (b) {
         var p = b._p || proj(b), rr = b.r * p.scale;
-        var sway = Math.sin(t * 1.7 + b.sway) * (2 + ripe(b) * 3) * p.scale;
+        var drift = Math.sin(stage.now * 1.7 + b.sway) * 6 * p.scale;   // 실은 몸통보다 늦게 따라온다
         ctx.lineWidth = Math.max(.8, 1.4 * p.scale);
         ctx.beginPath();
-        ctx.moveTo(p.x + sway, p.y + rr * 1.24);
-        ctx.quadraticCurveTo(p.x + sway * 1.6, p.y + rr + 18 * p.scale, p.x - sway, p.y + rr + 34 * p.scale);
+        ctx.moveTo(p.x, p.y + rr * 1.24);
+        ctx.quadraticCurveTo(p.x + drift, p.y + rr + 18 * p.scale, p.x - drift, p.y + rr + 34 * p.scale);
         ctx.stroke();
       });
       ctx.restore();
@@ -558,7 +560,7 @@
     function drawConfetti(ctx) {
       ctx.save();
       st.confetti.forEach(function (f) {
-        var p = gl ? gl.project(f.x, f.y, f.z) : { x: f.x, y: f.y, scale: 1 };
+        var p = projAt(f.x, f.y, f.z);
         var s = 7 * p.scale;
         ctx.globalAlpha = clamp(1 - f.t / f.life, 0, 1);
         ctx.fillStyle = f.c;

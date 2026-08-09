@@ -181,10 +181,14 @@
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx);
         gl.uniformMatrix4fv(uVP, false, new Float32Array(VP));
         gl.uniform3f(uEye, 0, 0, CAM_Z);
-        gl.uniform1f(uDark, dark == null ? 1 : dark);
+        var g0 = dark == null ? 1 : dark;
 
         for (var i = 0; i < list.length; i++) {
           var b = list[i], w = toWorld(b.x, b.y, b.z);
+          // 거리 감광 — 먼 풍선은 무대 어둠에 잠긴다. 크기 차이만으로는 깊이가 약하게 읽힌다.
+          // z는 -170(뒤) ~ +110(앞) 범위라 그 폭에 맞춰 0.62~1.0으로 민다
+          var depth = g0 * (0.62 + 0.38 * ((b.z + 170) / 280));
+          gl.uniform1f(uDark, depth < 0.5 ? 0.5 : (depth > 1 ? 1 : depth));
           // 몸통 — 세로로 살짝 길고 아래가 도톰한 풍선 비례
           gl.uniform3f(uCenter, w[0], w[1], w[2]);
           // sx/sy = 호흡(고무의 압력) 스쿼시. 없으면 1
