@@ -376,6 +376,11 @@
       });
       // 도네 읽어주기 — 배너가 떠 있는 3.4초 동안만 클릭이 통한다 (CSS pointer-events)
       $('donBanner').addEventListener('click', function () { self2.readDonation(); });
+      // 스트리머 표현 축 (§6.4) — 리액션 버튼. 방송 중에만 보인다
+      $('reactBar').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-tag]');
+        if (b) self2.express(b.getAttribute('data-tag'));
+      });
       // 인트로 4컷 — 열 때마다 보여준다 (사용자 요청: 1회용 아님). 스토리가 곧 목표 안내다.
       $('introSplash').classList.remove('hidden');
       $('introGo').addEventListener('click', function () {
@@ -393,13 +398,15 @@
       surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall',
                  'bite', 'hook', 'new_bomb'],
       panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death',
-              'line_snap', 'boom'],
+              'line_snap', 'boom', 'streamer_scream'],
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
             'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
-            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up'],
+            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up',
+            'streamer_joy'],
       confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
-                  'strike_miss', 'escape', 'trash', 'timeout_boom'],
+                  'strike_miss', 'escape', 'trash', 'timeout_boom', 'streamer_selfmock'],
       thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
+      silence: ['streamer_silence'],
       question: ['milestone'],
     },
     camReact: function (ev) {
@@ -411,6 +418,24 @@
           if (f && f.complete && f.naturalWidth) $('camImg').src = f.src;
           return;
         }
+      }
+    },
+
+    // ---- 스트리머 표현 축 (시뮬 레이어 v0.2 §6.4) — 방송 중 능동 리액션 ----
+    // 플레이어 입력이 관측 가능한 사건(streamer_* 태그)이 되어 판정층에 들어간다.
+    // 관객은 여전히 관측만 하므로 C3 위반이 아니다. 마우스 전용 — 게임 키와 충돌 없음 (§11.4).
+    // 쿨다운은 규약 3(자극 간격)의 확장 — 연타로 도감을 긁는 것을 막는다.
+    REACT_CD: 6,
+    express: function (tag) {
+      if (this.phase !== 'live' || !Shell.Dex || !this.game) return;
+      if (this.now - (this._lastReactAt || -99) < this.REACT_CD) return;
+      this._lastReactAt = this.now;
+      Shell.Dex.judge(this.game.id, tag); // 결정론 판정 — 칸·파장 (메타 통화만)
+      this.camReact(tag);                 // 캠이 표정으로 응답한다 (연출)
+      var bar = $('reactBar');
+      if (bar) {
+        bar.classList.add('cool');
+        setTimeout(function () { bar.classList.remove('cool'); }, this.REACT_CD * 1000);
       }
     },
 
@@ -503,6 +528,7 @@
         '</button>';
       // 캐스트 영입 (반응 도감) — 구독자·코인을 소비해 채팅 캐스트를 늘린다 (ADR-006)
       if (Shell.Dex) icons += Shell.Dex.deskIcon();
+      $('reactBar').classList.add('hidden'); // 표현 축은 방송 중 전용
 
       var recent = this.ch.log.length
         ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
@@ -540,6 +566,15 @@
         (typeof this.mixBar === 'function'
           ? '<div class="deskStat chanmix"><span>채널 색깔</span>' + this.mixBar(this.ch.mix) +
             '<b style="color:' + this.mixTop().c + '">' + this.mixTop().n + ' 채널</b></div>'
+          : '') +
+        // 텐션 (§7) — 게임을 고르기 전에 보여야 "쉴까 방송할까"가 전략이 된다. 회복은 휴방뿐
+        (Shell.Dex
+          ? '<div class="deskStat simTension' + (Shell.Dex.tension() <= 30 ? ' low' : '') + '">텐션 <b>' +
+            Math.round(Shell.Dex.tension()) + '%</b><span class="tenNote">' +
+            (Shell.Dex.tension() <= 30 ? '지쳤다 — 새 반응(파장)이 잘 나오지 않는다' : '파장 대역폭 ×' +
+              Shell.Dex.tensionMult().toFixed(2)) + '</span>' +
+            (Shell.Dex.tension() < 100 ? '<button id="restBtn" type="button">휴방 (+25)</button>' : '') +
+            '</div>'
           : '') +
         pdNote + recent;
 
@@ -585,6 +620,13 @@
         if (btn.hasAttribute('data-game')) self.start(btn.getAttribute('data-game'));
         else if (btn.getAttribute('data-app') === 'shop') self.openShop();
         else if (btn.getAttribute('data-app') === 'cast' && Shell.Dex) Shell.Dex.openPanel();
+      });
+      // 휴방 (§7) — 하루를 쉬고 텐션을 회복한다. 시청자 수에는 아무 일도 일어나지 않는다
+      var rest = $('restBtn');
+      if (rest) rest.addEventListener('click', function () {
+        Shell.Dex.rest();
+        self.showHub(); // 텐션 표시 갱신
+        self.showTicker('휴방했다 — 컨디션이 돌아온다 (텐션 ' + Math.round(Shell.Dex.tension()) + '%)');
       });
     },
 
@@ -729,7 +771,10 @@
       Chat.reset();
       Chat.load(g.chat.T, g.chat.BURST);
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
-      if (Shell.Dex) Shell.Dex.newShow();    // 반응 도감 — 파장(신규 칸) 카운터 리셋 (ADR-006)
+      if (Shell.Dex) {
+        Shell.Dex.newShow(g.id);             // 반응 도감 — 파장 리셋 + 저텐션 fatigue 발행 (ADR-006·§7.2)
+        $('reactBar').classList.remove('hidden'); // 스트리머 표현 축 (§6.4) — 방송 중에만
+      }
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
       // file:// 직접 실행 안내 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 녹화가
       // 막힌다 (클립 영상·리플레이 비활성). 한 번만, 조용히.
@@ -1361,9 +1406,12 @@
       // 방송 중 시청자 수에는 손대지 않고 메타 통화에만 얹으므로 승인 밸런스와 충돌하지
       // 않으면서, "채널 색을 관리할 이유"가 처음으로 생긴다 (ADR-004 결정 7)
       var div = this.diversity(), divMult = 1 + DIV_BONUS * div;
-      // 파장 — 이번 방송에 처음 들은 반응 칸 수 (ADR-006). 다양성과 같은 원리로 메타 통화에만
+      // 파장 — 이번 방송에 처음 들은 반응 칸 수 (ADR-006). 다양성과 같은 원리로 메타 통화에만.
+      // 텐션(§7)은 파장 배율 안에서 대역폭으로 곱해진다 — 감쇠(settleShow)는 배율을 읽은 뒤
       var waveNew = Shell.Dex ? Shell.Dex.waveNew : 0;
       var waveMult = Shell.Dex ? Shell.Dex.waveMult() : 1;
+      var tensionAfter = 0;
+      if (Shell.Dex) { Shell.Dex.settleShow(g.id); tensionAfter = Math.round(Shell.Dex.tension()); }
       var newSubs = Math.floor(final / 100 * divMult * waveMult); // 최종 시청자의 1% × 다양성 × 파장
       this.ch.subs += newSubs;
       this.ch.shows++;
@@ -1493,6 +1541,8 @@
           '<span>도네 수익</span><b>+' + earned.toLocaleString() + ' 코인 → 잔액 ' + this.ch.coins.toLocaleString() + '</b>' +
           (waveNew > 0 ? '<span>반응 도감</span><b>처음 들은 반응 ' + waveNew + '칸 <span class="rec">파장 ×' +
             waveMult.toFixed(2) + '</span></b>' : '') +
+          (Shell.Dex ? '<span>컨디션</span><b>텐션 ' + tensionAfter + '%' +
+            (tensionAfter <= 30 ? ' <span class="fine">— 지쳤다. 휴방이 새 반응을 되살린다</span>' : '') + '</b>' : '') +
         '</div>' +
         '<div class="archline">오늘 모인 사람들 — ' + archRows +
           (fickleBorn >= 10 ? '<br><span class="fine">이 중 <b>' + fickleBorn.toLocaleString() +
@@ -1514,6 +1564,7 @@
       $('btnHub').onclick = function () { self.showHub(); };
       this.drawReport($('repGraph'));
       $('camBox').classList.add('hidden');
+      $('reactBar').classList.add('hidden');
     },
 
     // ---------- 루프 ----------

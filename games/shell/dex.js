@@ -23,6 +23,9 @@
   var WAVE_RATE = 0.15; // §8.3 구독자 전환 가산 — 미검증 초기값
   var WAVE_CAP = 8;     // 파장 상한. 축당 파라미터 2개 동결 (튜닝 표면 방지 — 주요⑥)
   var KEY = 'jgs-dex-v1';
+  // 텐션 (§7) — 시청자 수를 절대 깎지 않는다. 파장 대역폭만 좁힌다 (§7.1).
+  // 수치는 전부 v0.2 §7.2의 미검증 초기값 — 표에 있는 값만 쓰고 새 파라미터를 만들지 않는다
+  var TEN = { SHOW: 12, SAME: 18, REST: 25, NEWGAME: 8, FATIGUE: 30 };
 
   var Dex = {
     st: null,
@@ -32,6 +35,9 @@
       if (this.st) return this.st;
       try { this.st = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* file://·시크릿 */ }
       if (!this.st || typeof this.st !== 'object' || !this.st.cells) this.st = { hired: [], cells: {} };
+      // 텐션 필드 — 구 저장분 이월 (스키마 마이그레이션)
+      if (typeof this.st.tension !== 'number') this.st.tension = 100;
+      if (!this.st.played) this.st.played = {};
       return this.st;
     },
     save: function () { try { localStorage.setItem(KEY, JSON.stringify(this.st)); } catch (e) {} },
@@ -72,7 +78,32 @@
       });
     },
 
-    newShow: function () { this.waveNew = 0; },
+    newShow: function (gameId) {
+      this.waveNew = 0;
+      // §7.2 효과② — 저텐션이면 방송 시작에 streamer_fatigue가 자동 발행된다.
+      // 번아웃도 콘텐츠다 (§7.3) — 이 태그를 trigger로 가진 개체(전원 Q1)의 칸이 열린다.
+      // 현 로스터에는 보유 개체가 없어 무해하게 0칸 — 100종 영입 확장 시 살아난다
+      if (gameId && this.load().tension <= TEN.FATIGUE) this.judge(gameId, 'streamer_fatigue');
+    },
+
+    // ---- 텐션 (§7) — 스트리머 컨디션. 파장 대역폭만 좁힌다 (시청자 수 무관여, §7.1) ----
+    tension: function () { return this.load().tension; },
+    tensionMult: function () { return 0.4 + 0.6 * this.load().tension / 100; }, // §7.2 효과①
+    // 정산 훅 — 감쇠는 파장 배율을 읽은 "뒤"에 호출된다 (이번 방송은 방송 전 텐션으로 정산)
+    settleShow: function (gameId) {
+      var st = this.load();
+      var drop = st.lastGame === gameId ? TEN.SAME : TEN.SHOW;
+      var recover = st.played[gameId] ? 0 : TEN.NEWGAME; // 안 하던 게임 첫 방송 +8
+      st.tension = Math.max(0, Math.min(100, st.tension - drop + recover));
+      st.played[gameId] = 1;
+      st.lastGame = gameId;
+      this.save();
+    },
+    rest: function () { // 휴방 — 허브에서 하루를 넘긴다. 유일한 능동 회복 수단
+      var st = this.load();
+      st.tension = Math.min(100, st.tension + TEN.REST);
+      this.save();
+    },
 
     // 결정론 판정 — stage.emit 관측 지점에서 호출된다. 반환: 반응한 닉 목록 (연출용).
     // 이벤트 → 태그 번역은 tagmap(초안, §11.2-2), streamer_* 접두는 태그 직접 발행
@@ -96,7 +127,8 @@
       return hit;
     },
 
-    waveMult: function () { return 1 + WAVE_RATE * Math.min(WAVE_CAP, this.waveNew); },
+    // 파장 배율 — 텐션이 대역폭을 좁힌다 (×0.4~×1.0, §7.2 효과①). 상한은 텐션 전에 적용
+    waveMult: function () { return 1 + WAVE_RATE * Math.min(WAVE_CAP, this.waveNew) * this.tensionMult(); },
 
     // 개체의 도감 진행 — [열린 칸, 전체 칸]
     progress: function (entry) {

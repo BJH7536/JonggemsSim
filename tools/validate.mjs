@@ -140,6 +140,10 @@ const reachTags = new Set();
       });
     }
   }
+  // 스트리머 표현축 v1 (§6.4) — 게임이 아니라 셸이 직접 발행하는 태그.
+  // 발행부: games/shell/shell.js express(리액션 버튼 4종)·dex.js newShow(저텐션 fatigue)
+  ['streamer_scream', 'streamer_joy', 'streamer_selfmock', 'streamer_silence', 'streamer_fatigue']
+    .forEach(t => reachTags.add(t));
   // 불멸 관측단(판정층 상시 캐스트, dex 로스터 합류) — 개체당 최소 1개 trigger 도달 가능 (§11.3).
   // 전 태그 도달을 요구하지 않는 이유: 표현축(§6.4) 등 미착지 태그가 원본 데이터에 이미 있다 —
   // "전부 도달 불가 = 영원히 침묵"만이 결함이다.

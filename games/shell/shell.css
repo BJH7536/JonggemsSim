@@ -151,6 +151,16 @@ body {
   padding: 5px 5px 2px; box-shadow: 0 4px 18px rgba(0,0,0,.6);
 }
 #camBox.hidden { display: none; }
+/* 스트리머 표현 축 (§6.4) — 캠 옆의 리액션 버튼 열. 방송 중 전용, 쿨다운 동안 흐려진다 */
+#reactBar { position: absolute; left: 100px; bottom: 40px; z-index: 2; display: flex; gap: 4px; }
+#reactBar.hidden { display: none; }
+#reactBar button {
+  font: inherit; font-size: 11px; color: var(--plat2); cursor: pointer;
+  background: rgba(12,10,16,.78); border: 1px solid var(--plat); border-radius: 6px; padding: 4px 8px;
+}
+#reactBar button:hover { color: #ece7dd; border-color: var(--amber); }
+#reactBar.cool { opacity: .35; pointer-events: none; }
+body.fullshow #reactBar { bottom: 235px; }
 #camBox img { display: block; width: 74px; height: 74px; border-radius: 5px; }
 #camBox span { font-size: 8.5px; letter-spacing: 2px; color: var(--plat2); }
 .vpopup {
@@ -319,6 +329,15 @@ body {
 .dexBar i { display: block; height: 100%; background: var(--amber); border-radius: 3px; }
 .dexN { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
 .dexObs { flex: 0 0 auto; font-size: 9px; font-style: normal; letter-spacing: 1px; color: var(--dim); border: 1px solid #2a2437; border-radius: 3px; padding: 0 4px; }
+/* 텐션 (§7) — 허브 표시. 손실은 숫자만 조용히 (규약 2) — 저텐션도 색만 바뀐다 */
+.deskStat.simTension { display: flex; align-items: center; gap: 8px; }
+.deskStat.simTension.low b { color: #ff6b5a; }
+.tenNote { color: var(--dim); font-size: 11px; }
+#restBtn {
+  font: inherit; font-size: 11px; cursor: pointer; color: var(--plat2);
+  background: rgba(12,10,16,.6); border: 1px solid var(--plat); border-radius: 5px; padding: 2px 8px;
+}
+#restBtn:hover { color: #ece7dd; border-color: var(--amber); }
 .dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px; margin-top: 7px; }
 .dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
 .dexCard b { font-size: 13px; }
