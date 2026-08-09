@@ -95,7 +95,7 @@
       repairT: 0, idleT: 0, nagT: 8,
       lands: 0, snaps: 0, escapes: 0, casts: 0, maxT: 0,
       best: -1, bestName: '—',
-      donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
+      chatT: 3, mileIdx: 0,
       bubbles: [], vfx: [],
       // 배경 물고기 실루엣 — 연출 전용 (C3)
       amb: [],
@@ -351,15 +351,8 @@
           if (st.bubbles[i].y < SURFACE) st.bubbles.splice(i, 1);
         }
 
-        st.donT -= dt;
-        if (st.donT <= 0) {
-          st.donT = 9 + Math.random() * 7;
-          if (Math.random() < .45) {
-            var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var a2 = stage.gain(d, '익명의 도네', 'donation');
-            stage.emit('donation', { d: a2.toLocaleString() });
-          }
-        }
+        // 도네 주기·확률·금액은 셸 소유 (contract 4.2, ADR-008) — 방송 장비가 빈도를 조절한다
+        stage.donRoll(dt, 9, .45);
         st.chatT -= dt;
         if (st.chatT <= 0) {
           st.chatT = clamp(4 - Math.log10(stage.viewers + 10) * .55, 1.3, 4) + Math.random() * 1.5;

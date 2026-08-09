@@ -88,7 +88,7 @@
       recOK: 0, recTry: 0, done: 0, disaster: 0,
       fresh: [0, 0, 0, 0], freshRec: [0, 0, 0, 0], lastAccType: -1,
       unlocked: { b3: false, mode3: false, b4: false },
-      donT: 8 + Math.random() * 7, chatT: 2.5, mileIdx: 0,
+      chatT: 2.5, mileIdx: 0,
       burners: [0, 1, 2, 3].map(function (i) {
         return { i: i, on: i < 2, broken: 0, dish: null, mode: null, p: 0, acc: null };
       }),
@@ -318,16 +318,8 @@
 
         if (st.chainT > 0) { st.chainT -= dt; if (st.chainT <= 0) { st.chain = 1; renderHUD(); } }
 
-        // 양념 (규약 5): 랜덤 도네는 드물게, 규모 비례 1~3% 최소 10명 (critic L5)
-        st.donT -= dt;
-        if (st.donT <= 0) {
-          st.donT = 8 + Math.random() * 7;
-          if (Math.random() < .5) {
-            var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var actual = stage.gain(d, '익명의 도네', 'donation'); sfxDon();
-            stage.emit('donation', { d: actual.toLocaleString() });
-          }
-        }
+        // 도네 주기·확률·금액은 셸 소유 (contract 4.2, ADR-008) — 방송 장비가 빈도를 조절한다
+        if (stage.donRoll(dt, 8, .5)) sfxDon();
 
         var emptyCount = 0;
         for (var bi = 0; bi < st.burners.length; bi++) {

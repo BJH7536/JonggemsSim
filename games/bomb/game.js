@@ -67,7 +67,7 @@
       defused: 0, booms: 0, clutches: 0, maxPay: 0,
       bomb: null, scan: null, downT: 0,
       idleT: 0, nagged: false, tickT: 0,
-      timers: [], donT: 8 + Math.random() * 7, chatT: 3, mileIdx: 0,
+      timers: [], chatT: 3, mileIdx: 0,
       sparks: [], floaters: [], vfx: [],
     };
     var panel = stage.panel;
@@ -319,16 +319,8 @@
           }
         }
 
-        // 도네 (양념)
-        st.donT -= dt;
-        if (st.donT <= 0) {
-          st.donT = 9 + Math.random() * 7;
-          if (Math.random() < .45) {
-            var don = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var a = stage.gain(don, '익명의 도네', 'donation');
-            stage.emit('donation', { d: a.toLocaleString() });
-          }
-        }
+        // 도네 주기·확률·금액은 셸 소유 (contract 4.2, ADR-008) — 방송 장비가 빈도를 조절한다
+        stage.donRoll(dt, 9, .45);
         st.chatT -= dt;
         if (st.chatT <= 0) {
           st.chatT = clamp(4 - Math.log10(stage.viewers + 10) * .55, 1.3, 4) + Math.random() * 1.5;

@@ -223,7 +223,7 @@
       fallFresh: 0, recoverAcc: 0,
       falls: 0, maxDrop: 0, saves: 0, cleared: false,
       restT: 0, stillT: 0, lastH: 0, nagT: 0, airVy: 0, touched: false, wasContact: false, unplantT: 1,
-      donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
+      chatT: 3, mileIdx: 0,
       dust: [],
     };
     var MILES = [1000, 5000, 15000, 60000, 150000];
@@ -517,15 +517,8 @@
           }
         }
 
-        st.donT -= dt;
-        if (st.donT <= 0) {
-          st.donT = 9 + Math.random() * 7;
-          if (Math.random() < .45) {
-            var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var a = stage.gain(d, '익명의 도네', 'donation');
-            stage.emit('donation', { d: a.toLocaleString() });
-          }
-        }
+        // 도네 주기·확률·금액은 셸 소유 (contract 4.2, ADR-008) — 방송 장비가 빈도를 조절한다
+        stage.donRoll(dt, 9, .45);
 
         st.chatT -= dt;
         if (st.chatT <= 0) {

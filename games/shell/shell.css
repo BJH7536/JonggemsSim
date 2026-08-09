@@ -385,8 +385,8 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   font-size: 10px; letter-spacing: 2px; color: #7dffd0; font-weight: 700;
 }
 .rwHead .rwSave { margin-left: auto; color: #c8ffe8; font-weight: 400; letter-spacing: 0; }
-/* 합성 클립은 1260×600 (게임+HUD+채팅) — cover로 자르면 하단 조작부가 잘려나간다 */
-#replayWin video, #replayWin img { display: block; width: 100%; height: 324px; object-fit: contain; background: #000; }
+/* 합성 클립은 1260×660 (게임+HUD+채팅) — cover로 자르면 하단 조작부가 잘려나간다 */
+#replayWin video, #replayWin img { display: block; width: 100%; height: 356px; object-fit: contain; background: #000; }
 .rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
 .rwCap b { color: #7dffd0; }
 /* 클립 하단 후원 줄 (치지직 문법) — 연출 전용, 코인 무관 */
@@ -744,6 +744,22 @@ body {
 .labRow { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; padding: 4px 0; color: var(--dim); }
 .labRow b { color: var(--ink); }
 .labSoon { margin: 13px 0 0; font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+
+/* 방송 장비 (ADR-008) — 장식(방송용품)과 한 창에 있지만 구역을 갈라 둔다.
+   둘의 차이(성능+유지비 vs 순수 장식)가 이 게임의 규약이라 제목이 그걸 설명한다 */
+.shopSec { margin: 16px 0 8px; font-size: 13.5px; color: var(--amber2); letter-spacing: 1px; }
+.shopSec .fine { color: var(--dim); letter-spacing: 0; }
+.rigGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 9px; }
+.rigItem {
+  display: flex; flex-direction: column; gap: 6px; padding: 10px 12px;
+  border: 1px solid #2e3138; border-radius: 8px; background: rgba(23,25,28,.75);
+}
+.rigItem.max { border-color: rgba(0,255,163,.4); }
+.riTop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.riTop b { font-size: 13px; }
+.riLv { font-size: 11px; color: var(--plat2); }
+.riDesc { font-size: 11px; color: #c9cdd2; line-height: 1.5; }
+.riDesc b { color: var(--ink); }
 /* 2배로 키우면서 왼쪽 아래 deskStat(텐션·휴방 버튼)을 덮어버려 오른쪽으로 옮겼다 */
 #desktop .recent {   /* 오른쪽 아래 — 왼쪽 아래는 .deskBL(상태 줄) 자리다 */
   position: absolute; right: 24px; bottom: 44px; width: min(560px, 46%);
@@ -1092,7 +1108,7 @@ body.fullshow #chatDock {
 body.fullshow #chatWinbar { background: transparent; border-bottom: none; }
 body.fullshow #chatCol { background: transparent; }
 
-/* 클립 미디어 비율 — 합성 녹화(1260:600)와 구판(1260:430·960:430)이 섞이므로 비율 고정 대신 auto */
+/* 클립 미디어 비율 — 합성 녹화(1260:660)와 구판(1260:430·960:430)이 섞이므로 비율 고정 대신 auto */
 .clipCard img, .clipCard video { height: auto; }
 #replayWin video, #replayWin img { height: auto; max-height: 300px; } /* 영상이 창의 주인공 — 2배 확대 (사용자 피드백). 300 상한 = 구판 스틸(960:430)이 뷰포트 바닥을 안 뚫는 선 */
 /* 전체화면에선 하단 HUD(패널+풋)가 캠 자리를 덮는다 — 캠을 HUD 위로 올린다 */

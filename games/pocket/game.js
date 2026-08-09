@@ -101,7 +101,7 @@
       timers: [], healT: 0, idleT: 0, warnedND: false,
       kos: 0, faints: 0, crits: 0, comebacks: 0,
       anim: null, hitFlash: { me: 0, foe: 0 }, floaters: [], vfx: [],
-      donT: 9 + Math.random() * 7, chatT: 3, mileIdx: 0,
+      chatT: 3, mileIdx: 0,
     };
     var panel = stage.panel;
 
@@ -366,15 +366,8 @@
           if (st.idleT > 4) stage.lose(Math.max(1, stage.viewers * 0.006) * dt); // 장고 — 조용히
         }
 
-        st.donT -= dt;
-        if (st.donT <= 0) {
-          st.donT = 9 + Math.random() * 7;
-          if (Math.random() < .45) {
-            var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var a = stage.gain(d, '익명의 도네', 'donation');
-            stage.emit('donation', { d: a.toLocaleString() });
-          }
-        }
+        // 도네 주기·확률·금액은 셸 소유 (contract 4.2, ADR-008) — 방송 장비가 빈도를 조절한다
+        stage.donRoll(dt, 9, .45);
         st.chatT -= dt;
         if (st.chatT <= 0) {
           st.chatT = clamp(4 - Math.log10(stage.viewers + 10) * .55, 1.3, 4) + Math.random() * 1.5;

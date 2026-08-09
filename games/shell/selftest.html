@@ -96,6 +96,76 @@ eq('구매 성공 시 정확히 차감', (Shell.shopBuy(shopCh, { id: 'x', price
 ok('잔액 부족은 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'y', price: 999 }) === 'poor' && shopCh.coins === 400);
 ok('중복 구매는 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'x', price: 100 }) === 'owned' && shopCh.coins === 400);
 
+// ---- 방송 장비 (ADR-008) — 재화는 강화로 늘고 명성은 실력으로만 는다는 불변식 ----
+var rCh = { coins: 10000, parts: 10, tier: 0, rig: {} };
+eq('Lv1 구매 시 코인·부품이 정확히 차감',
+   (Shell.rigUp(rCh, 'feed') === 'ok' ? [rCh.coins, rCh.parts, rCh.rig.feed] : null), [8500, 8, 1]);
+ok('등급 미달이면 잠금 (명성이 장비 상한을 정한다)', Shell.rigUp(rCh, 'feed') === 'locked');
+rCh.tier = 1;
+ok('부품이 모자라면 거부 — 코인은 그대로', (function () {
+  var save = rCh.parts; rCh.parts = 1;
+  var r = Shell.rigUp(rCh, 'feed'), c = rCh.coins;
+  rCh.parts = save;
+  return r === 'parts' && c === 8500;
+})());
+ok('코인이 모자라면 거부 — 부품은 그대로', (function () {
+  var save = rCh.coins; rCh.coins = 10;
+  var r = Shell.rigUp(rCh, 'feed'), p = rCh.parts;
+  rCh.coins = save;
+  return r === 'poor' && p === 8;
+})());
+ok('없는 계열은 거부', Shell.rigUp(rCh, 'nope') === 'bad');
+ok('Lv3을 넘겨 올릴 수 없다', (function () {
+  var m = { coins: 1e9, parts: 1e9, tier: 4, rig: { don: 3 } };
+  return Shell.rigUp(m, 'don') === 'max' && m.rig.don === 3;
+})());
+
+// 등급 인플레 — 이 ADR의 핵심 불변식. 같은 결과면 장비가 좋을수록 평가가 낮아야 한다
+var gBase = { final: 30000, start: 300, peak: 33000, clips: 2, coins: 1000, freshPct: 100, dead: false };
+ok('장비 세금이 등급 점수를 깎는다 (무상 파워 금지)', (function () {
+  var lv0 = Shell.gradeShow(gBase).score;
+  var lv9 = Shell.gradeShow(Object.assign({}, gBase, { rig: 9 })).score;
+  return lv9 < lv0 && Math.abs((lv0 - lv9) - Shell.RIG_TAX * 9) < 1.5;
+})());
+ok('출발선이 높아지면 같은 최종값의 성장 점수가 낮아진다 (§2 상쇄)',
+   Shell.gradeShow(Object.assign({}, gBase, { start: 1500 })).score <
+   Shell.gradeShow(gBase).score);
+
+// 유지비 — 발산하면 강등 나선(강등 → 수입 감소 → 재강등)에 빠진다
+ok('만렙 유지율은 수입을 넘지 않는다 (54% < 100%)',
+   Shell.RIG_UPKEEP * 9 < 1);
+ok('유지비는 직전 3회 평균 도네 × 총레벨 × 6%', (function () {
+  var c = { rig: { feed: 3, stage: 3, don: 3 }, donHist: [1000, 1000, 1000] };
+  return Shell.rigUpkeep(c) === Math.round(1000 * 9 * 0.06);
+})());
+ok('이력이 없으면 유지비도 없다 (첫 방송이 빚으로 시작하지 않는다)',
+   Shell.rigUpkeep({ rig: { feed: 3 }, donHist: [] }) === 0);
+ok('미납이면 가장 높은 계열이 한 단계 강등', (function () {
+  var c = { coins: 0, rig: { feed: 3, stage: 1, don: 0 }, donHist: [5000, 5000, 5000] };
+  var r = Shell.rigSettle(c, 100);
+  return r.demoted === 'feed' && c.rig.feed === 2 && r.paid === 0;
+})());
+ok('낼 수 있으면 걷고 강등하지 않는다', (function () {
+  var c = { coins: 99999, rig: { feed: 1 }, donHist: [1000] };
+  var r = Shell.rigSettle(c, 100);
+  return r.demoted === null && c.rig.feed === 1 && c.coins === 99999 - r.due;
+})());
+ok('이번 방송 수입은 이번 청구서에 섞이지 않는다', (function () {
+  var c = { coins: 99999, rig: { feed: 1 }, donHist: [100] };
+  var r = Shell.rigSettle(c, 999999);   // 이번 회차만 폭증
+  return r.due === Math.round(100 * 1 * 0.06) && c.donHist[0] === 999999;
+})());
+eq('도네 이력은 3회까지만 남는다', (function () {
+  var c = { coins: 0, rig: {}, donHist: [] };
+  [1, 2, 3, 4].forEach(function (v) { Shell.rigSettle(c, v); });
+  return c.donHist;
+})(), [4, 3, 2]);
+ok('장비가 없으면 유지비도 강등도 없다', (function () {
+  var c = { coins: 0, rig: {}, donHist: [9999] };
+  var r = Shell.rigSettle(c, 0);
+  return r.due === 0 && r.demoted === null;
+})());
+
 // ---- 30일 시즌 — 조용히 틀리면 시즌이 안 끝나거나 멀쩡한 채널이 죽는다 ----
 var C = Shell.CAMPAIGN;
 eq('시즌은 1일차에서 시작한다', Shell.campaign({ best: {} }).day, 1);

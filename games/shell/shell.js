@@ -146,6 +146,9 @@
         gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
         day: d.day || 1,            // 시즌 N일차 — 방송 한 판·휴방 한 번이 각각 하루 (Shell.CAMPAIGN)
         plays: d.plays || {},       // gameId -> 방송 횟수 — 다음 게임 해금의 재료
+        rig: d.rig || {},           // 방송 장비 레벨 {feed, stage, don} 각 0~3 (ADR-008)
+        parts: d.parts || 0,        // 장비 부품 — 미션 보상에서만 나온다 (코인으로 못 산다)
+        donHist: d.donHist || [],   // 직전 3회 도네 수입 — 장비 유지비의 기준
         tier: d.tier || 0,          // 파트너 등급 0~4 (브론즈~다이아) — 내려가지 않는다
         tierPts: d.tierPts || 0,    // 등급 게이지 — C/D가 조용히 깎는 유일한 수치 (규약 2)
         // 채널의 색 — 원형별 구성 비율(합 1). 방송이 끝날 때마다 물든다.
@@ -879,8 +882,12 @@
       this.phase = 'live';
       // 시작 시청자 = 게임 기본값 + 구독자 기여분, 관객 구성은 채널의 색을 물려받는다.
       // 이월이 없으면 10번째 방송이 1번째와 똑같아진다 — 채널이 성장하지 않는다
-      var start0 = g.startViewers + this.subBonus();
+      // 송출기(ADR-008)가 여기서 바닥을 올린다. start0은 endShow의 등급 계산에도 그대로
+      // 넘어가야 한다 — 분모가 고정이면 출발선 상승이 순수 무상 파워가 된다 (ADR-008 §2)
+      var start0 = g.startViewers + this.subBonus() + Shell.rigFloor(this.ch);
+      this._start0 = start0;
       this.viewers = start0;
+      this._donT = 6 + Math.random() * 4;  // 도네 타이머는 셸 소유 (contract 4.2)
       this.comp = this.ch.mix.map(function (r) { return start0 * r; });
       this.compStart = this.comp.slice();
       this.fickle = [0, 0, 0, 0];
@@ -977,7 +984,10 @@
         // 생략하면 중립 배분이라 기존 호출은 그대로 동작한다 (contract 4.2)
         gain: function (n, label, ev) {
           if (!(n > 0) || self.phase !== 'live') return 0;
-          var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id)));
+          // 조명·무대(ADR-008)는 여기서 증폭한다. 도네는 제외 — 도네 알림 계열과 이중 계상된다.
+          // 대가는 이미 hold(final/peak)에 있다: 크게 터뜨릴수록 유지가 어려워진다
+          var rigM = (ev === 'donation') ? 1 : Shell.rigGain(self.ch);
+          var actual = Math.max(1, Math.round(n * self.freshMult(self.game.id) * rigM));
           self.viewers += actual;
           self._surgeAcc += actual;                          // 흥미도의 급증 신호 (클립)
           self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
@@ -1001,6 +1011,23 @@
         },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
+        // 도네 주기 — 셸 소유 (contract 4.2, ADR-008 §6.4). 게임 5종이 같은 타이머를 복붙하고
+        // 있었고, 장비가 빈도를 조절하려면 한 곳이어야 한다 (새 게임도 공짜로 따라온다).
+        // base·prob는 게임이 정한다 (기존 밸런스 보존). 반환: 터졌으면 실제 반영량, 아니면 0
+        donRoll: function (dt, base, prob) {
+          if (self.phase !== 'live') return 0;
+          self._donT -= dt;
+          if (self._donT > 0) return 0;
+          var r = Shell.rigDon(self.ch);
+          self._donT = ((base || 9) + Math.random() * 7) * r.gap;
+          if (Math.random() >= (prob == null ? .45 : prob) + r.prob) return 0;
+          // 양념 (규약 5): 랜덤 도네는 드물게, 규모 비례 1~3% 최소 10명 (critic L5).
+          // 게임 5종에서 이관된 밸런스 근거 — 값을 바꾸면 양념이 뼈대를 넘본다
+          var d = Math.max(10, Math.round(self.viewers * (0.01 + Math.random() * 0.02)));
+          var a = this.gain(d, '익명의 도네', 'donation');
+          this.emit('donation', { d: a.toLocaleString() });
+          return a;
+        },
         ticker: function (text, muted) { self.showTicker(text, muted); },
         setChain: function (v) {
           $('chainVal').textContent = '×' + v.toFixed(1);
@@ -1167,7 +1194,29 @@
       $('overlay').innerHTML = '<div class="panel shopWin">' +
         '<h2><img class="shopH" src="games/shell/img/icon-shop.png" alt="">방송용품 상점</h2>' +
         '<p class="shopBal">보유 코인 <b id="shopCoins">' + this.ch.coins.toLocaleString() + '</b>' +
-        ' <span class="fine">— 도네가 정산되면 쌓인다. 용품은 전부 장식이다 (방송이 세지진 않는다)</span></p>' +
+        ' · 부품 <b>' + (this.ch.parts || 0) + '</b>' +
+        ' <span class="fine">— 부품은 미션 달성으로만 나온다</span></p>' +
+        // 장비(성능·유지비 있음)와 용품(장식)을 한 창에 두되 절대 섞지 않는다.
+        // 둘의 차이가 이 게임의 규약이라 구역 제목이 그걸 설명한다
+        '<h3 class="shopSec">방송 장비 <span class="fine">— 성능이 오른다. 대신 방송마다 유지비를 낸다' +
+          (Shell.rigUpkeep(this.ch) > 0 ? ' (현재 ' + Shell.rigUpkeep(this.ch).toLocaleString() + ' 코인)' : '') +
+          '</span></h3>' +
+        '<div class="rigGrid">' + Shell.RIG_LINES.map(function (k) {
+          var R = Shell.RIG[k], lv = Shell.rigLv(self.ch, k), nx = Shell.RIG_COST[lv + 1];
+          var eff = k === 'feed' ? '+' + R.floor[lv].toLocaleString() + '명'
+                  : k === 'stage' ? '×' + R.mult[lv].toFixed(2)
+                  : lv ? '간격 ×' + R.gap[lv].toFixed(2) + ' · 확률 +' + Math.round(R.prob[lv] * 100) + '%p' : '기본';
+          return '<div class="rigItem' + (lv >= 3 ? ' max' : '') + '">' +
+            '<div class="riTop"><b>' + R.n + '</b><span class="riLv">Lv' + lv + '</span></div>' +
+            '<div class="riDesc">' + R.d + ' — 현재 <b>' + eff + '</b></div>' +
+            (lv >= 3
+              ? '<div class="siOwned">최대 레벨 — 이제 유지가 목표다</div>'
+              : '<button class="siBuy" data-rig="' + k + '">Lv' + (lv + 1) + ' · ' +
+                nx.coins.toLocaleString() + ' 코인 · 부품 ' + nx.parts +
+                (nx.tier > 0 ? ' · ' + Shell.TIERS[nx.tier].n + ' 이상' : '') + '</button>') +
+            '</div>';
+        }).join('') + '</div>' +
+        '<h3 class="shopSec">방송용품 <span class="fine">— 전부 장식이다 (방송이 세지진 않는다)</span></h3>' +
         '<div class="shopGrid">' + this.SHOP_ITEMS.map(function (it) {
           var owned = !!self.ch.gear[it.id];
           var locked = (it.minTier || 0) > (self.ch.tier || 0);
@@ -1183,6 +1232,22 @@
         }).join('') + '</div>' +
         '<div class="btnrow"><button class="slab" id="shopClose">데스크탑으로 (Esc)</button></div></div>';
       $('shopClose').onclick = function () { self.showHub(); };
+      $('overlay').querySelectorAll('[data-rig]').forEach(function (b) {
+        b.onclick = function () {
+          var line = b.getAttribute('data-rig');
+          var r = Shell.rigUp(self.ch, line);
+          if (r !== 'ok') {
+            var msg = { poor: '코인 부족', parts: '부품 부족', locked: '등급 부족' }[r] || '불가';
+            var was = b.textContent;
+            b.textContent = msg;
+            setTimeout(function () { b.textContent = was; }, 900);
+            return;
+          }
+          self.saveChannel(); self.updateTopbar();
+          Shell.sfx.tone(392, .1, 'sawtooth', .09); Shell.sfx.tone(587, .16, 'sawtooth', .09, .1);
+          self.openShop(); // 레벨·잔액·유지비 반영해 다시 그린다
+        };
+      });
       $('overlay').querySelectorAll('[data-buy]').forEach(function (b) {
         b.onclick = function () {
           var it = self.SHOP_ITEMS.filter(function (x) { return x.id === b.getAttribute('data-buy'); })[0];
@@ -1437,21 +1502,21 @@
     // 녹화 합성 — 매 프레임 게임 화면 + 화면 위 HUD + 하단 조작부 + 채팅 미러를 합성 캔버스에 그린다.
     // 캔버스(#scene)만 녹화하면 시청자 수·조작 버튼처럼 DOM으로 그린 것이 클립에서 통째로 빠진다.
     // 외부 의존성(html2canvas류) 0건 방침이라 DOM 텍스트를 읽어 캔버스로 다시 그린다 — 연출 전용, C3 무관.
-    REC_W: 1260, REC_H: 600,  // 게임 960×430 + 시청자 그래프 34 + 하단 HUD 136 / 오른쪽 채팅 300
+    REC_W: 1260, REC_H: 660,  // 게임 960×430 + 시청자 그래프 34 + 하단 HUD 196 / 오른쪽 채팅 300
     compositeRec: function () {
       if (!this._recCtx || this.phase !== 'live') return;
       var c = this._recCtx;
       c.drawImage(this.ctx.canvas, 0, 0);
-      // 스트리머 캠 — 화면의 캠 박스를 그대로 (우하단, 같은 크기). 표정은 CAM_MOOD가
-      // 이미 골라 둔 것을 그대로 쓴다 — 연출 전용이라 수치와 무관 (C3).
+      // 스트리머 캠 — 우하단 축소판(132px). 화면은 264px지만 클립에선 그만큼이 액션을 가린다.
+      // 표정은 CAM_MOOD가 이미 골라 둔 것을 그대로 — 연출 전용이라 수치와 무관 (C3).
       var face = this._camFaces && this._camFaces[this._camMood];
       if (face && face.complete && face.naturalWidth) {
-        var S = 264, bw = S + 16, bh = S + 30, bx = 960 - 10 - bw, by = 430 - 40 - bh;
+        var S = 132, bw = S + 12, bh = S + 28, bx = 960 - 12 - bw, by = 430 - 12 - bh;
         c.fillStyle = 'rgba(12,10,16,.78)'; c.fillRect(bx, by, bw, bh);
         c.strokeStyle = '#00ffa3'; c.lineWidth = 1; c.strokeRect(bx + .5, by + .5, bw - 1, bh - 1);
-        c.drawImage(face, bx + 8, by + 8, S, S);
-        c.fillStyle = '#7dffd0'; c.font = 'bold 12px system-ui, sans-serif'; c.textAlign = 'center';
-        c.fillText('LIVE CAM', bx + bw / 2, by + bh - 9);
+        c.drawImage(face, bx + 6, by + 6, S, S);
+        c.fillStyle = '#7dffd0'; c.font = 'bold 10px system-ui, sans-serif'; c.textAlign = 'center';
+        c.fillText('LIVE CAM', bx + bw / 2, by + bh - 8);
       }
       this._recHud(c);     // 화면 위 오버레이 — 탈리·시청자 카운터·게임 HUD·연쇄 배수
       this._recBottom(c);  // 화면 아래 — 시청자 그래프·방송 정보줄·조작 패널·키 안내
@@ -1568,6 +1633,15 @@
       c.textAlign = 'right'; c.font = 'bold 14px system-ui, sans-serif'; c.fillStyle = '#ffb447';
       c.fillText('👁 ' + this._recTxt('infoViewers'), 948, 486);
 
+      var foot = this._recTxt('foot');
+      if (foot) {
+        c.textAlign = 'center'; c.font = '11px system-ui, sans-serif'; c.fillStyle = '#6b6455';
+        c.fillText(this._recTrunc(c, foot, 940), 480, this.REC_H - 7);
+      }
+
+      // 구조(어떤 칸에 어떤 줄이 있나)만 0.2초마다 다시 훑고, 값(게이지 폭·버튼 라벨)은
+      // 매 프레임 요소에서 직접 읽는다 — 게이지가 차오르는 게 클립에서도 실시간으로 보여야 한다.
+      // style.width·textContent는 레이아웃을 강제하지 않아 매 프레임 읽어도 공짜다.
       if (this.now - (this._recPanelAt || -9) > .2) {
         this._recPanelAt = this.now;
         var host = $('panel');
@@ -1575,33 +1649,45 @@
         if (!els.length) els = host.querySelectorAll('button');
         if (!els.length) els = host.children;
         this._recChips = Array.prototype.map.call(els, function (el) {
-          var kids = el.children.length
-            ? Array.prototype.map.call(el.children, function (k) { return (k.textContent || '').replace(/\s+/g, ' ').trim(); })
-            : [(el.textContent || '').replace(/\s+/g, ' ').trim()];
-          return { lines: kids.filter(Boolean).slice(0, 3), cls: el.className || '' };
+          return { el: el, parts: el.children.length ? Array.prototype.slice.call(el.children) : [el] };
         });
       }
-      var chips = this._recChips || [], top = 512, h = this.REC_H - top - 24;
-      if (chips.length) {
-        var gap = 8, w = (960 - 20 - gap * (chips.length - 1)) / chips.length;
-        chips.forEach(function (ch, i) {
-          var x = 10 + i * (w + gap), hot = /\bhot\b/.test(ch.cls), lock = /\block(ed)?\b/.test(ch.cls);
-          c.fillStyle = lock ? '#131417' : '#1d1810';
-          c.fillRect(x, top, w, h);
-          c.strokeStyle = hot ? '#ffb447' : lock ? '#2c3036' : '#3a332a';
-          c.lineWidth = 1; c.strokeRect(x + .5, top + .5, w - 1, h - 1);
+      var chips = this._recChips || [], top = 512, h = this.REC_H - top - 22;
+      if (!chips.length) return;
+      var gap = 8, w = (960 - 20 - gap * (chips.length - 1)) / chips.length;
+      for (var i2 = 0; i2 < chips.length; i2++) {
+        var ch = chips[i2], cls = ch.el.className || '', x = 10 + i2 * (w + gap);
+        var hot = /\bhot\b/.test(cls), lock = /\blocked\b/.test(cls);
+        c.fillStyle = lock ? '#131417' : '#1d1810'; c.fillRect(x, top, w, h);
+        c.strokeStyle = hot ? '#ffb447' : lock ? '#2c3036' : '#3a332a';
+        c.lineWidth = 1; c.strokeRect(x + .5, top + .5, w - 1, h - 1);
+        var yy = top + 17, head = true;
+        for (var k = 0; k < ch.parts.length; k++) {
+          var p = ch.parts[k], pc = p.className || '', kid = p.firstElementChild;
+          var fw = kid && kid.style && kid.style.width;
+          if (fw && fw.slice(-1) === '%') {   // 게이지 — .prog>i(조리 진행) / .win>i(수습 제한시간)
+            var isWin = /\bwin\b/.test(pc), bh2 = isWin ? 7 : 5;
+            c.fillStyle = isWin ? '#3a1418' : '#000';
+            c.fillRect(x + 8, yy - 4, w - 16, bh2);
+            c.fillStyle = isWin ? '#b8332a' : '#4dd8e6';
+            c.fillRect(x + 8, yy - 4, (w - 16) * Math.max(0, Math.min(1, parseFloat(fw) / 100)), bh2);
+            yy += bh2 + 9; continue;
+          }
+          var t = (p.textContent || '').replace(/\s+/g, ' ').trim();
+          if (!t) continue;
           c.textAlign = 'center';
-          ch.lines.forEach(function (t, li) {
-            c.font = (li ? '' : 'bold ') + (li ? '11px' : '12.5px') + ' system-ui, sans-serif';
-            c.fillStyle = li ? (lock ? '#6b6455' : '#c9cdd2') : hot ? '#ffdf9e' : '#ece7dd';
-            c.fillText(this._recTrunc(c, t, w - 12), x + w / 2, top + 18 + li * 17);
-          }, this);
-        }, this);
-      }
-      var foot = this._recTxt('foot');
-      if (foot) {
-        c.textAlign = 'center'; c.font = '11px system-ui, sans-serif'; c.fillStyle = '#6b6455';
-        c.fillText(this._recTrunc(c, foot, 940), 480, this.REC_H - 8);
+          if (p.tagName === 'BUTTON') {       // 수습 버튼 — 화면처럼 눈에 띄어야 한다
+            c.fillStyle = '#b8332a'; c.fillRect(x + 8, yy - 11, w - 16, 20);
+            c.fillStyle = '#fff'; c.font = 'bold 12px system-ui, sans-serif';
+            c.fillText(this._recTrunc(c, t, w - 20), x + w / 2, yy + 3);
+            yy += 26; continue;
+          }
+          c.font = (head ? 'bold 12.5px' : '11px') + ' system-ui, sans-serif';
+          c.fillStyle = head ? (hot ? '#ffdf9e' : '#ece7dd')
+            : /\baccname\b/.test(pc) ? '#ff8d7a' : lock ? '#6b6455' : '#c9cdd2';
+          c.fillText(this._recTrunc(c, t, w - 12), x + w / 2, yy);
+          yy += head ? 18 : 15; head = false;
+        }
       }
     },
 
@@ -1761,18 +1847,26 @@
       var peak = final;
       for (var gi = 0; gi < this._graph.length; gi++) peak = Math.max(peak, this._graph[gi].v);
       var isDead = reason === 'dead' || reason === 'crash';
-      var evGrade = Shell.gradeShow({ final: final, start: g.startViewers, peak: peak,
+      // start는 실제 출발선(구독자 보너스·송출기 포함). ADR-008 §2 — 여기가 g.startViewers면
+      // 강화가 등급을 무상으로 밀어 올린다. rig는 잔여 인플레를 걷는 세금(§4)
+      var evGrade = Shell.gradeShow({ final: final, start: this._start0 || g.startViewers, peak: peak,
+        rig: Shell.rigTotal(this.ch),
         clips: (this._clips || []).length, coins: earned, freshPct: this._showFresh, dead: isDead });
       var got = { peak: Math.round(peak), coins: earned, clips: (this._clips || []).length };
-      var mBonus = 0;
+      var mBonus = 0, mParts = 0;
       var missions = (this._missions || []).map(function (m) {
         var hit = got[m.k] >= m.target;
-        if (hit) mBonus += m.reward;
+        if (hit) { mBonus += m.reward; mParts += 1; }
         return { m: m, hit: hit, got: got[m.k] };
       });
-      this.ch.coins += mBonus; // 미션 보상도 코인 — 장식 재원일 뿐, 룰 수치 무관
-      // 이 방송의 등급이 다음 게임의 열쇠가 된다 (해금 사슬). 강제 종료분은 gradeShow가
-      // 이미 점수를 0.6배로 깎으므로 따로 거르지 않는다 — 사고 방송으로는 관문이 잘 안 채워진다
+      this.ch.coins += mBonus;
+      // 부품은 미션에서만 나온다 (ADR-008 §6.2). 코인으로 살 수 있게 하면 도네(랜덤 파생)가
+      // 강화 속도를 정하게 되어 양념이 뼈대를 밀어낸다 (규약 5)
+      this.ch.parts = (this.ch.parts || 0) + mParts;
+      // 장비 유지비 — 이번 방송 수입을 이력에 넣기 전에 걷는다 (이번 수입이 이번 청구서에
+      // 섞이면 안 된다). 못 내면 조용히 한 단계 강등 (규약 2 — 손실 무연출)
+      var upkeep = Shell.rigSettle(this.ch, earned);
+      // 이 방송이 다음 게임의 열쇠가 된다 (해금 사슬) — 등급과 무관하게 횟수만 센다
       Shell.recordPlay(this.ch, g.id);
       var chNow = this.ch;
       var opened = this.games.filter(function (x) {
@@ -1889,6 +1983,12 @@
           '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명' +
             ' <span class="' + (divMult >= 1.3 ? 'rec' : 'fine') + '">다양성 ×' + divMult.toFixed(2) + '</span></b>' +
           '<span>도네 수익</span><b>+' + earned.toLocaleString() + ' 코인 → 잔액 ' + this.ch.coins.toLocaleString() + '</b>' +
+          (mParts > 0 ? '<span>장비 부품</span><b>+' + mParts + '개 <span class="fine">— 미션 달성분. 보유 ' +
+            this.ch.parts + '개</span></b>' : '') +
+          // 유지비·강등은 숫자만 조용히 (규약 2 — 손실 무연출). 강조도 색도 붙이지 않는다
+          (upkeep.due > 0 ? '<span>장비 유지비</span><b>−' + upkeep.paid.toLocaleString() + ' 코인' +
+            (upkeep.demoted ? ' <span class="fine">— 미납. ' + Shell.RIG[upkeep.demoted].n +
+              ' Lv' + Shell.rigLv(this.ch, upkeep.demoted) + '로 내려갔다</span>' : '') + '</b>' : '') +
           (waveNew > 0 ? '<span>반응 도감</span><b>처음 들은 반응 ' + waveNew + '칸 <span class="rec">파장 ×' +
             waveMult.toFixed(2) + '</span></b>' : '') +
           (Shell.Dex ? '<span>컨디션</span><b>텐션 ' + tensionAfter + '%' +
@@ -2158,6 +2258,9 @@
     var don = clamp(Math.log10((m.coins || 0) + 1) * 4, 0, 12);
     var vari = m.freshPct >= 100 ? 10 : m.freshPct >= 70 ? 5 : 0;
     var score = growth + hold + clips + don + vari;
+    // 기대치 세금 (ADR-008 §4) — 장비가 좋으면 같은 결과의 값어치가 떨어진다.
+    // "장비가 그 정돈데, 이 정도면…" — 재화는 강화로 늘고 명성은 실력으로만 늘게 하는 마지막 고리
+    score -= Shell.RIG_TAX * (m.rig || 0);
     if (m.dead) score *= .6;
     score = Math.round(score);
     var g = score >= 85 ? 'S' : score >= 70 ? 'A' : score >= 50 ? 'B' : score >= 30 ? 'C' : 'D';
@@ -2236,6 +2339,79 @@
     ];
     var i = ch.shows % 3;
     return [pool[i], pool[(i + 1) % 3]];
+  };
+
+  // ---------- 방송 장비 (ADR-008) ----------
+  // 불변식: 강화는 재화(시청자·코인)만 늘리고 명성(등급)은 늘리지 못한다.
+  // 세 계열 모두 gradeShow에 상쇄 항이 이미 있고(송출기→growth 분모, 조명→hold, 도네→log 포화),
+  // 남는 인플레는 RIG_TAX가 흡수한다. 포화("다 사면 끝")는 유지비가 구조적으로 막는다.
+  Shell.RIG = {
+    feed:  { n: '송출기',   d: '기본 시청자 보장',  floor: [0, 250, 600, 1200] },
+    stage: { n: '조명·무대', d: '획득 배율',        mult:  [1, 1.10, 1.20, 1.32] },
+    don:   { n: '도네 알림', d: '도네 빈도',
+             gap: [1, .85, .72, .60], prob: [0, .08, .15, .22] },
+  };
+  Shell.RIG_LINES = ['feed', 'stage', 'don'];
+  // 부품은 미션 보상에서만 나온다 — 코인으로 사면 도네(랜덤)가 강화 속도를 정하게 된다
+  Shell.RIG_COST = [null,
+    { coins: 1500,  parts: 2, tier: 0 },
+    { coins: 6000,  parts: 5, tier: 1 },
+    { coins: 20000, parts: 9, tier: 2 }];
+  Shell.RIG_TAX = 1.5;      // 레벨당 등급 점수 차감 (만렙 9레벨 = −13.5점)
+  Shell.RIG_UPKEEP = 0.06;  // 레벨당 유지율 — 만렙 54%. 도네 수입에 비례하므로 절대값 튜닝 불요
+
+  Shell.rigLv = function (ch, line) { return ((ch.rig || {})[line] || 0); };
+  Shell.rigTotal = function (ch) {
+    return Shell.RIG_LINES.reduce(function (n, k) { return n + Shell.rigLv(ch, k); }, 0);
+  };
+  Shell.rigFloor = function (ch) { return Shell.RIG.feed.floor[Shell.rigLv(ch, 'feed')]; };
+  Shell.rigGain = function (ch) { return Shell.RIG.stage.mult[Shell.rigLv(ch, 'stage')]; };
+  Shell.rigDon = function (ch) {
+    var l = Shell.rigLv(ch, 'don');
+    return { gap: Shell.RIG.don.gap[l], prob: Shell.RIG.don.prob[l] };
+  };
+
+  // 업그레이드 — 순수 함수로 떼어 둔 이유는 shopBuy와 같다. 조용히 틀리면 재화가 증발하거나
+  // 무한 강화가 된다. 검증: games/shell/selftest.html
+  Shell.rigUp = function (ch, line) {
+    if (!Shell.RIG[line]) return 'bad';
+    var lv = Shell.rigLv(ch, line);
+    if (lv >= 3) return 'max';
+    var c = Shell.RIG_COST[lv + 1];
+    if ((ch.tier || 0) < c.tier) return 'locked';   // 명성이 장비의 상한을 정한다
+    if ((ch.parts || 0) < c.parts) return 'parts';
+    if ((ch.coins || 0) < c.coins) return 'poor';
+    ch.coins -= c.coins; ch.parts -= c.parts;
+    if (!ch.rig) ch.rig = {};
+    ch.rig[line] = lv + 1;
+    return 'ok';
+  };
+
+  // 방송당 유지비 = 직전 3회 평균 도네 수입 × (총레벨 × 6%). 채널 규모를 자동 추종한다.
+  // 만렙이어도 54%라 수입을 넘지 않는다 — 강등 나선에 빠지지 않는 이유
+  Shell.rigUpkeep = function (ch) {
+    var h = ch.donHist || [];
+    if (!h.length) return 0;
+    var avg = h.reduce(function (a, b) { return a + b; }, 0) / h.length;
+    return Math.round(avg * Shell.rigTotal(ch) * Shell.RIG_UPKEEP);
+  };
+
+  // 정산 — 유지비를 걷고, 못 걷으면 가장 높은 계열을 한 단계 강등한다 (조용히, 규약 2).
+  // 이력은 유지비를 계산한 뒤에 갱신한다 (이번 방송 수입이 이번 청구서에 섞이면 안 된다)
+  Shell.rigSettle = function (ch, earned) {
+    var due = Shell.rigUpkeep(ch);
+    var paid = Math.min(ch.coins || 0, due);
+    ch.coins = (ch.coins || 0) - paid;
+    var demoted = null;
+    if (paid < due) {
+      var top = null;
+      Shell.RIG_LINES.forEach(function (k) {
+        if (Shell.rigLv(ch, k) > 0 && (!top || Shell.rigLv(ch, k) > Shell.rigLv(ch, top))) top = k;
+      });
+      if (top) { ch.rig[top] -= 1; demoted = top; }
+    }
+    ch.donHist = [earned].concat(ch.donHist || []).slice(0, 3);
+    return { due: due, paid: paid, demoted: demoted };
   };
 
   // 상점 구매 — 순수 함수로 떼어 둔 이유: 차감·중복·잔액 검사가 조용히 틀리면
