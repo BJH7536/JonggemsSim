@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><title>주머니 괴수 구동 검사 (임시)</title></head>
+<head><meta charset="UTF-8"><title>주머니 괴수 구동 검사</title></head>
 <body>
 <canvas id="scene" width="960" height="430"></canvas>
 <div id="panel"></div>
@@ -12,15 +12,15 @@
 <script src="../../data/dex.js"></script>
 <script src="../../data/personas/viewers.js"></script>
 <script src="../../data/events/tagmap.js"></script>
-<script src="config.js"></script>
+<script src="../shell/config.js"></script>
 <script src="../../engine/chat.js"></script>
 <script src="../../engine/llm.js"></script>
-<script src="shell.js"></script>
-<script src="dex.js"></script>
-<script src="crowd.js"></script>
-<script src="impact.js"></script>
+<script src="../shell/shell.js"></script>
+<script src="../shell/dex.js"></script>
+<script src="../shell/crowd.js"></script>
+<script src="../shell/impact.js"></script>
 <script src="../../data/events/pocket.js"></script>
-<script src="../pocket/game.js"></script>
+<script src="game.js"></script>
 <script>
 // ADR-010 구동 검사 — 셸 없이 stage를 스텁으로 물려 pocket 인스턴스만 돌린다.
 // 검사 대상: 복귀 2지선다 · 선입력 큐 · 40% 복귀 · wipe 임팩트 트리거.
