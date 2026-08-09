@@ -90,11 +90,10 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
     </div>
     <div class="note">
       · 이 페이지는 실제 엔진(<code>engine/chat.js</code>)·실제 캐스트(<code>data/personas/cast.js</code>)·
-      실제 게임 어휘(<code>chat-data.js</code>)를 그대로 사용한다 — 여기서 보이는 그대로 게임에서 나온다.<br>
+      실제 게임 어휘(<code>data/events/*.js</code>)를 그대로 사용한다 — 여기서 보이는 그대로 게임에서 나온다.<br>
       · 사실 슬롯 값은 실제 게임이 넘기는 형태의 표본값이다 (숫자는 매번 무작위).<br>
       · LLM 경로는 부스에 없다 — 템플릿·페르소나 작업 확인용. LLM 발화는 게임(<code>index.html</code>)에서.<br>
-      · 어휘 수정 → 저장 → 이 페이지 새로고침. (<code>data/</code> 스키마 확정 전까지는
-      <code>games/*/chat-data.js</code>를 직접 수정한다)
+      · 어휘 수정 → 저장 → 이 페이지 새로고침. 머지 전 <code>node tools/validate.mjs</code>로 검증.
     </div>
   </div>
 
@@ -106,11 +105,11 @@ button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
 
 <script src="../data/personas/cast.js"></script>
 <script src="../engine/chat.js"></script>
-<script src="../games/hwaryeok/chat-data.js"></script>
-<script src="../games/giving-up/chat-data.js"></script>
-<script src="../games/pocket/chat-data.js"></script>
-<script src="../games/bomb/chat-data.js"></script>
-<script src="../games/fishing/chat-data.js"></script>
+<script src="../data/events/hwaryeok.js"></script>
+<script src="../data/events/giving-up.js"></script>
+<script src="../data/events/pocket.js"></script>
+<script src="../data/events/bomb.js"></script>
+<script src="../data/events/fishing.js"></script>
 <script>
 (function () {
   'use strict';

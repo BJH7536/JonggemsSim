@@ -3,7 +3,7 @@
  * 이 게임의 존재 이유는 "훈수"다. 턴제는 관객이 수를 같이 읽는 장르라
  * info/mock 톤이 처음으로 주연이 된다 — 화력쇼(환호)·GUOI(조롱)와 세 번째 결.
  *
- * 소윤(기획) 접점. 스키마 확정 후 data/events/pocket.json 으로 이관 (contract.md 1절).
+ * 소윤(기획) 소유 — 2026-08-09 games/에서 data/events/로 이관 완료 (contract.md 1절, ADR-002).
  * 톤 6종 = hype / worry / info / mock / cheer / question. 이벤트당 flavor 6개 이상.
  */
 window.POCKET_CHAT = {

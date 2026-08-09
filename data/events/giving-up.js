@@ -4,7 +4,7 @@
  * 이쪽은 "느린 긴장 → 대추락"에 붙는다. 같은 페르소나 8종이 다른 게임에서
  * 다르게 말하는 게 종겜스의 관전 포인트라, 어휘를 게임별로 완전히 분리한다.
  *
- * 소윤(기획) 접점. 스키마 확정 후 data/events/giving-up.json 으로 이관 (contract.md 1절).
+ * 소윤(기획) 소유 — 2026-08-09 games/에서 data/events/로 이관 완료 (contract.md 1절, ADR-002).
  * 톤 6종 = hype / worry / info / mock / cheer / question. 이벤트당 flavor 6개 이상.
  */
 window.GIVINGUP_CHAT = {

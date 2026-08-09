@@ -1,7 +1,6 @@
 /* 화력쇼 — AI 시청자 이벤트 어휘 (게임 16종 이벤트 × 톤별 템플릿).
  *
- * 소윤(기획) 접점. 스키마가 `data/`로 확정되면 이 파일은 data/events/hwaryeok.json 로더로
- * 대체된다 — 그때까지 게임이 자기 어휘를 직접 들고 있는다 (contract.md 1절).
+ * 소윤(기획) 소유 — 2026-08-09 games/에서 data/events/로 이관 완료 (contract.md 1절, ADR-002).
  *
  * 규약: facts = 사실 슬롯 포함(검증 대상, 버스트의 첫 줄만), flavor = [톤, 리액션].
  *       톤 6종 = hype / worry / info / mock / cheer / question. 이벤트당 flavor 6개 이상.

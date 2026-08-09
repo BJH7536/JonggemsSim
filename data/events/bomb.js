@@ -3,7 +3,7 @@
  * 이 게임의 결은 "긴장"이다. 폭탄 시계가 도는 동안 관객은 판독(겁쟁이)과
  * 감컷(도박사)을 실시간으로 평가한다 — 판독엔 mock, 감컷엔 hype, 폭발엔 축제.
  *
- * 소윤(기획) 접점. 스키마 확정 후 data/events/bomb.json 으로 이관 (contract.md 1절).
+ * 소윤(기획) 소유 — 2026-08-09 games/에서 data/events/로 이관 완료 (contract.md 1절, ADR-002).
  * 톤 6종 = hype / worry / info / mock / cheer / question. 이벤트당 flavor 6개 이상.
  * STIM = [위험, 파괴, 숙련, 유머] 0~1 — 공명 모델용 (PR #4 대비).
  */

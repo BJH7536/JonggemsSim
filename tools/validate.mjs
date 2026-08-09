@@ -7,7 +7,7 @@
  * games/shell/selftest.html의 어휘 규약 검사(슬롯 정합·flavor 6개·톤 6종·start/end)를
  * 브라우저 밖으로 옮긴 것 — selftest는 셸·게임 로직 검사로 남고, 데이터 계약은 여기가 진실.
  */
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,15 +42,16 @@ const bad = (file, msg) => fails.push(`${file}: ${msg}`);
   }
 }
 
-// ---- 2. 게임 이벤트 어휘 — games/*/chat-data.js (contract.md 1절) ----
+// ---- 2. 게임 이벤트 어휘 — data/events/<게임>.js (contract.md 1절) ----
 const slotSet = t => [...new Set((t.match(/\{(\w+)\}/g) || []).map(s => s.slice(1, -1)))].sort().join(',');
-for (const dir of readdirSync(join(ROOT, 'games'), { withFileTypes: true })) {
-  if (!dir.isDirectory()) continue;
-  const file = `games/${dir.name}/chat-data.js`;
-  if (!existsSync(join(ROOT, file))) continue;
+const eventFiles = readdirSync(join(ROOT, 'data/events')).filter(f => f.endsWith('.js'));
+if (!eventFiles.length) bad('data/events', '어휘 파일이 하나도 없다 — 스캔 경로가 틀렸는지 확인');
+for (const name of eventFiles) {
+  const file = `data/events/${name}`;
   const w = {};
   try { new Function('window', readFileSync(join(ROOT, file), 'utf8'))(w); }
   catch (e) { bad(file, `실행 실패 — ${e.message}`); continue; }
+  if (!Object.keys(w).length) { bad(file, 'window.*_CHAT 전역을 만들지 않는다'); continue; }
   const data = w[Object.keys(w)[0]];
   if (!data || !data.T) { bad(file, 'window.*_CHAT = { T, BURST } 형태가 아니다'); continue; }
   const T = data.T;

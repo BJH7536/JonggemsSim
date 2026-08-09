@@ -21,15 +21,15 @@
 <script src="../../engine/chat.js"></script>
 <script src="../../engine/llm.js"></script>
 <script src="shell.js"></script>
-<script src="../hwaryeok/chat-data.js"></script>
+<script src="../../data/events/hwaryeok.js"></script>
 <script src="../hwaryeok/game.js"></script>
-<script src="../giving-up/chat-data.js"></script>
+<script src="../../data/events/giving-up.js"></script>
 <script src="../giving-up/game.js"></script>
-<script src="../pocket/chat-data.js"></script>
+<script src="../../data/events/pocket.js"></script>
 <script src="../pocket/game.js"></script>
-<script src="../bomb/chat-data.js"></script>
+<script src="../../data/events/bomb.js"></script>
 <script src="../bomb/game.js"></script>
-<script src="../fishing/chat-data.js"></script>
+<script src="../../data/events/fishing.js"></script>
 <script src="../fishing/game.js"></script>
 <script>
 var pass = 0, fail = 0, log = [];
@@ -300,11 +300,11 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 var SHIPPED = [
   '../../index.html', 'shell.css', 'config.js', 'shell.js',
   '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js',
-  '../hwaryeok/chat-data.js', '../hwaryeok/game.js',
-  '../giving-up/chat-data.js', '../giving-up/game.js',
-  '../pocket/chat-data.js', '../pocket/game.js',
-  '../bomb/chat-data.js', '../bomb/game.js',
-  '../fishing/chat-data.js', '../fishing/game.js',
+  '../../data/events/hwaryeok.js', '../hwaryeok/game.js',
+  '../../data/events/giving-up.js', '../giving-up/game.js',
+  '../../data/events/pocket.js', '../pocket/game.js',
+  '../../data/events/bomb.js', '../bomb/game.js',
+  '../../data/events/fishing.js', '../fishing/game.js',
 ];
 // 스트리머 캠 얼굴 (자작 확인 — Assets/*/SOURCES.md)
 var FACES = ['silence', 'surprise', 'panic', 'aha', 'confusion', 'thinking', 'question']

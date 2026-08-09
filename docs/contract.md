@@ -6,8 +6,9 @@
 
 # 1. 이벤트 스키마 (v1 초안 — 관객 소유)
 
-게임(무대)이 발행하고 채팅(관객)이 소비하는 단위. 게임별 어휘 파일(`games/<id>/chat-data.js`,
-추후 `data/events/<id>.json`)이 이 스키마의 인스턴스다.
+게임(무대)이 발행하고 채팅(관객)이 소비하는 단위. 게임별 어휘 파일 `data/events/<id>.js`
+(2026-08-09 games/<id>/chat-data.js에서 이관 — ADR-002의 JSON 리터럴은 아니고 기존
+`window.*_CHAT` JS 리터럴 그대로, 캐리어 원리는 동일)가 이 스키마의 인스턴스다.
 
 ```js
 T[ev] = {
@@ -146,7 +147,7 @@ Shell.register({
 
 ## 4.5 새 게임 추가 절차
 
-1. `games/<id>/chat-data.js` — 이벤트 어휘 (소윤 협의)
+1. `data/events/<id>.js` — 이벤트 어휘 (소윤 협의, `window.<ID>_CHAT = { T, BURST }`)
 2. `games/<id>/game.js` — `Shell.register(...)`
 3. `index.html`에 `<script>` 두 줄 추가
 
