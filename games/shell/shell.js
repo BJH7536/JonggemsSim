@@ -39,12 +39,14 @@
     bomb: 'games/bomb/img/bench-bg.jpg',
   };
 
+  // 밈 감성으로 통일 — 제목은 "각오"가 아니라 "이미 망할 걸 아는 사람의 농담"이다.
+  // 게임당 4개: 3개면 같은 게임 두 번만 틀어도 제목이 돌아온다 (직전 회피는 없다).
   var SHOW_TITLES = {
-    hwaryeok: ['불 좀 끄고 올게요', '오늘 대참사 0회 도전', '4구 풀가동 각입니다'],
-    'giving-up': ['오늘 정상 못 가면 삭발', '항아리 유산소 하는 날', '떨어질수록 커집니다'],
-    pocket: ['빈사 역전만 노립니다', '연승 끊기면 바로 자야죠', '명중 38%를 믿습니다'],
-    fishing: ['오늘 나락의군주 잡습니다', '심해만 팝니다 얕은물 금지', '줄 끊기면 낚싯대 삽니다'],
-    bomb: ['판독 없이 갑니다', '오늘 폭발 0회 도전(안 지킴)', '감으로 자르는 남자'],
+    hwaryeok: ['불 좀 꺼줄래?', '어? 어? 어어어', '노빠꾸 4구 풀가동', '주방 화재도 컨텐츠입니다'],
+    'giving-up': ['아 손이 미끄러졌다고요', '이 구간만 백 번째', '정상 각 나왔다 (안 남)', '떨어지는 것도 실력입니다'],
+    pocket: ['38%는 사실상 확정입니다', '이게 빗나가네 실화냐', '빈사 역전 장인 나야 나', '한 판만 더 (마지막 아님)'],
+    fishing: ['오늘 나락 한번 가봅니다', '입질 온다 입질 (아님)', '월척 잡을 때까지 퇴근 없음', '심해가 부른다 (환청)'],
+    bomb: ['빨간 선이 국룰입니다', '이거 안 터짐 ㅇㅇ 믿으셈', '감으로 자르는 남자', '설명서는 접어두겠습니다'],
   };
 
   // ---------- 공명 판정층 (ADR-004) ----------
@@ -205,7 +207,9 @@
       var el = $('seasonEnd');
       if (!el) return;
       var clear = c.state === 'clear';
-      el.innerHTML = '<div class="isPanel' + (clear ? ' win' : '') + '">' +
+      // isWin — 'win'은 게임 조작 UI의 수습 윈도우 바(.win, height:7px·overflow:hidden)와
+      // 이름이 겹쳐 성공 패널이 7px로 찌부러졌다. 전역 클래스에 얹지 않는다
+      el.innerHTML = '<div class="isPanel' + (clear ? ' isWin' : '') + '">' +
         '<b class="isLogo">JGS<span>.tv</span></b>' +
         '<h1>' + (clear ? '재계약' : '계약 종료') + '</h1>' +
         '<p>' + c.days + '일 계약, ' + Math.min(c.day, c.days) + '일차 · 최고 시청자 <b>' +
@@ -1140,6 +1144,17 @@
         '<div class="dmsg">' + d.msg + '</div>' +
         '<div class="dhint">클릭해서 읽어주기</div>';
       d.read = false; this._donShown = d; // 읽어주기 대상 — 배너가 사라지면 기회도 사라진다
+      // 머리줄은 nowrap이라 긴 닉네임이면 화면 밖으로 흘러 잘린다 — 넘칠 때만 줄여 한 줄에 맞춘다.
+      // 아이콘 크기가 em이라 글자와 함께 줄어들어 비례 계산 한 번으로 들어맞는다.
+      var hd = el.querySelector('.dhead'), fs = 56;
+      hd.style.fontSize = '';
+      // clientWidth가 곧 쓸 수 있는 폭이다 (박스는 이미 max-width에 걸려 있다). 비율 한 번으로
+      // 비율 한 번으로 거의 맞지만 em 아이콘·글꼴 반올림 탓에 몇 px 남는다 — 붙을 때까지
+      // 조이되 8회로 끊는다 (닉네임이 아무리 길어도 서너 번이면 들어온다).
+      for (var t = 0; t < 8 && hd.scrollWidth > hd.clientWidth; t++) {
+        fs = Math.min(fs - 1, Math.floor(fs * hd.clientWidth / hd.scrollWidth));
+        hd.style.fontSize = fs + 'px';
+      }
       el.classList.remove('show', 'read'); void el.offsetWidth; el.classList.add('show');
       // 도네 알림음은 기본 — 코인 딸랑 두 음. 팡파레(상점 용품)는 그 위에 얹는다 (순수 장식)
       Shell.sfx.tone(1175, .07, 'triangle', .06); Shell.sfx.tone(1568, .1, 'triangle', .05, .07);
