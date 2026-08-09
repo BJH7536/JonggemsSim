@@ -125,6 +125,27 @@ ok('3회째 반복은 무엇이어도 클립 불가 (규약 4)', IS(4, 2, 1) < T
 ok('무게 4 두 번째는 급증이 실리면 클립 가능', IS(4, 1, 1) >= TH);
 ok('급증 신호는 단조 증가', IS(4, 1, 1) > IS(4, 1, .5) && IS(4, 1, .5) > IS(4, 1, 0));
 
+// ---- 풍선쇼 전용 점수 — 조용히 틀리면 유일한 즉시 피드백이 거짓말을 한다 ----
+var BM = window.BALLOON_MATH;
+ok('산식이 게임에서 노출된다', !!BM);
+eq('즉시 터뜨림(익음 0)은 ×1.0', BM.payMul(0), 1);
+eq('만개(익음 1)는 ×4.0', BM.payMul(1), 4);
+ok('익음배수는 단조 증가 — 익힐수록 비싸다 (공통 명제)',
+   BM.payMul(.25) < BM.payMul(.5) && BM.payMul(.5) < BM.payMul(.9));
+eq('콤보 0이면 배수 없음', BM.comboMul(0), 1);
+eq('콤보 20에서 상한 ×2.0', BM.comboMul(20), 2);
+eq('상한을 넘겨도 더 오르지 않는다', BM.comboMul(999), BM.comboMul(20));
+ok('콤보가 음수여도 배수가 1 밑으로 안 내려간다', BM.comboMul(-5) === 1);
+eq('안전 플레이(익음 0·콤보 0)는 100점', BM.score(0, 0), 100);
+eq('만개 + 콤보 상한이 최대 800점', BM.score(1, 20), 800);
+ok('같은 콤보면 익힌 쪽이 항상 높다', BM.score(1, 5) > BM.score(0, 5));
+ok('같은 익음도면 콤보가 긴 쪽이 항상 높다', BM.score(.5, 10) > BM.score(.5, 0));
+// 초반 즉사 방지 — 시작 시청자 300에서 두 번 놓치면 방송이 끝나던 문제
+ok('시작 규모(300)에서는 손실이 상수보다 작다', BM.burstLoss(300) < 140);
+eq('채널이 크면 원래 설계값(상수 140)', BM.burstLoss(10000), 140);
+ok('아주 작아도 최소 손실은 남는다 (놓쳐도 공짜는 아니다)', BM.burstLoss(10) === 30);
+ok('시작 규모에서 두 번 놓쳐도 즉사하지 않는다', BM.burstLoss(300) * 2 < 300);
+
 // ---- 도네 사건 판정 — 비율이 틀리면 초반엔 영영 안 터지고 후반엔 배너가 도배된다 ----
 function spike(viewers, n, now, lastAt) {
   var ctx = { phase: 'live', viewers: viewers, now: now, _lastForceAt: lastAt, _donForce: 0 };

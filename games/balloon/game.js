@@ -49,6 +49,19 @@
   var COLORS = ['#ff6b8a', '#ffb347', '#7de8ff', '#a8e063', '#c58aff'];
   var RGB = COLORS.map(hex2rgb);
 
+  /* 산식을 순수 함수로 떼어 둔 이유는 shopBuy·rigUp과 같다 — 점수가 조용히 틀리면
+     "잘하고 있나"라는 유일한 즉시 피드백이 거짓말을 한다. 검증: games/shell/selftest.html */
+  var MATH = {
+    payMul: function (t) { return 1 + PAY_SPAN * t; },              // 익음배수 1.0 → 4.0
+    comboMul: function (c) { return 1 + COMBO_STEP * Math.min(Math.max(c, 0), COMBO_CAP); },
+    score: function (t, combo) {
+      return Math.round(SCORE_BASE * MATH.payMul(t) * MATH.comboMul(combo));
+    },
+    // 상수 140이 설계값이지만 시작 시청자 300에서는 두 번이면 방송이 죽는다 — 초반만 완화
+    burstLoss: function (viewers) { return Math.min(BURST_LOSS, Math.max(30, viewers * .25)); },
+  };
+  window.BALLOON_MATH = MATH;
+
   function hex2rgb(h) {
     var n = parseInt(h.slice(1), 16);
     return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
@@ -184,8 +197,8 @@
     var st = {
       round: 0, roundPop: 0, roundMiss: 0, flooded: false,
       pops: 0, blooms: 0, bursts: 0, ripeSum: 0, maxAlive: 0,
-      score: 0, combo: 0, bestCombo: 0, comboMile: 0, scorePulse: 0,
-      balloons: [], puffs: [], floaters: [], confetti: [],
+      score: 0, scoreShown: 0, combo: 0, bestCombo: 0, comboMile: 0, scorePulse: 0,
+      balloons: [], puffs: [], floaters: [], confetti: [], shocks: [],
       spawnAcc: 0, idleT: 0, chatT: 3, mileIdx: 0,
     };
     var panel = stage.panel;
@@ -197,7 +210,7 @@
     function rate() { return SPAWN_BASE * RATE[clamp(st.round, 0, ROUNDS - 1)]; }
     function ripe(b) { return clamp((stage.now - b.born) / LIFE, 0, 1); }
     function floater(x, y, txt, c, big) { st.floaters.push({ x: x, y: y, txt: txt, t: 0, c: c, big: big }); }
-    function comboMul() { return 1 + COMBO_STEP * Math.min(st.combo, COMBO_CAP); }
+    function comboMul() { return MATH.comboMul(st.combo); }
 
     // 투영 — WebGL이 없으면 z를 무시한 1:1 (2D 폴백)
     function proj(b) {
@@ -244,7 +257,7 @@
     function pop(b) {
       var t = ripe(b);
       var bloom = t >= BLOOM_T;
-      var mul = 1 + PAY_SPAN * t;
+      var mul = MATH.payMul(t);
       var p = proj(b);
       var actual = stage.gain(Math.round(PAY_BASE * mul),
         bloom ? '만개!! ×' + mul.toFixed(1) : null, bloom ? 'bloom' : 'pop');
@@ -252,7 +265,7 @@
       // 전용 점수 — 익음배수 × 콤보. 안전 플레이로는 절대 안 오른다
       st.combo++;
       st.bestCombo = Math.max(st.bestCombo, st.combo);
-      var pts = Math.round(SCORE_BASE * mul * comboMul());
+      var pts = MATH.score(t, st.combo);
       st.score += pts;
       st.scorePulse = 1;
 
@@ -264,6 +277,9 @@
       if (bloom) {
         st.blooms++;
         sfxBloom();
+        // 충격파 — 만개는 이 게임의 절정이다. 파열 시트·색종이 위에 한 겹 더 얹어
+        // "제때 눌렀다"가 화면 전체로 퍼지게 한다 (규약 2 — 획득은 과하게)
+        st.shocks.push({ x: p.x, y: p.y, r0: b.r * p.scale, t: 0 });
         stage.flash(.2); stage.shake(5);
         stage.emit('bloom', { gain: actual.toLocaleString() });
       } else if (Math.random() < .12) {
@@ -286,7 +302,7 @@
       // 손실은 상수(140)가 설계값이지만, 시작 시청자가 300이라 두 번만 놓치면 10초 만에
       // 방송이 죽는다 — 처음 잡아 보는 사람은 반드시 두어 번 놓친다. 채널 규모의 1/4로
       // 상한을 둬 초반 즉사만 막는다. 채널이 크면(560명 이상) 원래 상수 그대로다
-      stage.lose(Math.min(BURST_LOSS, Math.max(30, stage.viewers * .25)));
+      stage.lose(MATH.burstLoss(stage.viewers));
       st.bursts++; st.roundMiss++;
       st.combo = 0; st.comboMile = 0;          // 콤보는 조용히 끊긴다 (손실 무연출)
       st.puffs.push({ x: p.x, y: p.y, r: b.r * p.scale, c: '#5a5650', born: stage.now, dull: true });
@@ -383,6 +399,11 @@
           f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
           f.rot += f.vr * dt;
         }
+        // 점수는 튀지 않고 굴러 올라간다 — 숫자가 도는 동안이 '벌고 있다'는 감각이다
+        if (st.scoreShown < st.score) {
+          st.scoreShown = Math.min(st.score, st.scoreShown + Math.max(120, (st.score - st.scoreShown) * 7) * dt);
+        }
+        st.shocks = st.shocks.filter(function (s) { s.t += dt; return s.t < .42; });
         st.scorePulse = Math.max(0, st.scorePulse - dt * 3);
         st.puffs = st.puffs.filter(function (p) { return stage.now - p.born < .45; });
         st.floaters = st.floaters.filter(function (f2) { f2.t += dt; return f2.t < .9; });
@@ -449,6 +470,7 @@
             .forEach(function (b) { drawBalloon2D(ctx, b, t); });
         }
 
+        drawShocks(ctx);
         drawPopFx(ctx, t);
         drawConfetti(ctx);
         drawPuffs(ctx, t);
@@ -602,7 +624,7 @@
       ctx.translate(480, 62); ctx.scale(pulse, pulse);
       ctx.fillStyle = st.scorePulse > .01 ? '#fff3c4' : '#ffd27a';
       ctx.font = 'bold 40px Georgia, serif';
-      ctx.fillText(st.score.toLocaleString(), 0, 0);
+      ctx.fillText(Math.round(st.scoreShown).toLocaleString(), 0, 0);
       ctx.restore();
 
       if (st.combo >= 2) {
@@ -614,6 +636,34 @@
         ctx.fillText(st.combo + ' COMBO  ×' + comboMul().toFixed(2), 480, 96);
         ctx.restore();
       }
+      // 고콤보 — 화면 테두리가 달아오른다. 숫자만으로는 "지금 불붙었다"가 안 읽힌다
+      if (st.combo >= 10) {
+        var heat = Math.min(1, (st.combo - 10) / 10);
+        ctx.save();
+        var eg = ctx.createLinearGradient(0, 0, 0, 430);
+        var a2 = (.12 + .1 * heat) * (.75 + .25 * Math.sin(stage.now * 9));
+        eg.addColorStop(0, 'rgba(255,107,138,' + a2 + ')');
+        eg.addColorStop(.22, 'rgba(255,107,138,0)');
+        eg.addColorStop(.78, 'rgba(255,107,138,0)');
+        eg.addColorStop(1, 'rgba(255,107,138,' + a2 + ')');
+        ctx.fillStyle = eg; ctx.fillRect(0, 0, 960, 430);
+        ctx.restore();
+      }
+    }
+
+    // 만개 충격파 — 3D 위, 색종이 아래
+    function drawShocks(ctx) {
+      ctx.save();
+      st.shocks.forEach(function (s) {
+        var k = s.t / .42;
+        ctx.globalAlpha = (1 - k) * .55;
+        ctx.strokeStyle = '#ffd6e2';
+        ctx.lineWidth = 3 * (1 - k) + .8;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r0 + 140 * k, 0, TAU);
+        ctx.stroke();
+      });
+      ctx.restore();
     }
 
     // ---------- 2D 폴백 (WebGL 불가 환경) ----------
