@@ -243,7 +243,7 @@ Shell.games.forEach(function (g) {
   eq(g.title + ': 사실 템플릿들이 같은 슬롯 집합을 쓴다', slotBad, []);
 });
 
-// ---- 공명 판정층 (ADR-002) ----
+// ---- 공명 판정층 (ADR-004) ----
 // 배분이 조용히 틀리면 "관객 구성"이라는 코어가 통째로 거짓말이 된다 — 총량 보존과
 // 공명 방향(어떤 자극이 어떤 원형을 부르는가) 두 가지를 계산으로 못박는다.
 eq('경제 원형 4종', Shell.ARCH.map(function (a) { return a.id; }), ['thrill', 'fan', 'expert', 'casual']);

@@ -214,7 +214,7 @@
               { mv: name, dmg: dmg, gain: actual.toLocaleString() });
           } else {
             // 안전한 딜은 조용한 소액 — 티커로만. 이벤트 인자도 없다(중립 배분):
-            // 안정타는 채널의 색을 바꿀 만한 사건이 아니라는 뜻이다 (ADR-002)
+            // 안정타는 채널의 색을 바꿀 만한 사건이 아니라는 뜻이다 (ADR-004)
             stage.gain(gain, null);
             sfxHit();
             stage.ticker(name + ' 적중 — ' + dmg + ' 피해', false);

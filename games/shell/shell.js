@@ -38,7 +38,7 @@
     bomb: ['판독 없이 갑니다', '오늘 폭발 0회 도전(안 지킴)', '감으로 자르는 남자'],
   };
 
-  // ---------- 공명 판정층 (ADR-002) ----------
+  // ---------- 공명 판정층 (ADR-004) ----------
   // 시청자 수는 단일 숫자가 아니라 "누가 보고 있는가"의 분포다. 총량은 게임이 정한 상수
   // 그대로이고(무변경 — critic 4차 승인 보존), 이 층은 그 유입이 어느 원형으로 갈지 배분만
   // 정한다. 결정론 데이터 + 상한이라 C3b(비결정 생성물의 경제 유입 금지) 밖이다.
@@ -188,7 +188,7 @@
     freshStep: function (id) { return this.ch.fresh[id] || 0; },
     freshMult: function (id) { return FRESH_MULT[this.freshStep(id)]; },
 
-    // ---------- 공명 배분 (ADR-002 결정 2) ----------
+    // ---------- 공명 배분 (ADR-004 결정 2) ----------
     compTotal: function () { return this.comp[0] + this.comp[1] + this.comp[2] + this.comp[3]; },
     // 채팅 캐스팅이 읽는 유일한 창구. 단방향이다 — 채팅이 되돌려 쓰는 경로는 없다 (C3)
     archShare: function (id) {
@@ -800,7 +800,7 @@
         // 신선도가 적용된 뒤의 실제 반영량. 게임은 "얼마를 벌 만한 플레이였나"만 말하고,
         // 시청자 수를 실제로 얼마나 움직일지는 셸이 정한다 (규약 1·4는 무대 소유).
         // label이 없으면 FX 팝업을 띄우지 않는다 — 소액 획득까지 큐를 먹으면 큰 자극이 밀린다.
-        // ev는 총량이 아니라 배분에만 쓰인다 (ADR-002 결정 2 — 총량 산식 무변경).
+        // ev는 총량이 아니라 배분에만 쓰인다 (ADR-004 결정 2 — 총량 산식 무변경).
         // 생략하면 중립 배분이라 기존 호출은 그대로 동작한다 (contract 4.2)
         gain: function (n, label, ev) {
           if (!(n > 0) || self.phase !== 'live') return 0;
@@ -809,7 +809,7 @@
           self._surgeAcc += actual;                          // 흥미도의 급증 신호 (클립)
           self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
           if (actual >= 150) self._marks.push(self._upT);    // 전폭 그래프의 스파이크 마커
-          self.compAdd(actual, ev);                          // 공명 판정층 — 원형별 배분 (ADR-002)
+          self.compAdd(actual, ev);                          // 공명 판정층 — 원형별 배분 (ADR-004)
           self.renderViewers();
           // 획득은 과하게 (규약 2). 단 도네는 전용 배너가 연출을 전담한다 — 중앙 팝업까지
           // 겹치면 큰 자극 두 개가 서로를 잡아먹는다 (규약 3)
@@ -1353,7 +1353,7 @@
 
       // 탐색 보너스 — 관객이 골고루 모인 방송일수록 구독자가 더 남는다.
       // 방송 중 시청자 수에는 손대지 않고 메타 통화에만 얹으므로 승인 밸런스와 충돌하지
-      // 않으면서, "채널 색을 관리할 이유"가 처음으로 생긴다 (ADR-002 결정 7)
+      // 않으면서, "채널 색을 관리할 이유"가 처음으로 생긴다 (ADR-004 결정 7)
       var div = this.diversity(), divMult = 1 + DIV_BONUS * div;
       var newSubs = Math.floor(final / 100 * divMult); // 최종 시청자의 1% × 다양성
       this.ch.subs += newSubs;
@@ -1792,7 +1792,7 @@
   Shell.SIM = SIM;
   // 샌드박스에서 흥미도 벡터를 슬라이더로 만지면 근접도도 따라 바뀌어야 한다
   Shell.recomputeSim = function () { SIM = computeSim(); Shell.SIM = SIM; };
-  // 판정층 상수 — 무대 소유(ADR-002 결정 4). 도구·검사가 읽는다
+  // 판정층 상수 — 무대 소유(ADR-004 결정 4). 도구·검사가 읽는다
   Shell.TUNE = {
     T_ECON: T_ECON, BETA: BETA, MIX_INHERIT: MIX_INHERIT,
     SUB_BONUS: SUB_BONUS, SUB_BONUS_CAP: SUB_BONUS_CAP,

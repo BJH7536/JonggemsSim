@@ -218,7 +218,7 @@
       return this.history.slice(-this.N).every(function (h) { return sim(text, h) < this.SIM_MAX; }, this);
     },
 
-    // 캐스팅 — 누가 말할지는 현재 관객 구성이 정한다 (ADR-002). 분석가가 몰린 방송에서는
+    // 캐스팅 — 누가 말할지는 현재 관객 구성이 정한다 (ADR-004). 분석가가 몰린 방송에서는
     // 10년차주방장·냉정한미식가가 자주 뜨고, 불구경파 방송이면 불멍장인·ㅋㅋ자판기가 도배한다.
     // Shell을 읽기만 하는 단방향이라 C3 위반이 아니다 — 채팅은 여전히 관측하고 말만 한다.
     pickPersona: function (used) {
