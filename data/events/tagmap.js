@@ -75,6 +75,9 @@ window.JONG_TAGMAP = {
     "scan_reveal": ["numbers_revealed"],
     "defused": ["clean_execution"],
     "defused_clutch": ["improbable_survival"],
+    "cash_out": ["meta_choice"],
+    "hot_cut": ["improbable_survival"],
+    "condition_met": ["clean_execution"],
     "chain_up": ["synergy_found"],
     "milestone": ["numbers_revealed"],
     "idle": ["idle"]

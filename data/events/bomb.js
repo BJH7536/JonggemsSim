@@ -3,6 +3,10 @@
  * 이 게임의 결은 "긴장"이다. 폭탄 시계가 도는 동안 관객은 판독(겁쟁이)과
  * 감컷(도박사)을 실시간으로 평가한다 — 판독엔 mock, 감컷엔 hype, 폭발엔 축제.
  *
+ * v2(포트·끊기 구조, 2026-08-10)에서 어휘가 늘었다: cash_out·hot_cut·condition_met·repair_*.
+ * 반대로 `cut_safe`·`defused_clutch`는 게임이 더 이상 발행하지 않는다(사어) — 지우지 않고 남긴
+ * 이유는 v2 밸런스가 1차 스윕값이라 클러치류 판정이 되살아날 수 있어서다. 확정되면 정리할 것.
+ *
  * 소윤(기획) 소유 — 2026-08-09 games/에서 data/events/로 이관 완료 (contract.md 1절, ADR-002).
  * 톤 6종 = hype / worry / info / mock / cheer / question. 이벤트당 flavor 6개 이상.
  * STIM = [위험, 파괴, 숙련, 유머] 0~1 — 공명 모델용 (PR #4 대비).
@@ -45,6 +49,27 @@ window.BOMB_CHAT = {
     chain_up: { facts: ['연쇄 ×{x} 돌입', '배수 ×{x}로 상승', '연쇄 ×{x}!!'], flavor: [
       ['hype', '배수 올랐다!!'], ['cheer', '연쇄 가즈아!!'], ['info', '지금 자르는 게 제일 크다'],
       ['mock', '끊길 때가 제일 재밌는데 ㅋㅋ'], ['question', '최대 몇 배예요?'], ['hype', '폼 미쳤다!!'] ] },
+    // ─ v2(포트·끊기 구조)에서 새로 생긴 순간들 ─
+    // 끊기는 이 게임의 결정 지점이다. 관객은 "왜 거기서 멈췄나"로 갈린다 — 굿콜과 겁쟁이가 같은 장면.
+    cash_out: { facts: ['{cuts}가닥에서 끊었다 +{gain}', '{cuts}컷 하고 손 뗌 +{gain}', '{cuts}가닥 자르고 송출 +{gain}'], flavor: [
+      ['hype', '굿콜!!'], ['mock', '겁쟁이 ㅋㅋ 한 가닥만 더 가지'], ['info', '끊는 것도 실력이다'],
+      ['worry', '더 갔으면 터졌음;;'], ['cheer', '안전운전 좋습니다'], ['question', '저기서 왜 끊어요?'],
+      ['mock', '포트 아깝다 진짜'], ['hype', '칼같이 뺐네'] ] },
+    // 함정확률 50%를 넘겨 자른 순간 — 이 게임에서 손이 제일 떨리는 지점이라 무게 3이다.
+    hot_cut: { facts: ['함정확률 {risk}% 뚫었다 · 포트 {pot}', '{risk}%를 감으로 통과 · 누적 {pot}', '{risk}% 컷 성공 ㄷㄷ 포트 {pot}'], flavor: [
+      ['hype', '미쳤다 진짜!!!'], ['worry', '심장 떨어질 뻔;;'], ['mock', '운빨이지 저건 ㅋㅋ'],
+      ['info', '저 구간이 배당이 제일 크다'], ['cheer', '손 좋다!!'], ['question', '저거 몇 프로였어요?'],
+      ['hype', '클립 각!!!'] ] },
+    condition_met: { facts: ['{cond} 달성 +{gain}', '의뢰 조건 충족 — {cond} +{gain}', '{cond} 찍고 +{gain}'], flavor: [
+      ['cheer', '조건 맞췄다!!'], ['hype', '계산하고 친 거다 이건'], ['info', '조건 배수가 제일 크다'],
+      ['mock', '우연 아니냐 ㅋㅋ'], ['question', '저 조건 뭐예요?'], ['cheer', '프로답네요'],
+      ['hype', '보너스 터졌다!!'] ] },
+    repair_fast: { facts: [], flavor: [
+      ['hype', '바로 재개!!'], ['cheer', '손 빠르다'], ['mock', '수리비는 어쩌고 ㅋㅋ'],
+      ['info', '빠른 복구는 시간을 사는 것'], ['worry', '대충 고친 거 아니죠?'], ['question', '저거 그냥 넘어가도 돼요?'] ] },
+    repair_solid: { facts: [], flavor: [
+      ['info', '보강하면 다음 의뢰 판독이 하나 는다'], ['cheer', '꼼꼼하다'], ['mock', '느긋하시네 ㅋㅋ'],
+      ['worry', '시간 아까운데…'], ['question', '보강하면 뭐가 좋아요?'], ['hype', '장비 챙기는 스타일'] ] },
     nag: { facts: [], flavor: [
       ['worry', '폭탄 시계 돌아가는데요??'], ['mock', '구경만 하는 해체사 ㅋㅋ'], ['question', '뭐부터 자를 거예요?'],
       ['info', '고민하는 동안 시간만 탄다'], ['mock', '화면 멈춘 줄'], ['worry', '빨리 손 대요 좀'] ] },
@@ -63,7 +88,10 @@ window.BOMB_CHAT = {
       ['mock', '마지막 폭발 아쉬웠다 ㅋㅋ'], ['hype', '오늘 클러치 레전드'], ['info', '클립 정리하러 갑니다'] ] },
   },
   BURST: { boom: 4, defused_clutch: 4, cut_paid: 2, defused: 2, chain_up: 2,
-           timeout_boom: 2, new_bomb: 1, start: 2, end: 2 },
+           timeout_boom: 2, new_bomb: 1, start: 2, end: 2,
+           // v2 신규. hot_cut·condition_met를 3으로 둔 이유: 이 게임의 무게 3 어휘가 0종이라
+           // 클립(흥미도 임계 0.5)이 방송 20초 안에 소진되고 있었다 (2026-08-10 헤드리스 계측)
+           cash_out: 2, hot_cut: 3, condition_met: 3, repair_fast: 1, repair_solid: 1 },
   // [위험, 파괴, 숙련, 유머] — 공명 모델 자극 벡터 (PR #4 대비, 현재 미소비)
   STIM: {
     start: [.2, .1, .1, .2], new_bomb: [.5, .2, .2, .1], scan_reveal: [.2, 0, .5, .1],
@@ -71,5 +99,7 @@ window.BOMB_CHAT = {
     defused: [.3, 0, .8, .1], defused_clutch: [1, .2, 1, .3], timeout_boom: [.4, .8, 0, .5],
     chain_up: [.5, .1, .7, .2], nag: [.2, 0, 0, .5], idle: [.1, 0, 0, .3],
     donation: [.1, 0, .1, .4], milestone: [.3, .1, .2, .3], end: [.1, 0, .2, .2],
+    cash_out: [.3, 0, .6, .2], hot_cut: [.9, .1, .8, .2], condition_met: [.3, 0, .9, .1],
+    repair_fast: [.1, .2, .4, .2], repair_solid: [0, .1, .5, .2],
   },
 };
