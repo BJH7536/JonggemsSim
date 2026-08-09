@@ -592,7 +592,14 @@
     // 양념이니 연출은 화려하게, 수치 관여는 없음). 배너끼리는 큐로 3.4초 간격 방출 (규약 3).
     // 닉네임은 채팅 페르소나를 빌려 쓴다 — 후원자가 관객석에 실재하는 인물로 읽히게.
     DON_MSG: ['오늘 방송 개꿀잼', '이건 봐야지', '무리하지 마세요', '한 판 더 가자',
-              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁'],
+              '방금 그거 미쳤다', '밥은 먹고 방송해요', '첫 도네입니다', '사고 한 번만 더 부탁',
+              '아니 이걸 이렇게 한다고? ㅋㅋ', '방금 장면 클립 각이던데', '구독 박고 갑니다'],
+    // 후원자 — 대부분 채팅 페르소나(관객석에 실재하는 인물로 읽히게), 가끔 익명 (치지직 문법)
+    pickSponsor: function () {
+      return Math.random() < .3
+        ? { nick: '익명의 후원자', color: '#b8c4cc' }
+        : Chat.personas[Math.floor(Math.random() * Chat.personas.length)];
+    },
     showDonation: function (facts) {
       // 코인 적립 — 이번 방송 누계로 모았다가 정산(endShow) 때 잔액에 더한다.
       // 시청자 수치는 게임이 이미 gain으로 반영했다 — 코인은 별도 통화라 규약 1과 무관.
@@ -600,7 +607,7 @@
       if (amt > 0) this._showCoins += amt;
       this._donQ.push({
         amt: (facts && facts.d) ? String(facts.d) : '1,000',
-        who: Chat.personas[Math.floor(Math.random() * Chat.personas.length)],
+        who: this.pickSponsor(),
         msg: this.DON_MSG[Math.floor(Math.random() * this.DON_MSG.length)],
       });
       this.drainDon();
@@ -611,12 +618,15 @@
       this._donBusy = true;
       var el = $('donBanner');
       // 금액 단위는 '코인'(플랫폼 화폐) — 게임이 넘기는 값이 시청자 환산 수치라
-      // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법)
-      el.innerHTML = '<img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
+      // '원'을 붙이면 13원 같은 어색한 소액이 된다 (치지직의 치즈, 트위치의 비트 문법).
+      // 형식은 치지직 후원 배너: "{이름}님이 {n}코인 후원!" 머리줄 + 아래 도네 내용 줄.
+      el.innerHTML = '<div class="dhead"><img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
         '<b style="color:' + d.who.color + '">' + d.who.nick + '</b>님이 <b class="amt">' +
-        d.amt + ' 코인</b> 후원! <span class="dmsg">' + d.msg + '</span>';
+        d.amt + '코인</b> 후원!</div>' +
+        '<div class="dmsg">' + d.msg + '</div>';
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-      // 도네 팡파레 (상점 용품) — 배너 위에 소리만 얹는다. 수치 무관, 순수 장식
+      // 도네 알림음은 기본 — 코인 딸랑 두 음. 팡파레(상점 용품)는 그 위에 얹는다 (순수 장식)
+      Shell.sfx.tone(1175, .07, 'triangle', .06); Shell.sfx.tone(1568, .1, 'triangle', .05, .07);
       if (this.ch.gear.fanfare) {
         Shell.sfx.tone(1047, .09, 'triangle', .07); Shell.sfx.tone(1319, .1, 'triangle', .06, .08);
         Shell.sfx.tone(1568, .18, 'triangle', .06, .16);
@@ -796,12 +806,25 @@
       var media = clip.vid
         ? '<video src="' + clip.vid + '" autoplay muted playsinline></video>'
         : '<img src="' + clip.img + '" alt="">';
+      // 클립 후원 (치지직 문법) — 터진 장면에 시청자가 지갑을 연다. 영상 밑에
+      // "{이름}님이 {n}코인 후원!" 한 줄. 연출 전용 — 코인 적립 없음 (클립은 수치
+      // 무관여, contract 4.6 — 연출이 경제를 만드는 경로를 열지 않는다).
+      var don = '';
+      if (label === 'INSTANT REPLAY') {
+        var spon = this.pickSponsor();
+        var damt = [500, 1000, 1000, 2000, 3000, 5000, 10000][Math.floor(Math.random() * 7)];
+        don = '<div class="rwDon"><img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
+          '<b style="color:' + spon.color + '">' + spon.nick + '</b>님이 <b class="amt">' +
+          damt.toLocaleString() + '코인</b> 후원!</div>';
+        // 클립 캡처 효과음 — 도네 딸랑과 겹치지 않는 낮은 촬칵+윙
+        Shell.sfx.tone(660, .05, 'square', .04); Shell.sfx.tone(990, .09, 'triangle', .05, .05);
+      }
       el.innerHTML = '<div class="rwHead"><i class="recDot"></i>' + label +
         '<span class="rwSave">클립 저장됨</span></div>' + media +
         '<div class="rwCap"><b>' + (clip.game ? clip.game + ' · ' : '') + Shell.util.fmtTime(clip.t) +
         '</b> ' + clip.mood + ' · 흥미도 ' + Math.round(clip.s * 100) + '%' +
         (!clip.vid && location.protocol === 'file:' ? ' <span class="rwNote">영상은 배포판·로컬 서버에서</span>' : '') +
-        '</div>';
+        '</div>' + don;
       if (label !== 'INSTANT REPLAY') el.querySelector('.rwSave').style.display = 'none';
       // 하이라이트 지점 직전부터 재생 — 프리롤(세그먼트 앞부분)을 건너뛴다.
       // MediaRecorder WebM은 duration이 Infinity로 나오는 경우가 있어(크롬) 그땐 처음부터.
