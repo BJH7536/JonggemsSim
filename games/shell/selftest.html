@@ -83,13 +83,14 @@ f = Shell.rotateFresh(f, 'b', ids);
 eq('b 한 판이 a를 한 단계 회복시킨다', f.a, 2);
 
 // ---- 임팩트 판정 (ADR-009) — 조용히 틀리면 대참사에 팡파르가 울린다 ----
-// 5게임의 설계 피크(버스트 4) 8개가 정확히 두 갈래로 갈려야 한다. 새 저작 테이블 없이
+// 등록된 게임들의 설계 피크(버스트 4)가 정확히 두 갈래로 갈려야 한다. 새 저작 테이블 없이
 // CAM_MOOD를 재사용하므로, 캠 표정 표를 건드리면 여기가 먼저 빨개진다.
-eq('대참사 피크 4종은 암울',
-   ['disaster', 'fall_legend', 'line_snap', 'boom'].map(function (e) { return Shell.impactOf(e, 4); }),
-   ['dark', 'dark', 'dark', 'dark']);
+// (2026-08-10 심연낚시 삭제로 line_snap·land_legend 표본이 사라져 살아 있는 것으로 교체)
+eq('대참사 피크 3종은 암울',
+   ['disaster', 'fall_legend', 'boom'].map(function (e) { return Shell.impactOf(e, 4); }),
+   ['dark', 'dark', 'dark']);
 eq('환호 피크 4종은 밝음',
-   ['summit', 'land_legend', 'defused_clutch', 'comeback'].map(function (e) { return Shell.impactOf(e, 4); }),
+   ['summit', 'bloom', 'defused_clutch', 'comeback'].map(function (e) { return Shell.impactOf(e, 4); }),
    ['bright', 'bright', 'bright', 'bright']);
 ok('무게 3 이하는 임팩트 없음 (설계 피크만 — 규약 5, 양념은 뼈대가 못 된다)',
    Shell.impactOf('fall_big', 3) === null && Shell.impactOf('donation', 2) === null);

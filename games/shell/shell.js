@@ -473,17 +473,18 @@
     // 게임이 emit하는 이벤트 이름을 표정으로 번역한다. 새 게임이 기존 이름을 재사용하면
     // 캠은 공짜로 따라온다 — 목록에 없는 이벤트는 무표정 유지 (contract 4.2 참고).
     CAM_MOOD: {
-      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall',
-                 'bite', 'hook', 'new_bomb'],
+      // 심연낚시·광클쇼 삭제(2026-08-10)로 그 이벤트 이름들은 여기서 뺐다 —
+      // 남겨 두면 표가 "이 이벤트를 다룬다"고 거짓말한다 (bite·hook·line_snap·land_*·
+      // tension_edge·strike_miss·escape·trash / combo_max·combo_break)
+      surprise: ['accident', 'oilfire', 'player_hit', 'new_foe', 'fall', 'new_bomb'],
       panic: ['disaster', 'fall_legend', 'fall_big', 'wipe', 'near_death',
-              'line_snap', 'boom', 'streamer_scream'],
+              'boom', 'streamer_scream'],
       aha: ['rescue', 'rescue_big', 'clutch', 'crit', 'comeback', 'summit', 'unlock',
             'enemy_ko', 'ultra_hit', 'risky_hit', 'advantage', 'revive', 'donation', 'done',
-            'land_big', 'land_legend', 'tension_edge', 'cut_paid', 'defused', 'defused_clutch', 'chain_up',
-            'bloom', 'combo_max', 'streamer_joy'],
+            'cut_paid', 'defused', 'defused_clutch', 'chain_up',
+            'bloom', 'streamer_joy'],
       confusion: ['fail', 'miss', 'faint', 'disadvantage', 'safe_spam',
-                  'strike_miss', 'escape', 'trash', 'timeout_boom', 'burst', 'combo_break',
-                  'streamer_selfmock'],
+                  'timeout_boom', 'burst', 'streamer_selfmock'],
       thinking: ['nag', 'stuck', 'idle', 'scan_reveal'],
       silence: ['streamer_silence'],
       question: ['milestone'],
