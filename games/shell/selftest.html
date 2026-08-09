@@ -95,6 +95,25 @@ eq('구매 성공 시 정확히 차감', (Shell.shopBuy(shopCh, { id: 'x', price
 ok('잔액 부족은 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'y', price: 999 }) === 'poor' && shopCh.coins === 400);
 ok('중복 구매는 거부·잔액 불변', Shell.shopBuy(shopCh, { id: 'x', price: 100 }) === 'owned' && shopCh.coins === 400);
 
+// ---- 30일 시즌 — 조용히 틀리면 시즌이 안 끝나거나 멀쩡한 채널이 죽는다 ----
+var C = Shell.CAMPAIGN;
+eq('시즌은 1일차에서 시작한다', Shell.campaign({ best: {} }).day, 1);
+ok('1일차·목표 미달은 진행 중', Shell.campaign({ best: {} }).state === 'run');
+eq('오늘 포함 남은 일수', Shell.campaign({ day: C.DAYS, best: {} }).left, 1);
+ok('마지막 날까지는 진행 중', Shell.campaign({ day: C.DAYS, best: {} }).state === 'run');
+ok('기간이 지나고 목표 미달이면 게임 오버',
+   Shell.campaign({ day: C.DAYS + 1, best: { a: C.GOAL - 1 } }).state === 'over');
+ok('목표를 넘겼으면 기간이 지나도 클리어 (달성이 만료를 이긴다)',
+   Shell.campaign({ day: C.DAYS + 9, best: { a: C.GOAL } }).state === 'clear');
+ok('최고 기록은 게임을 가로질러 가장 큰 값',
+   Shell.bestAll({ best: { a: 10, b: 900, c: 40 } }) === 900);
+ok('목표는 한 게임에서만 넘겨도 된다',
+   Shell.campaign({ day: 2, best: { a: 1, b: C.GOAL } }).state === 'clear');
+var dCh = { day: 1 };
+Shell.advanceDay(dCh); Shell.advanceDay(dCh);
+eq('방송이든 휴방이든 하루씩만 오른다', dCh.day, 3);
+eq('구 저장분(day 없음)은 1일차로 이월', Shell.advanceDay({}), 2);
+
 // ---- 해금 사슬 — 조용히 틀리면 게임이 영영 안 열리거나 전부 열린다 ----
 var uCh = { clears: {} };
 ok('첫 게임은 조건 없이 열려 있다', Shell.unlockState(uCh, 'hwaryeok').open);

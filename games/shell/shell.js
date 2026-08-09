@@ -144,6 +144,7 @@
         log: d.log || [],           // 최근 방송 기록 [{g, v, r}] 최신순 4개
         coins: d.coins || 0,        // 도네 코인 잔액 — 방송 정산 때 적립, 상점에서 소비
         gear: d.gear || {},         // 보유 방송용품 itemId -> true (전부 순수 장식 — 능력 강화 금지)
+        day: d.day || 1,            // 시즌 N일차 — 방송 한 판·휴방 한 번이 각각 하루 (Shell.CAMPAIGN)
         clears: d.clears || {},     // gameId -> {B, A} 등급별 달성 횟수 — 다음 게임 해금의 재료
         tier: d.tier || 0,          // 파트너 등급 0~4 (브론즈~다이아) — 내려가지 않는다
         tierPts: d.tierPts || 0,    // 등급 게이지 — C/D가 조용히 깎는 유일한 수치 (규약 2)
@@ -192,6 +193,47 @@
       var live = this.phase === 'live';
       $('tbLive').textContent = live ? '● LIVE' : 'OFFLINE';
       $('tbLive').className = live ? 'on' : 'off';
+      this.renderDay();
+    },
+
+    // 시즌 종료 — 목표 달성이든 기간 만료든 여기서 끝난다. 데스크탑 위를 덮는다
+    // (허브에서는 JGS 창이 최소화라 #overlay가 안 보인다).
+    showSeasonEnd: function (c) {
+      var el = $('seasonEnd');
+      if (!el) return;
+      var clear = c.state === 'clear';
+      el.innerHTML = '<div class="isPanel' + (clear ? ' win' : '') + '">' +
+        '<b class="isLogo">JGS<span>.tv</span></b>' +
+        '<h1>' + (clear ? '재계약' : '계약 종료') + '</h1>' +
+        '<p>' + c.days + '일 계약, ' + Math.min(c.day, c.days) + '일차 · 최고 시청자 <b>' +
+          c.best.toLocaleString() + '명</b> / 목표 ' + c.goal.toLocaleString() + '명</p>' +
+        '<p>' + (clear
+          ? '김 피디가 새 계약서를 내밀었다. <b>뜬 것이다.</b>'
+          : '목표까지 <b>' + (c.goal - c.best).toLocaleString() + '명</b> 모자랐다. 김 피디는 아무 말도 하지 않았다.') +
+        '</p>' +
+        '<p class="isSub">새 시즌을 시작하면 채널 기록·해금·도감이 전부 초기화된다.</p>' +
+        '<button id="seasonAgain" type="button" class="slab primary">새 시즌 시작</button>' +
+        '</div>';
+      el.classList.remove('hidden');
+      $('seasonAgain').onclick = function () {
+        // 채널과 도감을 함께 지운다 — 한쪽만 남으면 1일차인데 캐스트가 만렙인 채널이 된다
+        try { localStorage.removeItem(STORE_KEY); localStorage.removeItem('jgs-dex-v1'); } catch (e) {}
+        location.reload();
+      };
+    },
+
+    // 시즌 표시 — 화면 상단 중앙에 항상 떠 있다 (허브에서도, 방송 중에도).
+    // 남은 날이 곧 압박이라 숨기면 30일 제한이 존재하지 않는 것과 같다.
+    renderDay: function () {
+      var el = $('dayChip');
+      if (!el) return;
+      var c = Shell.campaign(this.ch);
+      el.className = c.left <= 3 ? 'last' : '';
+      el.innerHTML =
+        '<b>' + Math.min(c.day, c.days) + '</b><span class="dcOf">/ ' + c.days + '일</span>' +
+        '<i class="dcBar"><i style="width:' + c.pct.toFixed(1) + '%"></i></i>' +
+        '<span class="dcGoal">최고 <b>' + c.best.toLocaleString() + '</b> / ' +
+          c.goal.toLocaleString() + '명</span>';
     },
     saveChannel: function () {
       try { localStorage.setItem(STORE_KEY, JSON.stringify(this.ch)); } catch (e) {}
@@ -599,6 +641,9 @@
         '</div>' + recent + pdNote;
 
       this.bindHub();
+      // 시즌 판정은 허브 복귀 시점 한 곳에서만 — 방송 종료도 휴방도 결국 여기로 온다
+      var camp = Shell.campaign(this.ch);
+      if (camp.state !== 'run') this.showSeasonEnd(camp);
       // 아직 한 번도 방송한 적 없으면 첫 게임 아이콘에 코치마크 — 진입까지 헤매지 않게
       if (!this.ch.shows) {
         var first = $('desktop').querySelector('.dIcon');
@@ -646,7 +691,9 @@
       var rest = $('restBtn');
       if (rest) rest.addEventListener('click', function () {
         Shell.Dex.rest();
-        self.showHub(); // 텐션 표시 갱신
+        Shell.advanceDay(self.ch);  // 쉬는 것도 하루를 쓴다 — 공짜면 텐션 관리가 선택이 아니다
+        self.saveChannel();
+        self.showHub(); // 텐션·시즌 표시 갱신
         self.showTicker('휴방했다 — 컨디션이 돌아온다 (텐션 ' + Math.round(Shell.Dex.tension()) + '%)');
       });
     },
@@ -740,6 +787,7 @@
       // 콘솔 호출도 같은 문을 지나야 한다 (걸쇠는 한 곳에)
       var lock = Shell.unlockState(this.ch, gameId);
       if (!lock.open) return;
+      if (Shell.campaign(this.ch).state !== 'run') return; // 시즌이 끝났으면 더 방송하지 않는다
       var self = this;
       this.phase = 'starting';
       $('jgsWin').classList.remove('minimized');   // 창이 열리며 방송 준비 화면이 뜬다
@@ -755,6 +803,7 @@
       // 보여주면 플레이어는 뭘 해야 하는지 모른 채 3분을 보낸다. makeMissions는 결정론이라
       // 여기서 미리 만들어 보여줘도 _launch가 만드는 값과 같다.
       this._missions = Shell.makeMissions(this.ch);
+      var camp = Shell.campaign(this.ch);   // 브리핑에도 시즌 압박을 같이 띄운다
       var misHtml = this._missions.map(function (m) {
         return '<b>' + m.label + ' ' + m.target.toLocaleString() + '</b> 이상 <em>+' + m.reward + '코인</em>';
       }).join(' · ');
@@ -766,7 +815,9 @@
         '<div class="ssGame"><span class="cat">' + g.title + '</span> 오늘의 방송</div>' +
         '<div class="brBox">' +
           '<div class="brRow"><i>목표</i><span>' + Math.round(g.duration / 60) +
-            '분 동안 시청자를 최대한 모은다 — <b>0명이 되면 방송이 강제 종료된다</b></span></div>' +
+            '분 동안 시청자를 최대한 모은다 — <b>0명이 되면 방송이 강제 종료된다</b><br>' +
+            '<em>시즌 ' + camp.day + '일차 · 남은 ' + camp.left + '일 · 최고 ' +
+            camp.best.toLocaleString() + ' / ' + camp.goal.toLocaleString() + '명</em></span></div>' +
           '<div class="brRow"><i>조작</i><span>' + (g.foot || '조작 안내 없음') + '</span></div>' +
           '<div class="brRow"><i>미션</i><span>' + misHtml + '</span></div>' +
         '</div>' +
@@ -1546,6 +1597,7 @@
       var newSubs = Math.floor(final / 100 * divMult * waveMult); // 최종 시청자의 1% × 다양성 × 파장
       this.ch.subs += newSubs;
       this.ch.shows++;
+      Shell.advanceDay(this.ch); // 방송 한 판 = 하루 (시즌 판정은 허브 복귀 때)
       var earned = this._showCoins || 0;
       this.ch.coins += earned; // 도네 코인 정산 — 상점(방송용품)의 재원
 
@@ -1955,6 +2007,34 @@
     var g = score >= 85 ? 'S' : score >= 70 ? 'A' : score >= 50 ? 'B' : score >= 30 ? 'C' : 'D';
     return { score: score, grade: g,
       parts: { growth: Math.round(growth), hold: Math.round(hold), clips: clips, don: Math.round(don), vari: vari } };
+  };
+
+  // ---------- 30일 시즌 (캠페인) ----------
+  // 계약 기간이 있어야 "오늘 뭘 방송할까"가 선택이 된다. 기간이 없으면 신선도도 해금도
+  // 그냥 기다리면 풀리는 것이 되어 전략이 사라진다.
+  // 목표를 최고 동시 시청자로 잡은 이유: 이 게임의 "시청자를 모은다"는 방송 한 판의
+  // 시청자 수를 뜻한다 (규약 1 — 시청자 수가 곧 점수·체력). 누적 구독자는 이월 보너스
+  // 쪽 수치라 목표로 쓰면 규약 1과 어긋난다.
+  // GOAL은 밸런스 손잡이다 — 게임 안 최고 기준선(주머니 괴수 4번 슬롯 350,000) 바로 아래.
+  Shell.CAMPAIGN = { DAYS: 30, GOAL: 300000 };
+
+  Shell.bestAll = function (ch) {
+    var m = 0;
+    for (var k in (ch.best || {})) m = Math.max(m, ch.best[k] || 0);
+    return m;
+  };
+
+  // 하루 소비 — 방송 한 판도, 휴방도 똑같이 하루다 (쉬는 것도 선택이어야 하므로 공짜가 아니다)
+  Shell.advanceDay = function (ch) { ch.day = (ch.day || 1) + 1; return ch.day; };
+
+  // 시즌 판정 — 순수 함수. 조용히 틀리면 시즌이 안 끝나거나 멀쩡한 채널이 죽는다.
+  // 검증: games/shell/selftest.html
+  Shell.campaign = function (ch) {
+    var C = Shell.CAMPAIGN, best = Shell.bestAll(ch), day = ch.day || 1;
+    var left = C.DAYS - day + 1;                       // 오늘 포함 남은 일수
+    var st = best >= C.GOAL ? 'clear' : (day > C.DAYS ? 'over' : 'run');
+    return { state: st, day: day, days: C.DAYS, left: Math.max(0, left),
+             best: best, goal: C.GOAL, pct: Math.min(100, best / C.GOAL * 100) };
   };
 
   // ---------- 방송 해금 사슬 ----------

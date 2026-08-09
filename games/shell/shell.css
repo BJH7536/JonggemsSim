@@ -832,6 +832,38 @@ body {
   color: #06301e;
 }
 
+/* ---------- 시즌 카운터 (30일 계약) ----------
+   상단 중앙 고정. 방송 중에는 ON AIR 띠의 빈 가운데에 얹히고, 허브에서는 바탕화면 위에 뜬다.
+   남은 날이 곧 압박이라 숨기면 기간 제한이 없는 것과 같다 */
+#dayChip {
+  position: fixed; top: 3px; left: 50%; transform: translateX(-50%); z-index: 45;
+  display: flex; align-items: center; gap: 9px; pointer-events: none;
+  padding: 3px 13px; border-radius: 999px;
+  background: rgba(8,10,12,.82); border: 1px solid #2e3138;
+  font-size: 11.5px; color: #c9cdd2; text-shadow: 0 1px 3px #000; white-space: nowrap;
+}
+#dayChip b { color: var(--ink); font-size: 14px; font-family: Georgia, serif; }
+#dayChip .dcOf { color: var(--dim); }
+#dayChip .dcGoal b { font-size: 11.5px; color: var(--plat2); font-family: inherit; }
+#dayChip .dcBar {
+  display: block; width: 84px; height: 5px; border-radius: 3px;
+  background: #23262b; overflow: hidden;
+}
+#dayChip .dcBar i { display: block; height: 100%; background: var(--plat); }
+/* 막바지 — 손실 무연출(규약 2)에 맞춰 색만 바뀐다. 깜빡이지 않는다 */
+#dayChip.last { border-color: var(--tally); }
+#dayChip.last b { color: #ff8d7a; }
+
+/* 시즌 종료 — 첫 방문 스플래시(.isPanel)를 그대로 쓴다 */
+#seasonEnd {
+  position: fixed; inset: 0; z-index: 46; display: flex; align-items: center; justify-content: center;
+  background: rgba(8,9,10,.9); backdrop-filter: blur(4px);
+}
+#seasonEnd.hidden { display: none; }
+#seasonEnd .isPanel.win { box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(0,255,163,.45); }
+#seasonEnd .isPanel h1 { color: #ff8d7a; }
+#seasonEnd .isPanel.win h1 { color: var(--plat2); }
+
 /* ---------- 온보딩 — 첫 방문 스플래시 + 코치마크 ---------- */
 #introSplash {
   position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
