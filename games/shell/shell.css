@@ -137,6 +137,11 @@ body {
   position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 34px; z-index: 1;
   pointer-events: none; opacity: .9;
 }
+/* 관객 구성 게이지 (ADR-004 공명 판정층) — "지금 누가 보고 있는가"를 색으로 상시 노출.
+   콘텐츠 선택이 관객을 바꾼다는 사실이 숫자가 아니라 눈으로 읽혀야 포트폴리오가 전략이 된다 */
+#compBar { display: inline-flex; width: 66px; height: 9px; border-radius: 5px; overflow: hidden; border: 1px solid #4a4232; vertical-align: middle; margin-left: 7px; }
+#compBar:empty { display: none; }
+#compBar i { display: block; min-width: 0; transition: flex-grow .45s ease-out; }
 #tallyUp { font-weight: 400; opacity: .85; margin-left: 6px; font-variant-numeric: tabular-nums; }
 
 /* ---------- 스트리머 캠 — 게임 이벤트에 반응하는 얼굴 (연출 전용) ---------- */
@@ -262,6 +267,13 @@ body {
 }
 .gcard .gt { font-size: 16px; font-weight: 700; color: var(--ink); margin: 10px 14px 0; }
 .gcard .gd { font-size: 11.5px; color: var(--dim); margin: 5px 14px 0; line-height: 1.55; min-height: 3.1em; }
+/* 관객 프로필 — 이 게임이 특히 불러 모으는 원형. 라벨 하나로 단정하지 않고 막대를 함께
+   두는 이유는 게임 간 프로필이 실제로 비슷할 수 있기 때문이다 (그때는 비슷하게 보여야 한다).
+   .gcard 접두사를 떼서 데스크탑 툴팁(#dTip)의 프로필 행에도 같은 규칙이 적용되게 한다 */
+.gaud { font-size: 11px; color: var(--dim); margin: 7px 0 0; display: flex; align-items: center; gap: 7px; }
+.gaud b { font-weight: 700; white-space: nowrap; }
+.gaudbar { flex: 1; display: flex; height: 7px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
+.gaudbar i { display: block; min-width: 0; }
 .gcard .gf { font-size: 11px; margin: 8px 14px 0; color: #c9cdd2; display: flex; justify-content: space-between; }
 .gcard .gf b { font-variant-numeric: tabular-nums; }
 .gcard .gf.warn b { color: #ff8d7a; }
@@ -270,6 +282,11 @@ body {
 .freshbar i.warn { background: #ff8d7a; }
 .chanline { font-size: 12.5px; color: var(--dim); margin-top: 10px; }
 .chanline b { color: var(--plat2); font-variant-numeric: tabular-nums; }
+/* 채널 색깔 — 관객 구성 이월의 얼굴. 라이브 게이지(#compBar)와 같은 시각 언어를 쓴다 */
+.chanmix { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 11.5px; color: var(--dim); }
+.chanmix b { white-space: nowrap; font-weight: 700; }
+.mixbar { flex: 1; max-width: 200px; display: flex; height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid #2a2437; }
+.mixbar i { display: block; min-width: 0; transition: flex-grow .45s ease-out; }
 .recent { margin-top: 14px; border-top: 1px solid #26292e; padding-top: 10px; }
 .recent .rlab { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); margin-bottom: 6px; }
 .recent .rrow { display: flex; justify-content: space-between; font-size: 12px; color: #c9cdd2; padding: 2px 0; }
@@ -356,6 +373,9 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
   100% { left: 12px; opacity: 0; transform: translateY(-8px); }
 }
 @keyframes clipRec { to { opacity: .25; } }
+/* 원형별 순증감 — 오늘 방송이 어떤 사람들을 데려왔나 (공명 판정층 리포트 줄) */
+.archline { font-size: 12.5px; color: #cfc7b8; margin: 4px 0 2px; line-height: 1.7; }
+.archline b { color: var(--amber2); font-variant-numeric: tabular-nums; }
 
 /* ---------- 주머니 괴수 — 배틀 패널 ---------- */
 .pkbar { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }

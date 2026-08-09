@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공명 샌드박스 — 판정층</title>
+<style>
+:root { --amber: #ffb447; --amber2: #ffd27a; --ink: #ece7dd; --dim: #8a8478; --line: #3a332a; --ok: #6fd98f; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 18px 16px 40px; font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif; background: #0b0908; color: var(--ink); }
+h1 { margin: 0 0 2px; font-size: 20px; color: var(--amber); letter-spacing: 3px; font-family: Georgia, serif; }
+.sub { color: var(--dim); font-size: 12px; margin-bottom: 14px; }
+.sub b { color: var(--ok); }
+#wrap { display: flex; gap: 14px; max-width: 1280px; align-items: flex-start; }
+.col { flex: 1 1 0; min-width: 0; }
+.card { background: #100d09; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.slab { font-size: 10.5px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px; }
+button { background: #241e14; border: 1px solid var(--line); color: var(--ink); font-size: 12px; padding: 6px 9px; border-radius: 6px; cursor: pointer; }
+button:hover { border-color: var(--amber); color: var(--amber2); }
+button.on { background: #4a3a1c; border-color: var(--amber); color: #ffedc4; }
+.row { display: flex; flex-wrap: wrap; gap: 5px; }
+input[type=range] { accent-color: var(--amber); vertical-align: middle; }
+table { border-collapse: collapse; font-size: 12px; width: 100%; }
+td, th { padding: 3px 7px; text-align: right; border-bottom: 1px solid #1e1912; font-variant-numeric: tabular-nums; }
+th { color: var(--dim); font-weight: 400; font-size: 10.5px; }
+td:first-child, th:first-child { text-align: left; }
+.neg { color: #ff8d7a; } .pos { color: var(--ok); }
+#compBar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+#compBar div { display: flex; align-items: center; justify-content: center; font-size: 10.5px; color: #14100a; font-weight: 700; min-width: 0; overflow: hidden; white-space: nowrap; transition: flex-grow .3s; }
+.kv { font-size: 12px; color: #cfc7b8; line-height: 1.8; }
+.kv b { color: var(--amber2); font-variant-numeric: tabular-nums; }
+.evb b { color: var(--amber2); }
+.evb .meta { font-size: 9.5px; color: var(--dim); margin-left: 4px; }
+.sl { font-size: 11px; color: #cfc7b8; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.sl b { width: 120px; font-weight: 400; color: var(--dim); }
+.sl output { width: 40px; color: var(--amber2); font-variant-numeric: tabular-nums; }
+.vecrow { margin-bottom: 9px; }
+.vecrow > b { font-size: 12px; }
+.vecgrid { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 2px; }
+.vecgrid .sl { margin: 0; }
+.vecgrid .sl b { width: auto; font-size: 10px; }
+.vecgrid input { width: 58px; }
+.vecgrid output { width: 30px; font-size: 10px; }
+.note { font-size: 11px; color: var(--dim); line-height: 1.6; margin-top: 10px; }
+#exp { width: 100%; height: 120px; background: #0b0908; color: #cfc7b8; border: 1px solid var(--line); border-radius: 6px; font: 11px/1.5 ui-monospace, Consolas, monospace; padding: 8px; }
+@media (max-width: 1020px) { #wrap { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<h1>공명 샌드박스</h1>
+<div class="sub">판정층의 실행 가능한 사양 (ADR-002 · resonance-model.md §7) —
+  <b>게임과 똑같은 코드(games/shell/shell.js)를 그대로 호출한다.</b> 여기서 본 수치가 게임에서 나온다.</div>
+
+<div id="wrap">
+  <div class="col">
+    <div class="card">
+      <div class="slab">게임 · 이벤트 발사 (STIM은 chat-data 실데이터)</div>
+      <div class="row" id="gameRow" style="margin-bottom:8px"></div>
+      <div class="row" id="evRow"></div>
+      <div class="note">이벤트 클릭 = 그 자극 벡터로 유입 1회 (총량은 아래 n). 배분·변이·호오가 한 번에 적용된다.</div>
+    </div>
+    <div class="card">
+      <div class="slab">판정층 상수 (무대 소유 — ADR-002 결정 4)</div>
+      <div class="sl"><b>유입 총량 n</b><input type="range" id="pN" min="40" max="4000" step="20" value="520"><output id="oN">520</output></div>
+      <div class="sl"><b>경제 임계 T_econ</b><input type="range" id="pT" min="0" max="1" step="0.05"><output id="oT"></output></div>
+      <div class="sl"><b>혼합 바닥 β</b><input type="range" id="pB" min="0" max="0.5" step="0.05"><output id="oB"></output></div>
+      <div class="sl"><b>변이율</b><input type="range" id="pM" min="0" max="0.5" step="0.02"><output id="oM"></output></div>
+      <div class="sl"><b>뜨내기 이탈/초</b><input type="range" id="pF" min="0" max="0.06" step="0.005"><output id="oF"></output></div>
+      <div class="sl"><b>다양성 보너스</b><input type="range" id="pD" min="0" max="1.5" step="0.1"><output id="oD"></output></div>
+    </div>
+    <div class="card">
+      <div class="slab">원형 벡터 — 흥미도 v(주목 0~1) / 호오 val(방향 −1~1) · 소윤 저작</div>
+      <div id="vecs"></div>
+      <div class="row" style="margin-top:8px"><button id="btnExport">▼ 코드로 내보내기</button></div>
+      <textarea id="exp" readonly placeholder="찾은 값을 여기서 복사해 shell.js의 ARCH에 반영한다"></textarea>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="slab">관객 구성</div>
+      <div id="compBar"></div>
+      <div class="kv" id="compKv" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnSim">📺 방송 시뮬 (이벤트 30발)</button>
+        <button id="btnDrain">⏱ 60초 경과 (뜨내기 이탈)</button>
+        <button id="btnReset">초기화</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="slab">마지막 발사 — 공명·배분·호오</div>
+      <table id="calc"></table>
+      <div class="note">호오가 음수면 그 몫은 <b>뜨내기</b>로 분류되어 시간이 지나면 빠져나간다 (heel heat).</div>
+    </div>
+    <div class="card">
+      <div class="slab">게임별 관객 프로필 (허브 카드와 같은 산출)</div>
+      <table id="aff"></table>
+    </div>
+  </div>
+</div>
+
+<!-- 판정층 구현 그대로를 불러 쓴다 — 샌드박스가 사양과 어긋날 수 없게 만드는 유일한 방법 -->
+<script src="../games/shell/shell.js"></script>
+<script src="../games/hwaryeok/chat-data.js"></script>
+<script src="../games/giving-up/chat-data.js"></script>
+<script src="../games/pocket/chat-data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var A = Shell.ARCH, T = Shell.TUNE;
+  var GAMES = {
+    hwaryeok: { n: '화력쇼', d: window.HWARYEOK_CHAT },
+    'giving-up': { n: 'Giving Up On It', d: window.GIVINGUP_CHAT },
+    pocket: { n: '주머니 괴수', d: window.POCKET_CHAT },
+  };
+  var cur = 'hwaryeok', START = 1000;
+
+  // 셸 상태를 샌드박스가 직접 조작한다 (게임 루프 없이 판정층만 돌린다)
+  Shell.phase = 'live';
+  function resetComp() {
+    Shell.comp = Shell.ARCH_START.map(function (r) { return START * r; });
+    Shell.fickle = [0, 0, 0, 0];
+    Shell._fickleBorn = 0;
+    Shell.viewers = START;
+  }
+
+  // 상수 슬라이더는 Shell.TUNE을 직접 쓴다 — 단, 판정층이 읽는 것은 클로저 상수라
+  // 샌드박스에서는 같은 값을 미러링해 재현한다. (v1 범위: 값 탐색용)
+  var P = { T_ECON: T.T_ECON, BETA: T.BETA, MUT_RATE: T.MUT_RATE,
+            FICKLE_DECAY: T.FICKLE_DECAY, DIV_BONUS: T.DIV_BONUS };
+  var dot = function (a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]; };
+
+  // 배분 내역 표시용 — 셸과 같은 산식을 그대로 다시 계산해 "왜 이렇게 나뉘었나"를 보여준다
+  function explain(stim) {
+    var rows = A.map(function (a) {
+      var res = stim ? dot(stim, a.v) : null;
+      var val = stim ? dot(stim, a.val) : null;
+      var w = stim ? Math.max(0, res - P.T_ECON) + P.BETA : 0;
+      return { a: a, res: res, val: val, w: w };
+    });
+    var sw = rows.reduce(function (s, r) { return s + r.w; }, 0) || 1;
+    rows.forEach(function (r) { r.share = r.w / sw; });
+    return rows;
+  }
+
+  function fire(ev) {
+    var stim = (GAMES[cur].d.STIM || {})[ev] || null;
+    var before = Shell.comp.slice(), beforeF = Shell.fickle.slice();
+    Shell.game = { chat: GAMES[cur].d };
+    Shell.compAdd(parseFloat($('pN').value), ev);
+    Shell.viewers = Shell.compTotal();
+    renderCalc(ev, stim, before, beforeF);
+    renderComp();
+  }
+
+  function renderComp() {
+    var total = Shell.compTotal();
+    $('compBar').innerHTML = A.map(function (a, i) {
+      var pct = total > 0 ? Shell.comp[i] / total * 100 : 25;
+      return '<div style="flex-grow:' + Math.max(0.01, Shell.comp[i]) + ';background:' + a.c + '">' +
+        (pct >= 12 ? a.n + ' ' + Math.round(pct) + '%' : '') + '</div>';
+    }).join('');
+    var div = Shell.diversity();
+    $('compKv').innerHTML = '총 <b>' + Math.round(total).toLocaleString() + '명</b> · 뜨내기 <b>' +
+      Math.round(Shell.fickleTotal()).toLocaleString() + '명</b> · 다양성 <b>' + div.toFixed(2) +
+      '</b> → 구독자 배수 <b>×' + (1 + P.DIV_BONUS * div).toFixed(2) + '</b><br>' +
+      A.map(function (a, i) {
+        return '<span style="color:' + a.c + '">' + a.n + '</span> <b>' +
+          Math.round(Shell.comp[i]).toLocaleString() + '</b>';
+      }).join(' · ');
+  }
+
+  function renderCalc(ev, stim, before, beforeF) {
+    var rows = explain(stim);
+    $('calc').innerHTML = '<tr><th>' + ev + (stim ? '' : ' (미태깅 → 구성비 비례)') +
+      '</th><th>공명</th><th>호오</th><th>배분</th><th>실유입</th><th>뜨내기</th></tr>' +
+      rows.map(function (r, i) {
+        var gained = Shell.comp[i] - before[i], f = Shell.fickle[i] - beforeF[i];
+        return '<tr><td style="color:' + r.a.c + '">' + r.a.n + '</td>' +
+          '<td>' + (stim ? r.res.toFixed(2) : '—') + '</td>' +
+          '<td class="' + (stim && r.val < 0 ? 'neg' : 'pos') + '">' + (stim ? (r.val >= 0 ? '+' : '') + r.val.toFixed(2) : '—') + '</td>' +
+          '<td>' + (stim ? Math.round(r.share * 100) + '%' : '—') + '</td>' +
+          '<td><b style="color:var(--amber2)">+' + Math.round(gained).toLocaleString() + '</b></td>' +
+          '<td class="' + (f > 0 ? 'neg' : '') + '">' + (f > 0 ? Math.round(f).toLocaleString() : '—') + '</td></tr>';
+      }).join('') +
+      '<tr><td colspan="4">합계 (변이 ' + Math.round(P.MUT_RATE * 100) + '% 적용 후)</td><td><b>+' +
+      Math.round(Shell.comp.reduce(function (s, v, i) { return s + v - before[i]; }, 0)).toLocaleString() +
+      '</b></td><td></td></tr>';
+  }
+
+  function renderAff() {
+    $('aff').innerHTML = '<tr><th>게임</th>' + A.map(function (a) {
+      return '<th style="color:' + a.c + '">' + a.n + '</th>';
+    }).join('') + '<th>최다</th></tr>' +
+      Object.keys(GAMES).map(function (k) {
+        var prof = Shell.archProfile({ chat: GAMES[k].d });
+        if (!prof) return '';
+        return '<tr><td>' + GAMES[k].n + '</td>' + prof.rel.map(function (v) {
+          return '<td>' + v.toFixed(2) + '</td>';
+        }).join('') + '<td style="color:' + prof.top.c + '"><b>' + prof.top.n + '</b></td></tr>';
+      }).join('');
+  }
+
+  // ---------- 벡터 편집 ----------
+  function buildVecs() {
+    $('vecs').innerHTML = A.map(function (a, ai) {
+      var line = function (key, min) {
+        return '<div class="vecgrid">' + ['위험', '파괴', '숙련', '유머'].map(function (ax, i) {
+          return '<span class="sl"><b>' + (i === 0 ? (key === 'v' ? '흥미 ' : '호오 ') : '') + ax + '</b>' +
+            '<input type="range" min="' + min + '" max="1" step="0.05" value="' + a[key][i] +
+            '" data-a="' + ai + '" data-k="' + key + '" data-x="' + i + '">' +
+            '<output>' + a[key][i].toFixed(2) + '</output></span>';
+        }).join('') + '</div>';
+      };
+      return '<div class="vecrow"><b style="color:' + a.c + '">' + a.n + '</b>' +
+        line('v', 0) + line('val', -1) + '</div>';
+    }).join('');
+  }
+  $('vecs').addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset.a == null) return;
+    A[+t.dataset.a][t.dataset.k][+t.dataset.x] = parseFloat(t.value);
+    t.nextElementSibling.textContent = parseFloat(t.value).toFixed(2);
+    Shell.recomputeSim(); // 흥미도가 바뀌면 변이가 흐르는 방향도 바뀐다
+    renderAff();
+  });
+  $('btnExport').addEventListener('click', function () {
+    $('exp').value = 'var ARCH = [\n' + A.map(function (a) {
+      var f = function (arr) { return '[' + arr.map(function (x) { return x.toFixed(2); }).join(', ') + ']'; };
+      return "  { id: '" + a.id + "', n: '" + a.n + "', c: '" + a.c + "', v: " + f(a.v) + ', val: ' + f(a.val) + ' },';
+    }).join('\n') + '\n];';
+    $('exp').select();
+  });
+
+  // ---------- 상수 슬라이더 ----------
+  var binds = [['pN', null, 'oN'], ['pT', 'T_ECON', 'oT'], ['pB', 'BETA', 'oB'],
+               ['pM', 'MUT_RATE', 'oM'], ['pF', 'FICKLE_DECAY', 'oF'], ['pD', 'DIV_BONUS', 'oD']];
+  binds.forEach(function (b) {
+    var el = $(b[0]);
+    if (b[1]) el.value = P[b[1]];
+    $(b[2]).textContent = el.value;
+    el.addEventListener('input', function () {
+      $(b[2]).textContent = el.value;
+      if (b[1]) P[b[1]] = parseFloat(el.value);
+      renderComp();
+    });
+  });
+
+  // ---------- 게임·이벤트 ----------
+  function buildGames() {
+    $('gameRow').innerHTML = Object.keys(GAMES).map(function (k) {
+      return '<button data-g="' + k + '"' + (k === cur ? ' class="on"' : '') + '>' + GAMES[k].n + '</button>';
+    }).join('');
+    var S = GAMES[cur].d.STIM || {};
+    $('evRow').innerHTML = Object.keys(GAMES[cur].d.T).map(function (ev) {
+      var st = S[ev];
+      return '<button class="evb" data-ev="' + ev + '"><b>' + ev + '</b><span class="meta">' +
+        (st ? '[' + st.join(',') + ']' : '중립') + '</span></button>';
+    }).join('');
+  }
+  $('gameRow').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-g]'); if (!b) return;
+    cur = b.getAttribute('data-g'); buildGames();
+  });
+  $('evRow').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ev]'); if (!b) return;
+    fire(b.getAttribute('data-ev'));
+  });
+
+  $('btnSim').addEventListener('click', function () {
+    var TT = GAMES[cur].d.T, B = GAMES[cur].d.BURST, pool = [];
+    Object.keys(TT).forEach(function (ev) {
+      if (ev === 'start' || ev === 'end') return;
+      for (var i = 0; i < (B[ev] || 1); i++) pool.push(ev);
+    });
+    for (var k = 0; k < 30; k++) fire(pool[Math.floor(Math.random() * pool.length)]);
+  });
+  $('btnDrain').addEventListener('click', function () {
+    for (var s = 0; s < 60; s++) Shell.drainFickle(1);
+    Shell.viewers = Shell.compTotal();
+    renderComp();
+  });
+  $('btnReset').addEventListener('click', function () { resetComp(); renderComp(); $('calc').innerHTML = ''; });
+
+  resetComp(); buildVecs(); buildGames(); renderComp(); renderAff();
+})();
+</script>
+
+<!-- 소유: 관객(정훈). 판정층 산식은 무대 소유라 이 도구는 shell.js를 호출만 한다 (ADR-002) -->
+</body>
+</html>

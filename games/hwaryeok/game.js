@@ -196,7 +196,7 @@
     function completeDish(b) {
       var gain = Math.round(40 * b.mode.mul);
       // 소액 — FX 큐는 쓰지 않고 접시 연출 + 티커로만 (사고 없는 완성은 시시하다)
-      var actual = stage.gain(gain, null); // 신선도 적용 후 실제 반영량으로 표시
+      var actual = stage.gain(gain, null, 'done'); // 신선도 적용 후 실제 반영량으로 표시
       st.done++;
       spawnBurst('plate', BX[b.i], 268);
       sfxDone();
@@ -248,7 +248,8 @@
       var prevChain = st.chain;
       st.chain = Math.min(3, st.chain + .5); st.chainT = 5;
       st.maxChain = Math.max(st.maxChain, st.chain);
-      var actual = stage.gain(gain, close >= 1.9 ? '고배율 수습 ×' + close.toFixed(1) : '수습 성공');
+      var actual = stage.gain(gain, close >= 1.9 ? '고배율 수습 ×' + close.toFixed(1) : '수습 성공',
+        close >= 1.9 ? 'rescue_big' : 'rescue');
       stage.emit(close >= 1.9 ? 'rescue_big' : 'rescue', { gain: actual.toLocaleString() });
       if (st.chain >= 3 && prevChain < 3) stage.emit('chain3');
       spawnBurst('fixflash', BX[i], 270);
@@ -267,7 +268,7 @@
         if (scene.soot.indexOf(b.i) < 0) scene.soot.push(b.i); // 그을음 중복 누적 방지 (L-1)
         stage.shake(16); stage.flash(.5);
         sfxBoom();
-        var actual = stage.gain(g, '대참사!!');
+        var actual = stage.gain(g, '대참사!!', 'disaster');
         b.broken = 12;
         stage.ticker('대참사 — ' + a.n + '! 화구 ' + (b.i + 1) + ' 파손', false);
         stage.emit('disaster', { gain: actual.toLocaleString() });
@@ -312,7 +313,7 @@
           st.donT = 8 + Math.random() * 7;
           if (Math.random() < .5) {
             var d = Math.max(10, Math.round(stage.viewers * (0.01 + Math.random() * 0.02)));
-            var actual = stage.gain(d, '익명의 도네'); sfxDon();
+            var actual = stage.gain(d, '익명의 도네', 'donation'); sfxDon();
             stage.emit('donation', { d: actual.toLocaleString() });
           }
         }

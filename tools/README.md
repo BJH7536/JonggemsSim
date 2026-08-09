@@ -13,3 +13,8 @@
   캐스트(JSON 형식·톤·중복)와 어휘(start/end·flavor 6개·톤 6종·슬롯 정합·BURST 범위)를
   검사한다. GitHub Actions(`.github/workflows/validate.yml`)가 PR마다 자동 실행 —
   통과하면 `data/` 변경은 셀프 머지 가능 (CONTRIBUTING 규칙 2)
+- `resonance-sandbox.html` — 공명 판정층의 **실행 가능한 사양**. 게임과 똑같은 코드
+  (`games/shell/shell.js`)를 직접 호출하므로 사양과 구현이 어긋날 수 없다. 이벤트를 쏘면
+  공명·호오·배분·뜨내기 내역이 표로 나오고, 원형 벡터(흥미도 v / 호오 val)를 슬라이더로
+  만진 뒤 **"코드로 내보내기"**로 `ARCH` 블록을 복사해 반영한다. 상수(경제 임계·혼합 바닥·
+  변이율·이탈률·다양성 보너스)도 값 탐색용으로 노출. 60초 경과 버튼으로 뜨내기 이탈 확인

@@ -61,4 +61,13 @@ window.HWARYEOK_CHAT = {
       ['mock', '마지막에 아쉬웠다 ㅋㅋ'], ['hype', '오늘 레전드였다'], ['info', '클립 정리하러 갑니다'] ] },
   },
   BURST: { disaster: 4, rescue_big: 3, oilfire: 3, rescue: 2, accident: 2, unlock: 2, chain3: 2, start: 2, end: 2 },
+  // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)
+  // 화력쇼의 결은 **긴박**이다 — 웃기다기보다 조마조마하다. 위험·파괴를 세우고 유머는 낮춘다
+  // (2차 태깅: 게임 간 관객 프로필이 겹치던 문제 교정. resonance-model.md §6)
+  STIM: {
+    accident: [.75, .45, 0, .1], oilfire: [.95, .75, 0, .1], rescue: [.45, 0, .75, .05],
+    rescue_big: [.65, 0, 1, .1], fail: [.25, .35, 0, .15], disaster: [.7, 1, 0, .35],
+    done: [0, 0, .45, .05], unlock: [.1, 0, .5, .2], chain3: [.35, 0, .85, .1],
+    donation: [0, 0, 0, .4], milestone: [0, 0, .25, .3], nag: [0, 0, 0, .2],
+  },
 };

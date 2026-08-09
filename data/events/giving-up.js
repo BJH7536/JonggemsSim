@@ -56,4 +56,12 @@ window.GIVINGUP_CHAT = {
       ['cheer', '잘 봤습니다'], ['hype', '오늘 레전드였다'], ['info', '클립 정리하러 갑니다'] ] },
   },
   BURST: { fall_legend: 4, fall_big: 3, summit: 4, clutch: 2, fall: 2, climb: 2, start: 2, end: 2 },
+  // 자극 벡터 [danger, chaos, skill, fun] — 공명 배분용 (resonance-model.md §7.3, 초안: 정훈 / 검토: 소윤)
+  // 이 게임의 결은 **웃음**이다 — 추락은 무섭다기보다 웃기다. 유머를 극대화하고 위험은 낮춘다
+  // (2차 태깅: 게임 간 관객 프로필이 겹치던 문제 교정. resonance-model.md §6)
+  STIM: {
+    climb: [.15, 0, .75, .15], fall: [.15, .6, 0, .9], fall_big: [.25, .9, 0, 1],
+    fall_legend: [.3, 1, 0, 1], clutch: [.8, .15, .85, .35], stuck: [0, 0, 0, .3],
+    summit: [.2, 0, 1, .5], donation: [0, 0, 0, .5], milestone: [0, 0, .2, .45],
+  },
 };
