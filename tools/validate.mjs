@@ -83,6 +83,7 @@ const castByNick = new Map(); // 3절(티키타카)이 참조 무결성 검사�
 
 // ---- 3. 게임 이벤트 어휘 — data/events/<게임>.js (contract.md 1절) ----
 const slotSet = t => [...new Set((t.match(/\{(\w+)\}/g) || []).map(s => s.slice(1, -1)))].sort().join(',');
+const allEvents = new Set(); // 4절(도감)의 칸 도달 가능성 검사에 재사용
 const eventFiles = readdirSync(join(ROOT, 'data/events')).filter(f => f.endsWith('.js'));
 if (!eventFiles.length) bad('data/events', '어휘 파일이 하나도 없다 — 스캔 경로가 틀렸는지 확인');
 for (const name of eventFiles) {
@@ -90,12 +91,16 @@ for (const name of eventFiles) {
   const w = {};
   try { new Function('window', readFileSync(join(ROOT, file), 'utf8'))(w); }
   catch (e) { bad(file, `실행 실패 — ${e.message}`); continue; }
-  if (!Object.keys(w).length) { bad(file, 'window.*_CHAT 전역을 만들지 않는다'); continue; }
-  const data = w[Object.keys(w)[0]];
-  if (!data || !data.T) { bad(file, 'window.*_CHAT = { T, BURST } 형태가 아니다'); continue; }
+  if (!Object.keys(w).length) { bad(file, '전역을 하나도 만들지 않는다'); continue; }
+  // 어휘 파일만 검사한다 — data/events/에는 tagmap.js 같은 다른 종류의 데이터도 산다
+  const chatKey = Object.keys(w).filter(k => /_CHAT$/.test(k))[0];
+  if (!chatKey) continue;
+  const data = w[chatKey];
+  if (!data || !data.T) { bad(file, `${chatKey} = { T, BURST } 형태가 아니다`); continue; }
   const T = data.T;
   for (const req of ['start', 'end']) if (!T[req]) bad(file, `필수 이벤트 '${req}'가 없다`);
   for (const [ev, t] of Object.entries(T)) {
+    allEvents.add(ev);
     if (!/^[a-z][a-z0-9_]*$/.test(ev)) bad(file, `${ev}: 이벤트 이름이 소문자 스네이크 케이스가 아니다`);
     if ((t.flavor || []).length < 6) bad(file, `${ev}: flavor ${(t.flavor || []).length}개 — 6개 미만이면 비반복 게이트가 발화를 폐기한다`);
     (t.flavor || []).forEach(f => { if (!TONES.includes(f[0])) bad(file, `${ev}: 미공인 톤 '${f[0]}'`); });
@@ -109,8 +114,51 @@ for (const name of eventFiles) {
   }
 }
 
+// ---- 4. 반응 도감·캐스트 해금 — data/dex.js (contract.md 7절, ADR-006) ----
+{
+  const file = 'data/dex.js';
+  const src = readFileSync(join(ROOT, file), 'utf8');
+  const m = src.match(/window\.JONG_DEX\s*=\s*(\{[\s\S]*\});/);
+  let dex = null;
+  if (!m) bad(file, 'window.JONG_DEX = {...}; 대입문이 없다');
+  else try { dex = JSON.parse(m[1]); }
+  catch (e) { bad(file, `우변이 엄격한 JSON이 아니다 (쌍따옴표·후행 콤마 확인) — ${e.message}`); }
+  if (dex) {
+    const ARCHES = ['thrill', 'fan', 'expert', 'casual'];
+    // 칸 도달 가능성 (v0.2 §11.3) — 없는 이벤트를 트리거로 쓰면 영원히 침묵하는 칸이다
+    const reachable = (who, evs) => evs.forEach(ev => {
+      if (!allEvents.has(ev)) bad(file, `${who}: '${ev}'는 어느 게임 어휘에도 없다 — 도달 불가 칸`);
+    });
+    for (const [nick, evs] of Object.entries(dex.base_triggers || {})) {
+      if (!castByNick.has(nick)) bad(file, `base_triggers '${nick}': 캐스트에 없다`);
+      if (!Array.isArray(evs) || !evs.length) bad(file, `base_triggers '${nick}': 칸이 비어 있다`);
+      else reachable(`base_triggers ${nick}`, evs);
+    }
+    castByNick.forEach((_, nick) => {
+      if (!(dex.base_triggers || {})[nick]) bad(file, `기본 캐스트 '${nick}'의 도감 칸이 없다 — 도감에서 투명 인간이 된다`);
+    });
+    const seen = new Set();
+    (dex.unlocks || []).forEach((u, i) => {
+      const who = `unlocks[${i}] ${u.nick || '?'}`;
+      if (!u.nick) bad(file, `${who}: nick이 없다`);
+      if (castByNick.has(u.nick)) bad(file, `${who}: 기본 캐스트와 닉 충돌`);
+      if (seen.has(u.nick)) bad(file, `${who}: 해금 목록 내 닉 중복`);
+      seen.add(u.nick);
+      if (!/^#[0-9a-fA-F]{6}$/.test(u.color || '')) bad(file, `${who}: color 형식 오류`);
+      if (!Array.isArray(u.tones) || !u.tones.length) bad(file, `${who}: tones가 비어 있다`);
+      else u.tones.forEach(t => { if (!TONES.includes(t)) bad(file, `${who}: 미공인 톤 '${t}'`); });
+      if (!ARCHES.includes(u.arch)) bad(file, `${who}: arch '${u.arch}' — 공인 원형(${ARCHES.join('/')}) 밖`);
+      const cost = u.cost || {};
+      if (!((cost.subs || 0) > 0 || (cost.coins || 0) > 0)) bad(file, `${who}: cost가 없다 — 공짜 해금은 해금이 아니다`);
+      const evs = (u.triggers || []).concat(u.repellents || []);
+      if (!evs.length) bad(file, `${who}: trigger/repellent가 없다 — 영원히 침묵하는 캐스트`);
+      else reachable(who, evs);
+    });
+  }
+}
+
 if (fails.length) {
   console.error(`VALIDATE FAIL ${fails.length}건\n` + fails.map(f => '  ' + f).join('\n'));
   process.exit(1);
 }
-console.log('VALIDATE PASS — 캐스트 + 티키타카 + 게임 어휘 전부 계약(contract.md 1·2·3·5·6절) 준수');
+console.log('VALIDATE PASS — 캐스트 + 티키타카 + 게임 어휘 + 반응 도감 전부 계약(contract.md 1·2·3·5·6·7절) 준수');

@@ -19,10 +19,12 @@
 <script src="../../data/personas/cast.js"></script>
 <script src="../../data/tikitaka.js"></script>
 <script src="../../data/regulars.js"></script>
+<script src="../../data/dex.js"></script>
 <script src="config.js"></script>
 <script src="../../engine/chat.js"></script>
 <script src="../../engine/llm.js"></script>
 <script src="shell.js"></script>
+<script src="dex.js"></script>
 <script src="../../data/events/hwaryeok.js"></script>
 <script src="../hwaryeok/game.js"></script>
 <script src="../../data/events/giving-up.js"></script>
@@ -202,6 +204,59 @@ ok('기억 발화가 사실 슬롯을 채워 나간다', (function () {
   return !!t && t.indexOf('9,999') >= 0;
 })());
 ok('없는 키는 조용히 침묵한다', Chat.memoryNow('없는키', {}) === null);
+
+// ---- 반응 도감·파장·캐스트 해금 (ADR-006) — 조용히 틀리면 구독자가 새거나 해금이 공짜가 된다 ----
+(function () {
+  var savedDex = localStorage.getItem('jgs-dex-v1'); // 검사로 실채널 도감을 오염시키지 않는다
+  var savedStore = localStorage.getItem('jonggems-channel-v1'); // hire가 saveChannel을 부른다
+  var savedCh = Shell.ch, savedLen = Chat.personas.length;
+  var savedTop = Shell.updateTopbar;
+  Shell.updateTopbar = function () {}; // 하네스 DOM에는 탑바가 없다
+  try {
+    Shell.Dex.st = null; localStorage.removeItem('jgs-dex-v1');
+    Shell.Dex.newShow();
+    ok('트리거 매치가 칸을 열고 파장을 올린다', (function () {
+      Shell.Dex.judge('disaster'); // 불멍장인·ㅋㅋ자판기·잠수함(미영입) — 활성 2칸
+      return Shell.Dex.waveNew === 2;
+    })());
+    ok('같은 칸 반복은 파장을 다시 올리지 않는다 (미개봉→들음 전이만)', (function () {
+      Shell.Dex.judge('disaster');
+      return Shell.Dex.waveNew === 2;
+    })());
+    ok('미등록 이벤트는 조용히 무시된다', (function () {
+      try { Shell.Dex.judge('없는이벤트'); return Shell.Dex.waveNew === 2; } catch (e) { return false; }
+    })());
+    ok('파장 배율 = 1 + 0.15×칸, 상한 8칸', (function () {
+      var m2 = Math.abs(Shell.Dex.waveMult() - 1.3) < 1e-9;
+      Shell.Dex.waveNew = 99;
+      var mCap = Math.abs(Shell.Dex.waveMult() - 2.2) < 1e-9;
+      return m2 && mCap;
+    })());
+    // 해금 — 구독자·코인 소비 계약
+    Shell.ch = { subs: 20, coins: 0, gear: {} };
+    ok('재화 부족은 거부·잔액 불변', Shell.Dex.hire('안티') === 'poor' && Shell.ch.subs === 20);
+    ok('영입 성공 시 정확히 차감 + 채팅 캐스트 합류', (function () {
+      var r = Shell.Dex.hire('유목민'); // cost subs 15
+      var joined = Chat.personas.some(function (p) { return p.nick === '유목민'; });
+      return r === 'ok' && Shell.ch.subs === 5 && joined;
+    })());
+    ok('중복 영입은 거부·잔액 불변', Shell.Dex.hire('유목민') === 'owned' && Shell.ch.subs === 5);
+    ok('영입 캐스트의 트리거도 칸을 연다', (function () {
+      Shell.Dex.newShow();
+      Shell.Dex.judge('stuck'); // 길가던행인 + 유목민(영입됨)
+      return Shell.Dex.waveNew === 2;
+    })());
+  } finally {
+    Shell.ch = savedCh;
+    Shell.updateTopbar = savedTop;
+    Chat.personas.length = savedLen; // 검사로 합류한 캐스트 제거
+    if (savedDex === null) localStorage.removeItem('jgs-dex-v1');
+    else localStorage.setItem('jgs-dex-v1', savedDex);
+    if (savedStore === null) localStorage.removeItem('jonggems-channel-v1');
+    else localStorage.setItem('jonggems-channel-v1', savedStore);
+    Shell.Dex.st = null; Shell.Dex.waveNew = 0;
+  }
+})();
 
 // ---- 등록된 게임이 계약을 지키는가 ----
 eq('게임 5종이 등록된다', Shell.games.map(function (g) { return g.id; }), ['hwaryeok', 'giving-up', 'pocket', 'bomb', 'fishing']);
@@ -543,9 +598,9 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 // 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
-  '../../index.html', 'shell.css', 'config.js', 'shell.js',
+  '../../index.html', 'shell.css', 'config.js', 'shell.js', 'dex.js',
   '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js', '../../data/tikitaka.js',
-  '../../data/regulars.js',
+  '../../data/regulars.js', '../../data/dex.js',
   '../../data/events/hwaryeok.js', '../hwaryeok/game.js',
   '../../data/events/giving-up.js', '../giving-up/game.js',
   '../../data/events/pocket.js', '../pocket/game.js',

@@ -310,6 +310,21 @@ body {
 .shopWin h2 { display: flex; align-items: center; gap: 9px; }
 .shopWin .shopH { width: 30px; height: 30px; border-radius: 6px; }
 .shopBal b { color: #ffd24a; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+/* ---------- 캐스트 영입 · 반응 도감 (ADR-006) ---------- */
+.dexList { margin-top: 8px; }
+.dexRow { display: flex; align-items: center; gap: 9px; font-size: 12px; padding: 3px 0; }
+.dexRow b { flex: 0 0 96px; white-space: nowrap; }
+.dexBar { flex: 1; max-width: 220px; height: 6px; background: rgba(0,0,0,.4); border: 1px solid #2a2437; border-radius: 3px; overflow: hidden; }
+.dexBar i { display: block; height: 100%; background: var(--amber); border-radius: 3px; }
+.dexN { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 9px; margin-top: 7px; }
+.dexCard { background: rgba(23,25,28,.75); border: 1px solid #2e3138; border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
+.dexCard b { font-size: 13px; }
+.dexCard .dexDesc { font-size: 11px; color: #c9cdd2; line-height: 1.45; }
+.dexCard .dexTr { font-size: 10px; color: var(--dim); }
+.dexCard .siBuy { margin-top: 3px; background: #241e14; border: 1px solid #4a4232; color: var(--amber2); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-size: 12px; }
+.dexCard .siBuy:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,180,71,.3); }
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 12px 0 4px; }
 .shopItem {
   background: #17191c; border: 1px solid #2c3036; border-radius: 9px;
@@ -345,7 +360,7 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 /* 리플레이 창 — 진짜 스트리머의 OBS 리플레이 소스. 게임 위 좌상단에서 클립 영상이
    실제로 재생된다 (INSTANT REPLAY / 하이라이트 다시보기 공용). 면은 AetherAI 플레이트 */
 #replayWin {
-  position: absolute; top: 76px; left: -460px; z-index: 3; width: 300px;
+  position: absolute; top: 76px; left: -460px; z-index: 3; width: 340px;
   border: 1px solid rgba(0,255,163,.55); border-radius: 9px; overflow: hidden;
   box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 26px rgba(0,255,163,.2);
   pointer-events: none; opacity: 0;
@@ -360,8 +375,8 @@ body.g-tallyplat #tally.off { background: #3a332a; color: #9a9184; }
 .rwCap { padding: 5px 9px 6px; font-size: 11px; color: #c8ffe8; }
 .rwCap b { color: #7dffd0; }
 /* 클립 하단 후원 줄 (치지직 문법) — 연출 전용, 코인 무관 */
-.rwDon { display: flex; align-items: center; gap: 6px; padding: 0 9px 7px; font-size: 11.5px; color: #ffedc4; }
-.rwDon .uiIco { width: 14px; height: 14px; }
+/* 클립 하단 후원 줄 — 아이콘 없이 한 줄. 클립 창의 주인공은 영상이다 (사용자 피드백) */
+.rwDon { display: flex; align-items: center; gap: 4px; padding: 0 9px 6px; font-size: 11px; color: #ffedc4; }
 .rwDon .amt { color: #ffdf9e; }
 #replayWin .recDot { width: 7px; height: 7px; border-radius: 50%; background: #ff5a4a; flex: 0 0 auto; animation: clipRec 1s steps(2, start) infinite; }
 /* 리플레이가 실제로 재생될 시간을 준다 — 6.6초 (진입 + 재생 ~5.6 + 퇴장) */
@@ -914,7 +929,7 @@ body.fullshow #chatCol { background: transparent; }
 
 /* 클립 미디어 비율 — 합성 녹화(1260:430)와 구판 스틸(960:430)이 섞이므로 비율 고정 대신 auto */
 .clipCard img, .clipCard video { height: auto; }
-#replayWin video, #replayWin img { height: auto; max-height: 140px; }
+#replayWin video, #replayWin img { height: auto; max-height: 170px; } /* 영상이 창의 주인공 */
 /* 전체화면에선 하단 HUD(패널+풋)가 캠 자리를 덮는다 — 캠을 HUD 위로 올린다 */
 body.fullshow #camBox { bottom: 235px; }
 

@@ -368,6 +368,7 @@
       this._donQ = []; this._donBusy = false;      // 도네 배너 큐 (규약 3 — 간격 방출)
       this._marks = []; this._shownV = 0; this._lastGainAt = 0;
       if (window.JongLLM) JongLLM.init($('chatBadge'));
+      if (Shell.Dex) Shell.Dex.init(); // 영입된 캐스트를 채팅에 복원 (ADR-006)
       this.applyGear(); // 보유 방송용품(장식)을 화면에 반영
       var self2 = this;
       $('followBtn').addEventListener('click', function () {
@@ -500,6 +501,8 @@
         '<span class="dIconName">방송용품 상점</span>' +
         '<span class="dIconFresh">' + this.ch.coins.toLocaleString() + '💰</span>' +
         '</button>';
+      // 캐스트 영입 (반응 도감) — 구독자·코인을 소비해 채팅 캐스트를 늘린다 (ADR-006)
+      if (Shell.Dex) icons += Shell.Dex.deskIcon();
 
       var recent = this.ch.log.length
         ? '<div class="recent"><div class="rlab">최근 방송</div>' + this.ch.log.map(function (r) {
@@ -581,6 +584,7 @@
         if (!btn) return;
         if (btn.hasAttribute('data-game')) self.start(btn.getAttribute('data-game'));
         else if (btn.getAttribute('data-app') === 'shop') self.openShop();
+        else if (btn.getAttribute('data-app') === 'cast' && Shell.Dex) Shell.Dex.openPanel();
       });
     },
 
@@ -725,6 +729,7 @@
       Chat.reset();
       Chat.load(g.chat.T, g.chat.BURST);
       if (window.JongLLM) JongLLM.newShow(); // LLM 호출 예산은 방송 단위로 리셋
+      if (Shell.Dex) Shell.Dex.newShow();    // 반응 도감 — 파장(신규 칸) 카운터 리셋 (ADR-006)
       Chat.sys('— 생방송 시작 · ' + g.title + ' —');
       // file:// 직접 실행 안내 — 브라우저가 로컬 이미지를 교차 출처로 취급해 캔버스 녹화가
       // 막힌다 (클립 영상·리플레이 비활성). 한 번만, 조용히.
@@ -824,6 +829,7 @@
           if (ev === 'donation') self.showDonation(facts);
           self.camReact(ev); Chat.react(ev, facts);
           self.maybeClip(ev); // 관측 전용 — 흥미도 판정·클립 캡처 (수치 무관여, C3)
+          if (Shell.Dex) Shell.Dex.judge(ev); // 반응 도감 — 결정론 칸 판정 (메타 통화만, ADR-006)
         },
         hud: function (html) { $('plaque').innerHTML = html; },
         stamp: function (text) { self.showStamp(text); },
@@ -1144,9 +1150,9 @@
       if (label === 'INSTANT REPLAY') {
         var spon = this.pickSponsor();
         var damt = [500, 1000, 1000, 2000, 3000, 5000, 10000][Math.floor(Math.random() * 7)];
-        don = '<div class="rwDon"><img class="uiIco" src="games/shell/img/ui-coin.png" alt="">' +
-          '<b style="color:' + spon.color + '">' + spon.nick + '</b>님이 <b class="amt">' +
-          damt.toLocaleString() + '코인</b> 후원!</div>';
+        // 코인 아이콘 없이 글자만 — 클립 창의 주인공은 영상이다 (사용자 피드백)
+        don = '<div class="rwDon"><b style="color:' + spon.color + '">' + spon.nick +
+          '</b>님이 <b class="amt">' + damt.toLocaleString() + '코인</b> 후원!</div>';
         // 클립 캡처 효과음 — 도네 딸랑과 겹치지 않는 낮은 촬칵+윙
         Shell.sfx.tone(660, .05, 'square', .04); Shell.sfx.tone(990, .09, 'triangle', .05, .05);
       }
@@ -1355,7 +1361,10 @@
       // 방송 중 시청자 수에는 손대지 않고 메타 통화에만 얹으므로 승인 밸런스와 충돌하지
       // 않으면서, "채널 색을 관리할 이유"가 처음으로 생긴다 (ADR-004 결정 7)
       var div = this.diversity(), divMult = 1 + DIV_BONUS * div;
-      var newSubs = Math.floor(final / 100 * divMult); // 최종 시청자의 1% × 다양성
+      // 파장 — 이번 방송에 처음 들은 반응 칸 수 (ADR-006). 다양성과 같은 원리로 메타 통화에만
+      var waveNew = Shell.Dex ? Shell.Dex.waveNew : 0;
+      var waveMult = Shell.Dex ? Shell.Dex.waveMult() : 1;
+      var newSubs = Math.floor(final / 100 * divMult * waveMult); // 최종 시청자의 1% × 다양성 × 파장
       this.ch.subs += newSubs;
       this.ch.shows++;
       var earned = this._showCoins || 0;
@@ -1482,6 +1491,8 @@
           '<span>채널 구독자</span><b>+' + newSubs.toLocaleString() + ' → ' + this.ch.subs.toLocaleString() + '명' +
             ' <span class="' + (divMult >= 1.3 ? 'rec' : 'fine') + '">다양성 ×' + divMult.toFixed(2) + '</span></b>' +
           '<span>도네 수익</span><b>+' + earned.toLocaleString() + ' 코인 → 잔액 ' + this.ch.coins.toLocaleString() + '</b>' +
+          (waveNew > 0 ? '<span>반응 도감</span><b>처음 들은 반응 ' + waveNew + '칸 <span class="rec">파장 ×' +
+            waveMult.toFixed(2) + '</span></b>' : '') +
         '</div>' +
         '<div class="archline">오늘 모인 사람들 — ' + archRows +
           (fickleBorn >= 10 ? '<br><span class="fine">이 중 <b>' + fickleBorn.toLocaleString() +
