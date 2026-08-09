@@ -903,6 +903,7 @@
       this.viewers = start0;
       this._donT = 6 + Math.random() * 4;  // 도네 타이머는 셸 소유 (contract 4.2)
       this._donForce = 0; this._lastForceAt = -99;   // 사건 도네 예약 건수 (방송 단위 리셋)
+      this._donReadBonus = 0;              // 읽어주기 누적 보너스 — 방송이 바뀌면 처음부터
       this.comp = this.ch.mix.map(function (r) { return start0 * r; });
       this.compStart = this.comp.slice();
       this.fickle = [0, 0, 0, 0];
@@ -910,6 +911,7 @@
       this.timeLeft = g.duration;
       this._fxQueue.length = 0;
       this._shake = 0; this._flash = 0;
+      if (Shell.Impact) Shell.Impact.reset(); // 쿨다운·폭죽 잔여물이 방송을 넘지 않게
 
       $('overlay').classList.add('hidden');
       $('overlay').innerHTML = '';
@@ -1006,6 +1008,9 @@
           // 사건 판정은 유입 전 규모 기준이다 (더한 뒤 재면 비율이 희석된다).
           // 도네 자신의 획득은 제외 — 안 그러면 도네가 도네를 부르는 고리가 생긴다
           if (ev !== 'donation') self.donSpike(actual);
+          // 급등 임팩트 — 유입 전 규모 기준 (donSpike와 같은 문턱). 도네는 제외 (규약 5 — 양념은
+          // 뼈대가 못 된다). 손실 경로(loseViewers)에는 붙지 않는다 (규약 2). ADR-009
+          if (Shell.Impact && ev !== 'donation') Shell.Impact.onSurge(actual, self.viewers);
           self.viewers += actual;
           self._surgeAcc += actual;                          // 흥미도의 급증 신호 (클립)
           self._lastGainAt = self.now;                       // 카운터 '식음' 판정용
@@ -1025,6 +1030,7 @@
           if (ev === 'donation') self.showDonation(facts);
           self.camReact(ev); Chat.react(ev, facts);
           self.maybeClip(ev); // 관측 전용 — 흥미도 판정·클립 캡처 (수치 무관여, C3)
+          if (Shell.Impact) Shell.Impact.onEvent(ev); // 설계 피크(버스트 4)면 임팩트 (ADR-009)
           if (Shell.Dex) Shell.Dex.judge(self.game.id, ev); // 반응 도감 — 결정론 칸 판정 (메타 통화만, ADR-006)
         },
         hud: function (html) { $('plaque').innerHTML = html; },
@@ -1046,7 +1052,8 @@
             self._donT = self._donForce > 0 ? Shell.DON.STAGGER : reload;
           } else {
             self._donT = reload;
-            if (Math.random() >= (prob == null ? .45 : prob) + r.prob) return 0;
+            // 읽어주기 보너스(_donReadBonus)는 소통에 대한 응답 — 읽은 만큼 다음 도네가 조금 더 잘 온다
+            if (Math.random() >= (prob == null ? .45 : prob) + r.prob + (self._donReadBonus || 0)) return 0;
           }
           // 양념 (규약 5): 규모 비례. 원래 1~3%였는데 빈도를 2배로 올리고 사건 연속 발행까지
           // 붙였으므로 건당 금액을 0.4~1.2%로 낮췄다 — 총 수입을 대략 유지해서 도네(랜덤)가
@@ -1084,6 +1091,9 @@
       }
       // 채팅 열기 — 시청자 규모를 0~1로 눌러 관객 엔진에 넘긴다 (연출 전용, C3 무관)
       Chat.heat = Math.max(0, Math.min(1, Math.log10(Math.max(v, 1) / 150) / 2.3));
+      // 큰 사건 뒤 몇 초는 규모와 무관하게 채팅이 폭주한다 (ADR-009). 여기서 깔지 않으면
+      // 다음 gain이 규모 기준으로 다시 덮어써서 폭주가 한 프레임 만에 꺼진다
+      if (Shell.Impact && this.now < Shell.Impact.heatUntil) Chat.heat = 1;
       this.renderComp();
     },
     // 관객 구성 게이지 — "지금 누가 보고 있는가"를 색으로. 콘텐츠 선택이 관객을 바꾼다는 게
@@ -1211,7 +1221,8 @@
     // 실제 스트리머의 핵심 기술은 "플레이하면서 채팅을 상대하는 것" — 배너를 클릭하는 손이
     // 잠깐 게임에서 떨어지는 것 자체가 비용이자 몰입 장치다. 읽어주면 후원자가 반갑게
     // 반응하고(don_read, 화자 = 후원자 본인) trust(방송 간 관계 변수, ADR-003)가 쌓인다.
-    // ponytail: 경제 무관여 — 시청자·코인 이득 없음. 유입을 붙이려면 공명 모델 게이트(§5) 뒤에.
+    // 보상은 다음 도네 확률에 얹히는 미미한 보너스뿐 (Shell.DON.READ, 상한 READ_CAP) —
+    // 시청자·코인을 직접 주지는 않는다. 유입을 붙이려면 공명 모델 게이트(§5) 뒤에.
     // card 없이 부르면 아직 안 읽은 가장 최근 카드를 읽는다 (스택이라 대상이 여럿이다)
     readDonation: function (card) {
       var wrap = $('donBanner');
@@ -1228,6 +1239,8 @@
       this.showTicker('"' + d.msg + '" — ' + d.who.nick + '님 감사합니다!');
       Chat.memory('don_read', {}, d.who, 700 + Math.random() * 500); // 사람이 읽고 답하는 템포
       Chat.bumpTrust(); // 소통도 큰 사건이다 — 방송 간 관계에 쌓인다
+      // 읽어준 만큼 다음 도네가 조금 더 잘 온다 (누적, 상한 있음 — 소통만으로 도네를 뽑진 못한다)
+      this._donReadBonus = Math.min(Shell.DON.READ_CAP, (this._donReadBonus || 0) + Shell.DON.READ);
       Shell.sfx.tone(880, .08, 'triangle', .07); Shell.sfx.tone(1319, .12, 'triangle', .06, .09);
     },
 
@@ -2226,6 +2239,7 @@
       var g = ctx.createRadialGradient(480, 210, 190, 480, 210, 580);
       g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.5)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      if (Shell.Impact) Shell.Impact.draw(ctx, dt); // 폭죽 — 게임 위, 플래시 아래 (ADR-009)
       if (this._flash > .01) { ctx.fillStyle = 'rgba(255,245,220,' + this._flash + ')'; ctx.fillRect(0, 0, W, H); }
     },
   };
@@ -2500,6 +2514,10 @@
     BURST: 0.30,    // 대참사급 — 시청자의 30%가 한 번에 움직이면 2~3건이 연달아 터진다
     STAGGER: 0.45,  // 연속 도네 사이 간격(초). 규약 3의 0.4초를 지키면서 겹쳐 보이게 한다
     STACK: 3,       // 화면에 동시에 떠 있을 수 있는 카드 수 (그 이상은 스트리머 캠을 덮는다)
+    // 읽어주기 보상 — 읽을 때마다 다음 도네 확률에 얹힌다. 기본 확률이 .45라 건당 +2%p면
+    // 체감되지 않을 만큼 미미하고(사용자 요청), 상한 +10%p라 소통만으로 도네를 뽑을 순 없다.
+    // 양념(도네)이 뼈대를 넘보지 않는 선 — 규약 5
+    READ: 0.02, READ_CAP: 0.10,
     FORCE_GAP: 3,   // 사건 도네 최소 간격(초) — 연쇄 사건에 배너가 도배되지 않게 (규약 3)
   };
 

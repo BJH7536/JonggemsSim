@@ -227,6 +227,18 @@ body {
   border: 5px double var(--amber); border-radius: 10px; padding: 4px 28px;
   background: rgba(20,13,4,.6); text-shadow: 0 0 26px rgba(255,180,71,.55);
 }
+/* 대형 스탬프 (ADR-009) — 설계 피크에만. 평소 스탬프와 같은 크기면 사건이 안 커 보인다.
+   색이 방향을 말한다: 대박은 금빛, 대참사는 핏빛 — 문구를 못 읽어도 어느 쪽인지 안다 */
+#bigStamp.mega #bigStampText {
+  font-size: 104px; padding: 10px 60px; border-width: 8px;
+  letter-spacing: 4px; background: rgba(10,7,4,.72);
+}
+#bigStamp.megaDark #bigStampText {
+  color: #ff6b5a; border-color: #ff6b5a; text-shadow: 0 0 40px rgba(255,107,90,.7);
+}
+#bigStamp.megaBright #bigStampText {
+  color: #ffd24a; border-color: #ffd24a; text-shadow: 0 0 44px rgba(255,210,74,.8);
+}
 /* DOM상 #viewport(960×430, overflow:hidden) 안에 있지만 fixed로 앱 창 전체를 덮는다 —
    absolute였을 때 상점·영입·보관함이 게임 화면 크기에 갇혀 있었다. 오른쪽 300px는 채팅 독, 아래 44px는 작업표시줄 */
 #overlay {

@@ -28,6 +28,7 @@
 <script src="shell.js"></script>
 <script src="dex.js"></script>
 <script src="crowd.js"></script>
+<script src="impact.js"></script>
 <script src="../../data/events/hwaryeok.js"></script>
 <script src="../hwaryeok/game.js"></script>
 <script src="../../data/events/giving-up.js"></script>
@@ -80,6 +81,38 @@ for (var k = 0; k < 3; k++) f = Shell.rotateFresh(f, 'a', ids); // a: 3단계
 eq('a 3회 → 3단계', f.a, 3);
 f = Shell.rotateFresh(f, 'b', ids);
 eq('b 한 판이 a를 한 단계 회복시킨다', f.a, 2);
+
+// ---- 임팩트 판정 (ADR-009) — 조용히 틀리면 대참사에 팡파르가 울린다 ----
+// 5게임의 설계 피크(버스트 4) 8개가 정확히 두 갈래로 갈려야 한다. 새 저작 테이블 없이
+// CAM_MOOD를 재사용하므로, 캠 표정 표를 건드리면 여기가 먼저 빨개진다.
+eq('대참사 피크 4종은 암울',
+   ['disaster', 'fall_legend', 'line_snap', 'boom'].map(function (e) { return Shell.impactOf(e, 4); }),
+   ['dark', 'dark', 'dark', 'dark']);
+eq('환호 피크 4종은 밝음',
+   ['summit', 'land_legend', 'defused_clutch', 'comeback'].map(function (e) { return Shell.impactOf(e, 4); }),
+   ['bright', 'bright', 'bright', 'bright']);
+ok('무게 3 이하는 임팩트 없음 (설계 피크만 — 규약 5, 양념은 뼈대가 못 된다)',
+   Shell.impactOf('fall_big', 3) === null && Shell.impactOf('donation', 2) === null);
+ok('분류에 없는 이벤트는 조용히 지나간다', Shell.impactOf('없는이벤트', 4) === null);
+ok('게임이 저작한 버스트 4가 5게임 전부에 있다 (임팩트가 특정 게임 전용이 되지 않게)',
+   Shell.games.every(function (g) {
+     var B = (g.chat && g.chat.BURST) || {};
+     return Object.keys(B).some(function (k) { return B[k] === 4 && Shell.impactOf(k, 4); });
+   }));
+ok('쿨다운이 연쇄 피크의 두 번째를 버린다 (규약 3 — 곡이 서로를 잡아먹지 않게)', (function () {
+  var savedPhase = Shell.phase, savedNow = Shell.now;
+  try {
+    Shell.phase = 'live'; Shell.Impact.reset();
+    Shell.now = 100; var first = Shell.Impact.fire('dark', 'x');
+    Shell.now = 103; var during = Shell.Impact.fire('dark', 'x');   // 쿨다운 6초 안
+    Shell.now = 110; var after = Shell.Impact.fire('dark', 'x');
+    return first === true && during === false && after === true;
+  } finally { Shell.phase = savedPhase; Shell.now = savedNow; Shell.Impact.reset(); }
+})());
+ok('방송 중이 아니면 임팩트가 나가지 않는다', (function () {
+  var saved = Shell.phase; Shell.phase = 'hub'; Shell.Impact.reset();
+  try { return Shell.Impact.fire('bright', 'x') === false; } finally { Shell.phase = saved; }
+})());
 
 // ---- 클립 흥미도 — 조용히 틀리면 클립이 도배되거나 영영 안 잡힌다 ----
 var IS = Shell.interestScore, TH = Shell.CLIP.THRESH;
@@ -820,7 +853,7 @@ eq('추락 신선도표가 규약 4와 같다', T.FALL_FRESH, [1, .7, .45, .25, 
 // 여유가 크지만, 옆에 12MB짜리 Assets/ 스테이징이 생겼으므로 조용히 무거워질 경로가 열렸다.
 // 무거워지는 것 자체가 아니라 "모르는 사이에" 무거워지는 걸 막는다.
 var SHIPPED = [
-  '../../index.html', 'shell.css', 'config.js', 'shell.js', 'dex.js', 'clips.js', 'crowd.js',
+  '../../index.html', 'shell.css', 'config.js', 'shell.js', 'dex.js', 'clips.js', 'crowd.js', 'impact.js',
   '../../engine/chat.js', '../../engine/llm.js', '../../data/personas/cast.js', '../../data/tikitaka.js',
   '../../data/regulars.js', '../../data/dex.js',
   // 100종 캐리어 — 도감 관측단(12명)에 이어 군중 발화(88명)까지 여기서 온다. 88KB로
