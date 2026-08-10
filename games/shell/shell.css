@@ -660,17 +660,19 @@ body.fullshow .bcol { min-height: 14em; }
 
 /* 튜토리얼 팁 — 채팅으로 흘리면 시작 버스트에 묻힌다. 화면에 남고 다음 단계가 덮는다 */
 #tutTip {
-  /* %로 띄우는 이유: #viewport는 전체화면 스테이지 전체이고 그 아래쪽을 조작 패널·안내줄이
-     덮는다. 고정 px로 두면 창 크기에 따라 그 위에 얹힌다 — 게임 그림 안쪽에 머물게 한다 */
-  position: absolute; left: 50%; bottom: 30%; z-index: 4; transform: translate(-50%, 8px);
-  display: flex; align-items: center; gap: 9px; max-width: min(660px, 88%);
+  /* 좌하단 구석 — 화면 한가운데에 띄우면 플레이를 가린다 (사용자 지적).
+     세로를 %로 잡는 이유: #viewport는 전체화면 스테이지 전체이고 그 아래쪽을 조작 패널·
+     안내줄이 덮는다. 고정 px로 두면 창 크기에 따라 그 위에 얹힌다.
+     가로는 왼쪽 — 우하단은 라이브 캠, 하단 중앙은 티커, 우상단은 도네 카드 자리다 */
+  position: absolute; left: 16px; bottom: 30%; z-index: 4; transform: translateY(8px);
+  display: flex; align-items: center; gap: 9px; max-width: min(560px, 46%);
   padding: 9px 14px; border-radius: 9px; cursor: pointer;
   background: rgba(8,10,12,.9); border: 1px solid var(--plat);
   box-shadow: 0 8px 26px rgba(0,0,0,.55);
   font-size: 20px; line-height: 1.6; color: var(--ink);
   opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
 }
-#tutTip.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#tutTip.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
 #tutTip i {
   flex: 0 0 auto; font-style: normal; font-size: 20px; letter-spacing: 2px; font-weight: 700;
   color: #06301e; background: var(--plat); border-radius: 5px; padding: 3px 7px;
