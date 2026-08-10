@@ -246,9 +246,10 @@
         '<i class="dcBar"><i style="width:' + c.pct.toFixed(1) + '%"></i></i>' +
         '<span class="dcGoal">최고 <b>' + c.best.toLocaleString() + '</b> / 목표 ' +
           c.goal.toLocaleString() + '명</span>';
-      // 미션 쪽지 바로 아래에 붙인다 — 쪽지 높이는 미션 수에 따라 변해서 실측이 맞다
+      // 미션 쪽지 바로 아래에 붙인다 — 쪽지 높이는 미션 수에 따라 변해서 실측이 맞다.
+      // rect는 화면 픽셀, style은 body 배율이 곱해지는 CSS 픽셀 — 나눠서 넘긴다
       var pd = document.querySelector('.pdNote');
-      el.style.top = pd ? Math.round(pd.getBoundingClientRect().bottom + 14) + 'px' : '';
+      el.style.top = pd ? Math.round(pd.getBoundingClientRect().bottom / Shell.uiZoom() + 14) + 'px' : '';
     },
     saveChannel: function () {
       try { localStorage.setItem(STORE_KEY, JSON.stringify(this.ch)); } catch (e) {}
@@ -836,9 +837,13 @@
         im.replaceWith(c2); drawVec(c2);
       });
       // 위치 — 아이콘 오른쪽. 렌더된 실제 높이로 화면 아래 잘림을 보정한다
+      // rect·innerHeight는 화면 픽셀, offsetHeight·style은 body 배율(zoom)이 곱해지는
+      // CSS 픽셀 — 화면 픽셀로 계산한 뒤 배율로 나눠 넘긴다 (안 하면 툴팁이 배율만큼 어긋난다)
+      var z = Shell.uiZoom();
       var r = btn.getBoundingClientRect();
-      tip.style.left = (r.right + 14) + 'px';
-      tip.style.top = Math.max(10, Math.min(r.top, innerHeight - 54 - tip.offsetHeight)) + 'px';
+      var tipH = tip.offsetHeight * z;
+      tip.style.left = ((r.right + 14) / z) + 'px';
+      tip.style.top = (Math.max(10, Math.min(r.top, innerHeight - 54 - tipH)) / z) + 'px';
     },
     hideTip: function () { var t = $('dTip'); if (t) t.innerHTML = ''; },
 
@@ -1611,10 +1616,13 @@
       var gw = W * sc, gh = H * sc;
       var gx = r.left + (r.width - gw) / 2;
       var gbot = window.innerHeight - (r.top + (r.height - gh) / 2 + gh);
+      // getBoundingClientRect·innerHeight는 화면 픽셀인데, CSS 변수는 body 배율(zoom)이
+      // 곱해지는 공간에서 쓰인다 — 나눠서 넘기지 않으면 배율만큼 어긋난다.
+      var z = Shell.uiZoom();
       var st = document.body.style;
-      st.setProperty('--gx', Math.round(gx) + 'px');
-      st.setProperty('--gw', Math.round(gw) + 'px');
-      st.setProperty('--gbot', Math.max(44, Math.round(gbot)) + 'px');
+      st.setProperty('--gx', Math.round(gx / z) + 'px');
+      st.setProperty('--gw', Math.round(gw / z) + 'px');
+      st.setProperty('--gbot', Math.max(44, Math.round(gbot / z)) + 'px');
     },
 
     // ---------- 클립 영상 — 리플레이 버퍼 (연출·기록 전용) ----------
@@ -2614,6 +2622,13 @@
     // 양념(도네)이 뼈대를 넘보지 않는 선 — 규약 5
     READ: 0.02, READ_CAP: 0.10,
     FORCE_GAP: 3,   // 사건 도네 최소 간격(초) — 연쇄 사건에 배너가 도배되지 않게 (규약 3)
+  };
+
+  // UI 배율 (shell.css의 body zoom) — 화면 픽셀 ↔ CSS 픽셀 환산에 쓴다.
+  // zoom을 모르는 브라우저에서는 1이 나와 배율 없이 그대로 동작한다.
+  Shell.uiZoom = function () {
+    var z = parseFloat(getComputedStyle(document.body).zoom);
+    return z > 0 ? z : 1;
   };
 
   Shell.CLIP = { THRESH: .5, GAP: 8, KEEP: 4, RAW_MAX: 10 };
