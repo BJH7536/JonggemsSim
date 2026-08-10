@@ -9,7 +9,11 @@
   --plat: #00ffa3; --plat2: #7dffd0; --platbg: #17191c;
 }
 * { box-sizing: border-box; }
+/* UI 전체 배율 — 100%에서 요소가 과하게 커서 "브라우저 80% 확대가 적정"이라는 플레이
+   피드백. 그 상태를 기본값으로 굳힌다. 게임 캔버스 내부 해상도(960×430)와 룰은 불변 —
+   표시 크기만 줄어든다. 좌표 환산(Shell.fitHud)은 Shell.uiZoom()으로 이 값을 보정한다. */
 body {
+  zoom: .8;
   margin: 0; padding: 0 0 40px;
   font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif;
   background: #141517 radial-gradient(1100px 520px at 50% -120px, #1c1f22, #141517);
